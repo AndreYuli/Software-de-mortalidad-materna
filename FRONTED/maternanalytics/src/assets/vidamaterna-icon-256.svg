@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 64 64">
+  <!-- Organic womb container -->
+  <path d="M32 4 C52 4 58 20 58 34 C58 52 46 60 32 60 C18 60 6 52 6 34 C6 20 12 4 32 4Z" fill="#993556" opacity="0.08"/>
+  <path d="M32 4 C52 4 58 20 58 34 C58 52 46 60 32 60 C18 60 6 52 6 34 C6 20 12 4 32 4Z" fill="none" stroke="#993556" stroke-width="1.3"/>
+  <!-- Mother curve (left) -->
+  <path d="M26 16 C18 24 16 34 22 44 C26 48 30 52 32 54" fill="none" stroke="#D4537E" stroke-width="2" stroke-linecap="round"/>
+  <!-- Mother curve (right) -->
+  <path d="M38 14 C46 22 48 34 42 44 C38 48 34 52 32 54" fill="none" stroke="#993556" stroke-width="2" stroke-linecap="round"/>
+  <!-- Child circle -->
+  <circle cx="32" cy="36" r="5" fill="none" stroke="#D4537E" stroke-width="1.2"/>
+  <circle cx="32" cy="36" r="1.8" fill="#D4537E"/>
+  <!-- Data nodes -->
+  <circle cx="20" cy="26" r="1.5" fill="#ED93B1"/>
+  <circle cx="17" cy="36" r="1.5" fill="#ED93B1"/>
+  <circle cx="20" cy="44" r="1.5" fill="#ED93B1"/>
+  <circle cx="44" cy="24" r="1.5" fill="#F4C0D1"/>
+  <circle cx="47" cy="34" r="1.5" fill="#F4C0D1"/>
+  <circle cx="44" cy="44" r="1.5" fill="#F4C0D1"/>
+</svg>

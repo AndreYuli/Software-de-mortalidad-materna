@@ -1,0 +1,135 @@
+:root{
+  --blue-900:#1a2e4a;--blue-800:#1e3a5f;--blue-700:#2a5298;
+  --blue-500:#4d7fd4;--blue-300:#a8cdf0;--blue-100:#f0f7ff;
+  --cream:#f4f8ff;--text-dark:#1a2433;--text-mid:#3d5a80;--text-light:#7a9bbf;
+  --sidebar-w:248px;
+}
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body,html{height:100%;font-family:"Plus Jakarta Sans",sans-serif;background:var(--cream);color:var(--text-dark)}
+
+.dashboard{display:flex;height:100vh;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:linear-gradient(180deg,var(--blue-900) 0%,var(--blue-800) 100%);
+  display:flex;flex-direction:column;overflow-y:auto;
+  box-shadow:4px 0 24px rgba(26,46,74,0.18);position:relative;z-index:5;
+}
+.sidebar-logo{
+  display:flex;align-items:center;gap:10px;padding:24px 20px 20px;
+  font-family:"DM Serif Display",serif;font-size:18px;color:#fff;font-weight:600;
+  border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:8px;
+}
+.sidebar-section-label{
+  font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:rgba(255,255,255,0.3);padding:0 20px;margin:16px 0 4px;
+}
+.sidebar-nav{flex:1;padding-bottom:12px}
+.nav-item{
+  width:100%;display:flex;align-items:center;gap:12px;
+  padding:11px 20px;background:transparent;border:none;
+  font-size:14px;font-family:inherit;color:rgba(255,255,255,0.65);
+  cursor:pointer;transition:all 0.18s;text-align:left;position:relative;
+}
+.nav-item svg{width:18px;height:18px;flex-shrink:0;opacity:0.8}
+.nav-item:hover{background:rgba(255,255,255,0.07);color:#fff}
+.nav-item:hover svg{opacity:1}
+.nav-item.active{background:rgba(77,127,212,0.22);color:#fff;border-right:3px solid var(--blue-300)}
+.nav-item.active svg{opacity:1}
+.nav-item.nav-upload span{display:flex;flex-direction:column;flex:1;overflow:hidden}
+.nav-item.nav-upload span small{font-size:10px;color:rgba(255,255,255,0.35);margin-top:1px;letter-spacing:0.3px}
+.nav-item.nav-mortalidad.active{border-right-color:#7aaee8}
+.nav-item.nav-morbilidad.active{border-right-color:#a8cdf0}
+.nav-badge{min-width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-badge.ok{background:#1a7a4a;color:#fff}
+.nav-badge.err{background:#c0392b;color:#fff}
+
+.sidebar-footer{border-top:1px solid rgba(255,255,255,0.08);padding:16px 20px;display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--blue-500),var(--blue-300));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.user-info{flex:1;overflow:hidden}
+.user-name{font-size:13px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-email{font-size:11px;color:rgba(255,255,255,0.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn-logout{padding:7px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:transparent;color:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn-logout svg{width:16px;height:16px}
+.btn-logout:hover{background:rgba(192,57,43,0.25);border-color:rgba(192,57,43,0.4);color:#ff8f8f}
+
+/* MAIN */
+.dash-main{flex:1;overflow-y:auto;background:var(--cream);padding:48px}
+.view-content{max-width:560px}
+.view-header{margin-bottom:36px}
+.view-header h1{font-family:"DM Serif Display",serif;font-size:28px;color:var(--blue-900);margin-bottom:8px}
+.view-header p{font-size:14px;color:var(--text-light);line-height:1.6}
+
+/* EMPTY STATE */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px;text-align:center;background:#fff;border-radius:20px;border:1.5px dashed rgba(42,82,152,0.15)}
+.empty-state svg{width:80px;height:80px;margin-bottom:24px;opacity:0.7}
+.empty-state p{font-size:16px;font-weight:600;color:var(--blue-900);margin-bottom:6px}
+.empty-state span{font-size:13px;color:var(--text-light)}
+
+/* UPLOAD CARD */
+.single-upload{display:flex;flex-direction:column;align-items:center;gap:28px;width:100%}
+.upload-card{width:100%;border-radius:18px;padding:40px 32px;cursor:pointer;border:2px dashed transparent;transition:all 0.25s;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;user-select:none}
+.upload-card.dragging{transform:scale(1.02)}
+.card-mortalidad{background:linear-gradient(135deg,#e8f0fc 0%,#d0e2f8 100%);border-color:rgba(42,82,152,0.2)}
+.card-mortalidad:hover{border-color:var(--blue-700);box-shadow:0 8px 32px rgba(42,82,152,0.12)}
+.card-mortalidad .upload-icon svg{stroke:#2a5298}
+.card-mortalidad .upload-title{color:#1a2e4a}
+.card-mortalidad .upload-hint span{color:#2a5298}
+.card-mortalidad .upload-file-name{color:#2a5298;background:rgba(42,82,152,0.1)}
+.card-morbilidad{background:linear-gradient(135deg,#eaf4ff 0%,#cce5ff 100%);border-color:rgba(77,127,212,0.2)}
+.card-morbilidad:hover{border-color:var(--blue-500);box-shadow:0 8px 32px rgba(77,127,212,0.14)}
+.card-morbilidad .upload-icon svg{stroke:#4d7fd4}
+.card-morbilidad .upload-title{color:#1e3a5f}
+.card-morbilidad .upload-hint span{color:#4d7fd4}
+.card-morbilidad .upload-file-name{color:#4d7fd4;background:rgba(77,127,212,0.1)}
+.upload-icon{width:60px;height:60px;display:flex;align-items:center;justify-content:center}
+.upload-icon svg{width:44px;height:44px}
+.upload-title{font-family:"DM Serif Display",serif;font-size:22px}
+.upload-desc{font-size:13px;color:var(--text-light);line-height:1.5}
+.upload-hint{font-size:13px;color:var(--text-light);line-height:1.8}
+.upload-hint span{font-weight:600;text-decoration:underline}
+.upload-hint small{font-size:11px;opacity:0.7}
+.upload-file-name{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px;word-break:break-all}
+.upload-file-name svg{width:16px;height:16px;flex-shrink:0}
+.upload-card.has-error{border-color:rgba(192,57,43,0.4) !important}
+.upload-error{width:100%;text-align:left;background:rgba(255,235,235,0.8);border:1px solid rgba(192,57,43,0.2);border-radius:10px;padding:12px 14px}
+.error-summary{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#c0392b;margin-bottom:8px}
+.error-summary svg{width:16px;height:16px;flex-shrink:0;stroke:#c0392b}
+.error-cols{list-style:none;display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto}
+.error-cols li{font-size:11px;color:#922b21;padding:2px 6px;background:rgba(192,57,43,0.08);border-radius:4px}
+.error-cols li.more{color:#999;background:transparent;font-style:italic}
+
+/* ACTIONS */
+.upload-actions{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%}
+.btn-analizar{width:100%;padding:16px;border:none;border-radius:12px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer;letter-spacing:0.3px;background:linear-gradient(135deg,var(--blue-900),var(--blue-700));color:#fff;transition:transform 0.2s,box-shadow 0.3s,opacity 0.2s}
+.btn-analizar:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px rgba(42,82,152,0.3)}
+.btn-analizar:disabled{opacity:0.35;cursor:not-allowed}
+.success-msg{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:#1a7a4a;background:#e6f7ee;border:1px solid #a3d9b8;border-radius:10px;padding:10px 18px;width:100%}
+.success-msg svg{width:18px;height:18px;stroke:#1a7a4a;flex-shrink:0}
+
+/* Mobile */
+@media(max-width:768px){
+  .sidebar{width:64px;min-width:64px}
+  .sidebar-logo span,.sidebar-section-label,.user-info{display:none}
+  .nav-item{justify-content:center;padding:14px}
+  .nav-item svg{margin:0}
+  .nav-item.nav-upload span{display:none}
+  .sidebar-footer{justify-content:center;padding:12px}
+  .dash-main{padding:24px 16px}
+}
+
+/* ANALYZE ERROR */
+.analyze-error{width:100%;font-size:13px;font-weight:500;color:#c0392b;background:rgba(255,235,235,0.9);border:1px solid rgba(192,57,43,0.25);border-radius:10px;padding:10px 16px;text-align:center}
+
+/* ANALISIS LIST */
+.analisis-list{display:flex;flex-direction:column;gap:12px;width:100%}
+.analisis-card{background:#fff;border-radius:14px;padding:18px 20px;border:1.5px solid rgba(42,82,152,0.1);transition:box-shadow 0.2s,transform 0.2s;cursor:default}
+.analisis-card:hover{box-shadow:0 6px 24px rgba(42,82,152,0.1);transform:translateY(-1px)}
+.analisis-tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.5px;padding:3px 10px;border-radius:20px;margin-bottom:10px;text-transform:uppercase}
+.tag-mortalidad{background:rgba(42,82,152,0.12);color:#1e3a5f}
+.tag-morbilidad{background:rgba(77,127,212,0.12);color:#2a5298}
+.analisis-filename{font-size:14px;font-weight:600;color:var(--text-dark);margin-bottom:8px;word-break:break-all}
+.analisis-meta{display:flex;gap:16px;font-size:12px;color:var(--text-light)}
+.analisis-meta span{display:flex;align-items:center;gap:4px}
