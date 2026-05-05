@@ -7,6 +7,11 @@ from rest_framework.response import Response
 
 from .models import Analisis
 from .serializers import AnalisisSerializer, UploadSerializer
+from .processors import (
+    MortalidadProcessor, 
+    MorbilidadProcessor,
+    procesar_archivo_analisis
+)
 
 # Columnas requeridas por tipo de evento
 COLUMNAS_MORTALIDAD = [
@@ -130,16 +135,64 @@ def subir_archivo(request):
     return Response(AnalisisSerializer(analisis).data, status=status.HTTP_201_CREATED)
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def listar_analisis(request):
     """
     GET /api/analisis/
     Retorna todos los análisis guardados (sin el archivo).
+    
+    POST /api/analisis/
+    Recibe un archivo Excel (mortalidad o morbilidad), valida columnas
+    y guarda el análisis en base de datos.
     """
-    analisis = Analisis.objects.all()
-    serializer = AnalisisSerializer(analisis, many=True)
-    return Response(serializer.data)
+    if request.method == 'GET':
+        analisis = Analisis.objects.all()
+        serializer = AnalisisSerializer(analisis, many=True)
+        return Response(serializer.data)
+    
+    # POST - Crear nuevo análisis
+    serializer = UploadSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    tipo = serializer.validated_data['tipo']
+    archivo = serializer.validated_data['archivo']
+
+    # Validar columnas
+    columnas_archivo = leer_columnas_excel(archivo)
+    if columnas_archivo is None:
+        return Response(
+            {'error': 'No se pudo leer el archivo. Verifica que sea un Excel válido.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    requeridas = COLUMNAS_REQUERIDAS[tipo]
+    archivo_lower = [c.lower() for c in columnas_archivo]
+    faltantes = [c for c in requeridas if c.lower() not in archivo_lower]
+
+    if faltantes:
+        return Response(
+            {'error': 'Faltan columnas requeridas.', 'columnas_faltantes': faltantes},
+            status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        )
+
+    # Calcular resumen
+    archivo.seek(0)
+    resumen = calcular_resumen(archivo, tipo)
+    total_registros = resumen.pop('total_registros', 0)
+
+    # Guardar en base de datos
+    archivo.seek(0)
+    analisis = Analisis.objects.create(
+        tipo=tipo,
+        nombre_archivo=archivo.name,
+        archivo=archivo,
+        total_registros=total_registros,
+        resumen=resumen,
+    )
+
+    return Response(AnalisisSerializer(analisis).data, status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
@@ -155,4 +208,138 @@ def detalle_analisis(request, pk):
         return Response({'error': 'Análisis no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
 
     return Response(AnalisisSerializer(analisis).data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def analisis_completo(request, pk):
+    """
+    GET /api/analisis/<id>/completo/
+    Genera análisis completo con estadísticas, clustering y visualizaciones.
+    """
+    try:
+        analisis = Analisis.objects.get(pk=pk)
+    except Analisis.DoesNotExist:
+        return Response({'error': 'Análisis no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    # Leer archivo y procesar
+    try:
+        df = pd.read_excel(analisis.archivo.path, engine='openpyxl')
+        
+        if analisis.tipo == 'mortalidad':
+            processor = MortalidadProcessor(df)
+            resultado = {
+                'tipo': 'mortalidad',
+                'id': analisis.id,
+                'nombre_archivo': analisis.nombre_archivo,
+                'fecha_carga': analisis.fecha_carga,
+                'estadisticas_basicas': processor.calcular_estadisticas_basicas(),
+                'momento_muerte': processor.analizar_momento_muerte(),
+                'demoras': processor.analizar_demoras(),
+                'causas_cie10': processor.analizar_causas_cie10(top_n=15),
+            }
+        else:  # morbilidad
+            processor = MorbilidadProcessor(df)
+            resultado = {
+                'tipo': 'morbilidad',
+                'id': analisis.id,
+                'nombre_archivo': analisis.nombre_archivo,
+                'fecha_carga': analisis.fecha_carga,
+                'estadisticas_basicas': processor.calcular_estadisticas_basicas(),
+                'criterios_inclusion': processor.analizar_criterios_inclusion(),
+                'momento_ocurrencia': processor.analizar_momento_ocurrencia(),
+            }
+        
+        return Response(resultado)
+    
+    except Exception as e:
+        return Response(
+            {'error': f'Error al procesar el análisis: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def clustering_analisis(request, pk):
+    """
+    POST /api/analisis/<id>/clustering/
+    Realiza análisis de clustering sobre los datos.
+    
+    Body:
+        {
+            "tipo_clustering": "kmeans" | "jerarquico",
+            "n_clusters": 3  (opcional, default 3)
+        }
+    """
+    try:
+        analisis = Analisis.objects.get(pk=pk)
+    except Analisis.DoesNotExist:
+        return Response({'error': 'Análisis no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    tipo_clustering = request.data.get('tipo_clustering', 'kmeans')
+    n_clusters = request.data.get('n_clusters', 3)
+    
+    try:
+        df = pd.read_excel(analisis.archivo.path, engine='openpyxl')
+        
+        if analisis.tipo == 'mortalidad':
+            processor = MortalidadProcessor(df)
+            
+            if tipo_clustering == 'jerarquico':
+                resultado = processor.clustering_jerarquico()
+            else:  # kmeans por defecto
+                resultado = processor.clustering_factores_riesgo(n_clusters=n_clusters)
+        
+        else:  # morbilidad
+            processor = MorbilidadProcessor(df)
+            resultado = processor.clustering_perfiles_morbilidad(n_clusters=n_clusters)
+        
+        resultado['analisis_id'] = analisis.id
+        resultado['tipo_analisis'] = analisis.tipo
+        resultado['tipo_clustering'] = tipo_clustering
+        
+        return Response(resultado)
+    
+    except Exception as e:
+        return Response(
+            {'error': f'Error en clustering: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def heatmap_correlacion(request, pk):
+    """
+    GET /api/analisis/<id>/heatmap/
+    Genera matriz de correlación para heatmap.
+    Solo disponible para morbilidad.
+    """
+    try:
+        analisis = Analisis.objects.get(pk=pk)
+    except Analisis.DoesNotExist:
+        return Response({'error': 'Análisis no encontrado.'}, status=status.HTTP_404_NOT_FOUND)
+    
+    if analisis.tipo != 'morbilidad':
+        return Response(
+            {'error': 'Heatmap solo disponible para análisis de morbilidad'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        df = pd.read_excel(analisis.archivo.path, engine='openpyxl')
+        processor = MorbilidadProcessor(df)
+        resultado = processor.heatmap_correlacion()
+        
+        resultado['analisis_id'] = analisis.id
+        
+        return Response(resultado)
+    
+    except Exception as e:
+        return Response(
+            {'error': f'Error al generar heatmap: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
 

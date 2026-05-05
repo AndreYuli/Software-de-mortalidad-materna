@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import * as XLSX from 'xlsx'
 import './Dashboard.css'
+import AnalisisView from './AnalisisView'
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -158,7 +159,9 @@ function UploadCard({ title, description, color, icon, onFile, file, error, vali
 }
 
 export default function Dashboard({ onLogout }) {
+  const [activeTab, setActiveTab] = useState('overview')
   const [activeView, setActiveView] = useState('home')
+  const [selectedAnalisisId, setSelectedAnalisisId] = useState(null)
   const [mortalidadFile, setMortalidadFile] = useState(null)
   const [morbilidadFile, setMorbilidadFile] = useState(null)
   const [mortalidadError, setMortalidadError] = useState(null)
@@ -172,6 +175,17 @@ export default function Dashboard({ onLogout }) {
   const [morbilidadAnalyzeError, setMorbilidadAnalyzeError] = useState(null)
   const [analisisList, setAnalisisList] = useState([])
   const [loadingList, setLoadingList] = useState(false)
+  const [showDuplicates, setShowDuplicates] = useState(false)
+
+  // Si hay un análisis seleccionado, mostrar la vista de análisis
+  if (selectedAnalisisId) {
+    return (
+      <AnalisisView 
+        analisisId={selectedAnalisisId} 
+        onBack={() => setSelectedAnalisisId(null)} 
+      />
+    )
+  }
 
   const fetchAnalisis = async () => {
     setLoadingList(true)
@@ -180,6 +194,33 @@ export default function Dashboard({ onLogout }) {
       if (res.ok) setAnalisisList(await res.json())
     } catch { /* backend puede no estar activo */ }
     finally { setLoadingList(false) }
+  }
+
+  // Deduplicar análisis por nombre de archivo (mantener solo el más reciente)
+  const getUniqueAnalisis = (lista) => {
+    if (showDuplicates) return lista
+    const map = new Map()
+    lista.forEach(a => {
+      const key = `${a.tipo}-${a.nombre_archivo}`
+      const existing = map.get(key)
+      if (!existing || new Date(a.fecha_carga) > new Date(existing.fecha_carga)) {
+        map.set(key, a)
+      }
+    })
+    return Array.from(map.values()).sort((a, b) => 
+      new Date(b.fecha_carga) - new Date(a.fecha_carga)
+    )
+  }
+
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('es-CO', { 
+      day: '2-digit', 
+      month: 'short', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
   useEffect(() => { fetchAnalisis() }, [])
@@ -336,7 +377,7 @@ export default function Dashboard({ onLogout }) {
           <div className="view-content">
             <div className="view-header">
               <h1>{activeView === 'analisis' ? 'Análisis guardados' : 'Inicio'}</h1>
-              <p>Aquí aparecerán los análisis generados a partir de los datos cargados.</p>
+              <p>Archivos procesados y sus estadísticas de análisis.</p>
             </div>
             {loadingList ? (
               <div className="empty-state"><span>Cargando análisis...</span></div>
@@ -352,22 +393,65 @@ export default function Dashboard({ onLogout }) {
                 <p>Aún no hay análisis guardados.</p>
                 <span>Carga un archivo Excel desde el menú lateral para comenzar.</span>
               </div>
-            ) : (
-              <div className="analisis-list">
-                {analisisList.map((a) => (
-                  <div key={a.id} className="analisis-card">
-                    <span className={`analisis-tag tag-${a.tipo}`}>
-                      {a.tipo === 'mortalidad' ? 'Mortalidad — Evento 550' : 'Morbilidad — Evento 549'}
-                    </span>
-                    <p className="analisis-filename">{a.nombre_archivo}</p>
-                    <div className="analisis-meta">
-                      <span>{a.total_registros} registros</span>
-                      <span>{new Date(a.fecha_carga).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            ) : (() => {
+              const displayList = getUniqueAnalisis(analisisList)
+              const allEmpty = displayList.every(a => a.total_registros === 0)
+              const hasDuplicates = analisisList.length > displayList.length
+
+              return (
+                <>
+                  {hasDuplicates && (
+                    <div style={{ marginBottom: '12px', padding: '10px 14px', background: '#fff3cd', borderRadius: '8px', fontSize: '13px', color: '#856404', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <svg style={{ width: '16px', height: '16px', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                      </svg>
+                      <span style={{ flex: 1 }}>
+                        {analisisList.length - displayList.length} duplicado(s) oculto(s). Mostrando solo versión más reciente.
+                      </span>
+                      <button 
+                        onClick={() => setShowDuplicates(!showDuplicates)}
+                        style={{ padding: '4px 10px', background: '#ffc107', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}
+                      >
+                        {showDuplicates ? 'Ocultar' : 'Ver todos'}
+                      </button>
                     </div>
+                  )}
+                  {allEmpty && (
+                    <div style={{ marginBottom: '12px', padding: '10px 14px', background: '#f8d7da', borderRadius: '8px', fontSize: '13px', color: '#721c24', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <svg style={{ width: '16px', height: '16px', flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                      </svg>
+                      Todos los archivos tienen 0 registros. Verifica que contengan datos válidos.
+                    </div>
+                  )}
+                  <div className="analisis-list">
+                    {displayList.map((a) => (
+                      <div 
+                        key={a.id} 
+                        className="analisis-card" 
+                        onClick={() => setSelectedAnalisisId(a.id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <span className={`analisis-tag tag-${a.tipo}`}>
+                          {a.tipo === 'mortalidad' ? 'MORTALIDAD — EVENTO 550' : 'MORBILIDAD — EVENTO 549'}
+                        </span>
+                        <p className="analisis-filename" title={a.nombre_archivo}>{a.nombre_archivo}</p>
+                        <div className="analisis-meta">
+                          <span className={a.total_registros === 0 ? 'registros-empty' : ''}>
+                            {a.total_registros} {a.total_registros === 1 ? 'registro' : 'registros'}
+                          </span>
+                          <span title={formatDateTime(a.fecha_carga)}>
+                            {new Date(a.fecha_carga).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
+                            {' · '}
+                            {new Date(a.fecha_carga).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
+                </>
+              )
+            })()}
           </div>
         )}
 
