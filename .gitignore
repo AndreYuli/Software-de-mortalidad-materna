@@ -143,3 +143,17 @@ venv/
 .venv/
 env/venv/ 
 BACKEND/venv/ 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Base de datos
+*.sqlite3
+
+# Archivos subidos
+BACKEND/media/
+
+# Entornos virtuales
+BACKEND/venv/
+venv/
