@@ -233,7 +233,10 @@ export default function DashboardOKD({ onLogout }) {
     finally { setLoadingList(false) }
   }
 
-  useEffect(() => { fetchAnalisis() }, [])
+  useEffect(() => {
+    const t = setTimeout(() => { fetchAnalisis() }, 0)
+    return () => clearTimeout(t)
+  }, [])
 
   // Si hay un análisis seleccionado, mostrar la vista de análisis
   if (selectedAnalisisId) {
