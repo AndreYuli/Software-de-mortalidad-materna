@@ -18,6 +18,11 @@ export default function Login({ onLogin }) {
     setIsLoading(true)
     setTimeout(() => {
       if (email === FAKE_CREDENTIALS.email && password === FAKE_CREDENTIALS.password) {
+        const nameFromEmail = email.split('@')[0] || 'Usuario'
+        const prettyName = nameFromEmail
+          .replace(/[._-]+/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase())
+        localStorage.setItem('username', prettyName)
         onLogin()
       } else {
         setError('Correo o contraseña incorrectos.')

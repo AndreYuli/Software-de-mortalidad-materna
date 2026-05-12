@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
-import Plot from 'react-plotly.js'
+import PlotlyReact from 'react-plotly.js'
 import './AnalisisView.css'
+
+const Plot = PlotlyReact?.default ?? PlotlyReact
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -13,22 +15,36 @@ function AnalisisView({ analisisId, onBack }) {
   const [clusterCount, setClusterCount] = useState(3)
 
   useEffect(() => {
-    cargarAnalisis()
-  }, [analisisId])
+    let isMounted = true
+    const controller = new AbortController()
 
-  const cargarAnalisis = async () => {
-    try {
-      setLoading(true)
-      const response = await fetch(`${API_URL}/analisis/${analisisId}/completo/`)
-      if (!response.ok) throw new Error('Error al cargar análisis')
-      const result = await response.json()
-      setData(result)
-      setLoading(false)
-    } catch (err) {
-      setError(err.message)
-      setLoading(false)
+    const cargar = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await fetch(`${API_URL}/analisis/${analisisId}/completo/`, { signal: controller.signal })
+        const result = await response.json().catch(() => null)
+        if (!response.ok) throw new Error(result?.error || 'Error al cargar análisis')
+        if (isMounted) {
+          setData(result)
+        }
+      } catch (err) {
+        if (err?.name === 'AbortError') return
+        if (isMounted) {
+          setError(err?.message || 'Error al cargar análisis')
+          setData(null)
+        }
+      } finally {
+        if (isMounted) setLoading(false)
+      }
     }
-  }
+
+    cargar()
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [analisisId])
 
   const cargarClustering = async (tipo = 'kmeans') => {
     try {
@@ -109,7 +125,7 @@ function AnalisisView({ analisisId, onBack }) {
 
       <div className="analisis-content">
         {activeTab === 'overview' && <OverviewTab data={data} />}
-        {activeTab === 'charts' && <ChartsTab data={data} />}
+        {activeTab === 'charts' && <ChartsTab data={data} analisisId={analisisId} />}
         {activeTab === 'clustering' && (
           <ClusteringTab 
             data={clusteringData} 
@@ -199,7 +215,55 @@ function OverviewTab({ data }) {
   )
 }
 
-function ChartsTab({ data }) {
+function ChartsTab({ data, analisisId }) {
+  const [heatmapData, setHeatmapData] = useState(null)
+  const [heatmapLoading, setHeatmapLoading] = useState(false)
+  const [heatmapError, setHeatmapError] = useState(null)
+
+  useEffect(() => {
+    if (data?.tipo !== 'morbilidad') return
+
+    let isMounted = true
+    const controller = new AbortController()
+
+    const cargarHeatmap = async () => {
+      setHeatmapLoading(true)
+      setHeatmapError(null)
+      try {
+        const response = await fetch(`${API_URL}/analisis/${analisisId}/heatmap/`, { signal: controller.signal })
+        const payload = await response.json().catch(() => ({}))
+
+        if (!response.ok) {
+          const backendMsg = payload?.error || 'No se pudo generar el heatmap.'
+          throw new Error(backendMsg)
+        }
+
+        if (payload?.error) {
+          throw new Error(payload.error)
+        }
+
+        if (isMounted) {
+          setHeatmapData(payload)
+        }
+      } catch (err) {
+        if (err?.name === 'AbortError') return
+        if (isMounted) {
+          setHeatmapError(err?.message || 'Error al cargar heatmap.')
+          setHeatmapData(null)
+        }
+      } finally {
+        if (isMounted) setHeatmapLoading(false)
+      }
+    }
+
+    cargarHeatmap()
+
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [analisisId, data?.tipo])
+
   // Gráfico de momento de muerte/ocurrencia
   const getMomentoChart = () => {
     const distribucion = data.momento_muerte?.distribucion || data.momento_ocurrencia?.distribucion
@@ -330,6 +394,77 @@ function ChartsTab({ data }) {
             {getDemorasChart()}
           </div>
         </>
+      )}
+
+      {data.tipo === 'morbilidad' && (
+        <div className="chart-container">
+          {heatmapLoading && (
+            <div className="loading" style={{ padding: '40px 20px' }}>
+              <div className="spinner"></div>
+              <p>Generando heatmap de correlación...</p>
+            </div>
+          )}
+
+          {!heatmapLoading && heatmapError && (
+            <div className="error-view" style={{ padding: '30px 20px' }}>
+              <p>⚠️ {heatmapError}</p>
+            </div>
+          )}
+
+          {!heatmapLoading && !heatmapError && heatmapData?.correlation_matrix && heatmapData?.columns && (
+            <Plot
+              data={[{
+                type: 'heatmap',
+                x: heatmapData.columns,
+                y: heatmapData.columns,
+                z: heatmapData.correlation_matrix,
+                zmin: -1,
+                zmax: 1,
+                zmid: 0,
+                colorscale: [
+                  [0.0, '#1e3a5f'],
+                  [0.5, '#f0f7ff'],
+                  [1.0, '#c0392b']
+                ],
+                colorbar: {
+                  title: { text: 'Correlación', side: 'right' },
+                  ticksuffix: '',
+                  tickvals: [-1, -0.5, 0, 0.5, 1],
+                },
+                hovertemplate:
+                  '<b>%{y}</b> vs <b>%{x}</b><br>' +
+                  'Correlación: %{z:.2f}<extra></extra>'
+              }]}
+              layout={{
+                title: 'Heatmap de correlación (variables epidemiológicas)',
+                xaxis: {
+                  title: '',
+                  tickangle: -35,
+                  automargin: true,
+                  gridcolor: 'rgba(42, 82, 152, 0.08)',
+                },
+                yaxis: {
+                  title: '',
+                  automargin: true,
+                  gridcolor: 'rgba(42, 82, 152, 0.08)',
+                },
+                paper_bgcolor: 'transparent',
+                plot_bgcolor: 'rgba(255,255,255,0.9)',
+                font: { family: 'Plus Jakarta Sans, sans-serif' },
+                height: 650,
+                margin: { t: 60, b: 140, l: 140, r: 60 },
+              }}
+              config={{ responsive: true, displayModeBar: false }}
+              style={{ width: '100%' }}
+            />
+          )}
+
+          {!heatmapLoading && !heatmapError && (!heatmapData || heatmapData?.error) && (
+            <div style={{ color: 'var(--text-light)', fontSize: '13px' }}>
+              No hay datos suficientes para generar el heatmap.
+            </div>
+          )}
+        </div>
       )}
     </div>
   )

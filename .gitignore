@@ -157,3 +157,7 @@ BACKEND/media/
 # Entornos virtuales
 BACKEND/venv/
 venv/
+
+
+# Base de datos SQLite3
+db.sqlite3

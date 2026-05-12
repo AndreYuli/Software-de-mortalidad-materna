@@ -5,58 +5,26 @@ import * as XLSX from 'xlsx'
 
 const API_URL = 'http://localhost:8000/api'
 
-// Columnas requeridas para Mortalidad Materna (Evento 550)
+// Columnas requeridas (alineadas con BACKEND/api/views.py)
 const COLUMNAS_MORTALIDAD = [
-  'A. Nombres y Apellidos','B. Tipo ID','C. Número ID',
-  '5.1 Sitio de Defunción','6.1 Convivencia','6.2 Si otro convivencia',
-  '6.3 Escolaridad','6.4 Regulación Fecundidad','6.5 Gestaciones',
-  '6.6 Partos Vaginales','6.7 Cesáreas','6.8 Muertos','6.9 Vivos','6.10 Abortos',
-  '7.1.1 Ninguno','7.1.2 Hipertensión crónica','7.1.3 Cardiopatías','7.1.4 Diabetes',
-  '7.1.5 Mola hidatiforme','7.1.6 RN pretérmino','7.1.7 RN bajo peso',
-  '7.1.8 RN macrosómicos','7.1.9 Trastorno mental','7.1.10 Obesidad',
-  '7.1.11 Desnutrición crónica','7.1.12 Intergénesis <2a',
-  '7.1.13 ITS distintas VIH/síf/HB','7.1.14 VIH-SIDA','7.1.15 Otras infecciones',
-  '7.1.16 RH negativo','7.1.17 Tabaquismo','7.1.18 Alcoholismo',
-  '7.1.19 Sust.psicoactivas','7.1.20 Def.socioeconómicas','7.1.21 Sífilis',
-  '7.1.22 Hepatitis B','7.1.23 Otros factores riesgo','7.1.23 Cuáles otros factores',
-  '7.1.24 Gingivitis/periodontitis',
-  '7.2.1 Preeclampsia','7.2.2 Eclampsia','7.2.3 Síndrome HELLP',
-  '7.2.4 Diabetes gestacional','7.2.5 Sepsis','7.2.6 Hemorragia 1er trim',
-  '7.2.7 Hemorragia 2do trim','7.2.8 Hemorragia 3er trim',
-  '7.2.9 Desproporción céfalo-pélvica','7.2.10 Retardo crec.intrauterino',
-  '7.2.11 Enf.autoinmune','7.2.12 Malaria','7.2.13 Embarazo no deseado',
-  '7.2.14 Violencia contra gestante','7.2.15 Otras complicaciones',
-  '7.2.15 Cuáles otras complicaciones','7.2.16 Gest.violencia sexual',
-  '7.2.17 Feto incompatible con vida','7.2.18 Síntomas depresivos',
-  '8.1 No. CPN','8.2 Semana inicio CPN','8.3 Controles realizados por',
-  '8.4 Nivel atención prenatal','8.5 Remisiones oportunas','8.6 Compl. feto/RN CIE-10',
-  '9.1 Momento de la muerte','9.2 Semana gestación','9.3 Fecha parto (dd/mm/aaaa)',
-  '9.3 Hora parto','9.4 Tipo de parto','9.5 Parto atendido por','9.5.1 Otro ¿quién?',
-  '9.6 Nivel atención parto','10.1 Causa básica CIE-10','10.2 Causa determinada por',
-  '10.3.1 Demora 1','10.3.2 Demora 2','10.3.3 Demora 3','10.3.4 Demora 4',
+  'A. Nombres y Apellidos', 'B. Tipo ID', 'C. Número ID',
+  '5.1 Sitio de Defunción', '6.1 Convivencia', '6.3 Escolaridad',
+  '6.4 Regulación Fecundidad', '6.5 Gestaciones', '6.6 Partos Vaginales',
+  '6.7 Cesáreas', '6.8 Muertos', '6.9 Vivos', '6.10 Abortos',
+  '8.1 No. CPN', '8.2 Semana inicio CPN', '9.1 Momento de la muerte',
+  '9.2 Semana gestación', '9.4 Tipo de parto', '10.1 Causa básica CIE-10',
+  '10.3.1 Demora 1', '10.3.2 Demora 2', '10.3.3 Demora 3', '10.3.4 Demora 4',
 ]
 
-// Columnas requeridas para Morbilidad Materna Extrema (Evento 549)
 const COLUMNAS_MORBILIDAD = [
-  'Nombres y apellidos','Tipo de ID','N° identificación','Remitida',
-  'Institución referencia 1','Institución referencia 2','Tiempo remisión (horas)',
-  'N° gestaciones','Partos vaginales','Cesáreas','Abortos','Molas','Ectópicos',
-  'Muertos','Vivos','Fecha última gestación (dd/mm/aaaa)','Regulación fecundidad',
-  'N° controles prenatales','Semanas inicio CPN','Terminación gestación',
-  'Edad gestacional ocurrencia (sem)','Momento ocurrencia','Estado recién nacido',
-  'Multiplicidad','Peso RN (g)','Eclampsia','Sepsis sistémica severa',
-  'Hemorragia obstétrica severa','Preeclampsia','Ruptura uterina','Aborto séptico',
-  'Embarazo ectópico','7.1.8 Autoinmune','Hematológica','Oncológica',
-  'Endocrino/metabólicas','Renales','Gastrointestinales','Eventos tromboembólicos',
-  'Cardiocerebrovasculares','Otras','Falla cardíaca','Falla vascular','Falla renal',
-  'Falla hepática','Falla metabólica','Falla cerebral','Falla respiratoria',
-  'Falla coagulación','Ingreso UCI','Cirugía adicional','Transfusión',
-  'Total criterios','Accidente','Intoxicación accidental','Intento suicida',
-  'Víctima de violencia','Otros eventos salud pública','¿Cuál evento?',
-  'Días estancia hospitalaria','Días estancia UCI','Unidades transfundidas',
-  'Cirugía adicional 1','¿Cuál otra cirugía 1?','Cirugía adicional 2',
-  '¿Cuál otra cirugía 2?','Causa principal CIE-10','Causa principal agrupada',
-  'Causa asociada CIE-10','Fecha de egreso (dd/mm/aaaa)',
+  'Nombres y apellidos', 'Tipo de ID', 'N° identificación',
+  'N° gestaciones', 'Partos vaginales', 'Cesáreas', 'Abortos',
+  'N° controles prenatales', 'Semanas inicio CPN',
+  'Edad gestacional ocurrencia (sem)', 'Momento ocurrencia',
+  'Eclampsia', 'Sepsis sistémica severa', 'Hemorragia obstétrica severa',
+  'Preeclampsia', 'Ruptura uterina', 'Ingreso UCI', 'Cirugía adicional',
+  'Transfusión', 'Total criterios', 'Causa principal CIE-10',
+  'Días estancia hospitalaria', 'Días estancia UCI',
 ]
 
 async function validateColumns(file, requiredColumns) {
@@ -74,11 +42,12 @@ async function validateColumns(file, requiredColumns) {
           return
         }
 
-        const headers = jsonData[0].map(h => String(h).trim())
-        const missing = requiredColumns.filter(col => !headers.includes(col))
+        const headers = jsonData[0].map((h) => String(h ?? '').trim())
+        const headersLower = headers.map((h) => h.toLowerCase())
+        const missing = requiredColumns.filter((col) => !headersLower.includes(String(col).trim().toLowerCase()))
 
         if (missing.length > 0) {
-          resolve({ valid: false, missing })
+          resolve({ valid: false, missing, found: headers })
         } else {
           resolve({ valid: true })
         }
@@ -236,16 +205,6 @@ export default function DashboardOKD({ onLogout }) {
   const [mortalidadAnalyzeError, setMortalidadAnalyzeError] = useState(null)
   const [morbilidadAnalyzeError, setMorbilidadAnalyzeError] = useState(null)
 
-  // Si hay un análisis seleccionado, mostrar la vista de análisis
-  if (selectedAnalisisId) {
-    return (
-      <AnalisisView 
-        analisisId={selectedAnalisisId} 
-        onBack={() => setSelectedAnalisisId(null)} 
-      />
-    )
-  }
-
   const fetchAnalisis = async () => {
     setLoadingList(true)
     try {
@@ -275,6 +234,16 @@ export default function DashboardOKD({ onLogout }) {
   }
 
   useEffect(() => { fetchAnalisis() }, [])
+
+  // Si hay un análisis seleccionado, mostrar la vista de análisis
+  if (selectedAnalisisId) {
+    return (
+      <AnalisisView 
+        analisisId={selectedAnalisisId} 
+        onBack={() => setSelectedAnalisisId(null)} 
+      />
+    )
+  }
 
   // Manejo de archivos
   const handleMortalidadFile = async (file) => {
@@ -314,7 +283,11 @@ export default function DashboardOKD({ onLogout }) {
         setTimeout(() => setActiveView('dashboard'), 1500)
       } else {
         const err = await res.json()
-        setAnalyzeError(err.error || 'Error al procesar el archivo.')
+        if (Array.isArray(err.columnas_faltantes) && err.columnas_faltantes.length) {
+          setAnalyzeError(`Faltan columnas requeridas: ${err.columnas_faltantes.slice(0, 6).join(', ')}${err.columnas_faltantes.length > 6 ? '…' : ''}`)
+        } else {
+          setAnalyzeError(err.error || 'Error al procesar el archivo.')
+        }
       }
     } catch {
       setAnalyzeError('No se pudo conectar con el servidor.')
