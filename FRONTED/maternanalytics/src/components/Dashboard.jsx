@@ -146,16 +146,6 @@ export default function Dashboard({ onLogout }) {
   const [loadingList, setLoadingList] = useState(false)
   const [showDuplicates, setShowDuplicates] = useState(false)
 
-  // Si hay un análisis seleccionado, mostrar la vista de análisis
-  if (selectedAnalisisId) {
-    return (
-      <AnalisisView 
-        analisisId={selectedAnalisisId} 
-        onBack={() => setSelectedAnalisisId(null)} 
-      />
-    )
-  }
-
   const fetchAnalisis = async () => {
     setLoadingList(true)
     try {
@@ -192,7 +182,20 @@ export default function Dashboard({ onLogout }) {
     })
   }
 
-  useEffect(() => { fetchAnalisis() }, [])
+  useEffect(() => {
+    const t = setTimeout(() => { fetchAnalisis() }, 0)
+    return () => clearTimeout(t)
+  }, [])
+
+  // Si hay un análisis seleccionado, mostrar la vista de análisis
+  if (selectedAnalisisId) {
+    return (
+      <AnalisisView 
+        analisisId={selectedAnalisisId} 
+        onBack={() => setSelectedAnalisisId(null)} 
+      />
+    )
+  }
 
   const handleMortalidadFile = async (file) => {
     setMortalidadFile(file)

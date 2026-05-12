@@ -1,10 +1,74 @@
 import { useState, useEffect } from 'react'
 import PlotlyReact from 'react-plotly.js'
+import * as XLSX from 'xlsx'
 import './AnalisisView.css'
 
 const Plot = PlotlyReact?.default ?? PlotlyReact
 
 const API_URL = 'http://localhost:8000/api'
+
+const CHART_COLORS = {
+  blue: '#4d7fd4',
+  purple: '#6f42c1',
+  orange: '#f39c12',
+  red: '#c0392b',
+  green: '#2ca02c',
+  slate: '#1e3a5f',
+  grid: 'rgba(42, 82, 152, 0.08)'
+}
+
+const CIE10_DESCRIPTIONS = {
+  'O26.6': 'Trastornos del hígado durante el embarazo',
+  'O99.3': 'Trastornos del sistema nervioso que complican el embarazo',
+  'O14': 'Hipertensión gestacional con proteinuria significativa (preeclampsia)',
+  'O15': 'Eclampsia',
+  'O72': 'Hemorragia posparto',
+  'O85': 'Sepsis puerperal',
+  'O88': 'Embolia obstétrica',
+}
+
+function normalizeText(value) {
+  return (value ?? '')
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+}
+
+function normalizeCie10(code) {
+  const raw = (code ?? '').toString().trim().toUpperCase()
+  return raw.replace(/\s+/g, '')
+}
+
+function getCie10Description(code) {
+  const normalized = normalizeCie10(code)
+  if (!normalized) return 'Descripción no disponible'
+
+  if (CIE10_DESCRIPTIONS[normalized]) return CIE10_DESCRIPTIONS[normalized]
+
+  // Intentar match por 3 caracteres (ej. O14.1 -> O14)
+  const prefix3 = normalized.slice(0, 3)
+  if (CIE10_DESCRIPTIONS[prefix3]) return CIE10_DESCRIPTIONS[prefix3]
+
+  return 'Descripción no disponible'
+}
+
+function formatCie10Label(code) {
+  const normalized = normalizeCie10(code)
+  const desc = getCie10Description(normalized)
+  return normalized ? `${normalized} - ${desc}` : `Sin código - ${desc}`
+}
+
+function buildPercentLabels(values, totalOverride) {
+  const safeValues = (values || []).map(v => (Number.isFinite(Number(v)) ? Number(v) : 0))
+  const total = Number.isFinite(Number(totalOverride)) ? Number(totalOverride) : safeValues.reduce((a, b) => a + b, 0)
+  return safeValues.map(v => {
+    const pct = total > 0 ? (v / total) * 100 : 0
+    return `${v} (${pct.toFixed(1)}%)`
+  })
+}
 
 function AnalisisView({ analisisId, onBack }) {
   const [loading, setLoading] = useState(true)
@@ -220,6 +284,10 @@ function ChartsTab({ data, analisisId }) {
   const [heatmapLoading, setHeatmapLoading] = useState(false)
   const [heatmapError, setHeatmapError] = useState(null)
 
+  const [extraChart, setExtraChart] = useState(null)
+  const [extraChartLoading, setExtraChartLoading] = useState(false)
+  const [extraChartError, setExtraChartError] = useState(null)
+
   useEffect(() => {
     if (data?.tipo !== 'morbilidad') return
 
@@ -264,6 +332,224 @@ function ChartsTab({ data, analisisId }) {
     }
   }, [analisisId, data?.tipo])
 
+  useEffect(() => {
+    if (data?.tipo !== 'mortalidad') return
+
+    let isMounted = true
+    const controller = new AbortController()
+
+    const detectarDistribucion = async () => {
+      setExtraChartLoading(true)
+      setExtraChartError(null)
+      try {
+        // 1) Obtener URL del archivo guardado
+        const detailRes = await fetch(`${API_URL}/analisis/${analisisId}/`, { signal: controller.signal })
+        const detail = await detailRes.json().catch(() => null)
+        if (!detailRes.ok) throw new Error(detail?.error || 'No se pudo leer el análisis.')
+
+        const archivoUrl = detail?.archivo
+        if (!archivoUrl) {
+          if (isMounted) setExtraChart(null)
+          return
+        }
+
+        const absoluteUrl = archivoUrl.startsWith('http') ? archivoUrl : `http://localhost:8000${archivoUrl}`
+        const fileRes = await fetch(absoluteUrl, { signal: controller.signal })
+        if (!fileRes.ok) throw new Error('No se pudo descargar el Excel asociado al análisis.')
+
+        // 2) Leer Excel en el frontend para detectar columnas adicionales
+        const buf = await fileRes.arrayBuffer()
+        const wb = XLSX.read(buf, { type: 'array' })
+        const sheetName = wb.SheetNames?.[0]
+        const ws = sheetName ? wb.Sheets[sheetName] : null
+        if (!ws) {
+          if (isMounted) setExtraChart(null)
+          return
+        }
+
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null })
+        if (!rows || rows.length < 2) {
+          if (isMounted) setExtraChart(null)
+          return
+        }
+
+        const headers = (rows[0] || []).map(h => (h ?? '').toString().trim())
+        const normalizedHeaders = headers.map(h => normalizeText(h))
+
+        const findIndex = (patterns) => {
+          const pats = patterns.map(p => normalizeText(p))
+          return normalizedHeaders.findIndex(h => pats.some(p => p && h.includes(p)))
+        }
+
+        const candidates = [
+          {
+            kind: 'edad',
+            title: 'Distribución por edad (si está disponible)'
+          },
+          {
+            kind: 'departamento',
+            title: 'Top departamentos con más casos (si está disponible)'
+          },
+          {
+            kind: 'municipio',
+            title: 'Top municipios con más casos (si está disponible)'
+          },
+          {
+            kind: 'regimen',
+            title: 'Distribución por régimen (si está disponible)'
+          },
+          {
+            kind: 'eps',
+            title: 'Top EPS con más casos (si está disponible)'
+          },
+        ]
+
+        const kindToPatterns = {
+          edad: ['edad', 'edad (anos)', 'edad (años)', 'edad anos', 'edad años'],
+          departamento: ['departamento', 'depto', 'dpto'],
+          municipio: ['municipio', 'mun'],
+          regimen: ['regimen', 'régimen', 'afiliacion', 'afiliación'],
+          eps: ['eps', 'entidad promotora', 'aseguradora'],
+        }
+
+        let chosen = null
+        for (const c of candidates) {
+          const idx = findIndex(kindToPatterns[c.kind] || [])
+          if (idx >= 0) {
+            chosen = { kind: c.kind, idx, title: c.title, header: headers[idx] }
+            break
+          }
+        }
+
+        if (!chosen) {
+          if (isMounted) setExtraChart(null)
+          return
+        }
+
+        const dataRows = rows.slice(1)
+
+        const cleanCell = (v) => {
+          const s = (v ?? '').toString().trim()
+          if (!s) return null
+          const lowered = normalizeText(s)
+          if (lowered === 'nan' || lowered === 'null' || lowered === 'none' || lowered === 'sin dato') return null
+          return s
+        }
+
+        if (chosen.kind === 'edad') {
+          const edades = dataRows
+            .map(r => r?.[chosen.idx])
+            .map(v => {
+              const n = typeof v === 'number' ? v : Number.parseFloat((v ?? '').toString().replace(',', '.'))
+              return Number.isFinite(n) ? n : null
+            })
+            .filter(n => n !== null && n >= 0 && n <= 120)
+
+          if (edades.length < 3) {
+            if (isMounted) setExtraChart(null)
+            return
+          }
+
+          const buckets = [
+            { label: '<15', min: 0, max: 14.999 },
+            { label: '15-19', min: 15, max: 19.999 },
+            { label: '20-24', min: 20, max: 24.999 },
+            { label: '25-29', min: 25, max: 29.999 },
+            { label: '30-34', min: 30, max: 34.999 },
+            { label: '35-39', min: 35, max: 39.999 },
+            { label: '40+', min: 40, max: 120 },
+          ]
+
+          const counts = buckets.map(b => edades.filter(e => e >= b.min && e <= b.max).length)
+          const total = counts.reduce((a, b) => a + b, 0)
+          if (total <= 0) {
+            if (isMounted) setExtraChart(null)
+            return
+          }
+
+          if (isMounted) {
+            setExtraChart({
+              type: 'bar',
+              orientation: 'v',
+              title: 'Distribución por edad',
+              subtitle: `Columna detectada: ${chosen.header}`,
+              labels: buckets.map(b => b.label),
+              values: counts,
+              total,
+              xTitle: 'Rango de edad (años)',
+              yTitle: 'Casos'
+            })
+          }
+          return
+        }
+
+        // Categorías (departamento/municipio/régimen/EPS)
+        const cats = dataRows
+          .map(r => cleanCell(r?.[chosen.idx]))
+          .filter(Boolean)
+
+        if (cats.length < 3) {
+          if (isMounted) setExtraChart(null)
+          return
+        }
+
+        const countsMap = new Map()
+        for (const v of cats) {
+          const key = v.toString().trim()
+          countsMap.set(key, (countsMap.get(key) || 0) + 1)
+        }
+
+        const sorted = Array.from(countsMap.entries()).sort((a, b) => b[1] - a[1])
+        const top = sorted.slice(0, 10)
+        const rest = sorted.slice(10)
+        const otherCount = rest.reduce((sum, [, c]) => sum + c, 0)
+        const labels = top.map(([k]) => k)
+        const values = top.map(([, c]) => c)
+        if (otherCount > 0) {
+          labels.push('Otros')
+          values.push(otherCount)
+        }
+
+        const total = values.reduce((a, b) => a + b, 0)
+        const titleMap = {
+          departamento: 'Top departamentos',
+          municipio: 'Top municipios',
+          regimen: 'Distribución por régimen',
+          eps: 'Top EPS'
+        }
+
+        if (isMounted) {
+          setExtraChart({
+            type: 'bar',
+            orientation: 'h',
+            title: titleMap[chosen.kind] || 'Distribución',
+            subtitle: `Columna detectada: ${chosen.header}`,
+            labels,
+            values,
+            total,
+            xTitle: 'Casos',
+            yTitle: ''
+          })
+        }
+      } catch (err) {
+        if (err?.name === 'AbortError') return
+        if (isMounted) {
+          setExtraChart(null)
+          setExtraChartError(err?.message || 'No se pudo generar el gráfico adicional.')
+        }
+      } finally {
+        if (isMounted) setExtraChartLoading(false)
+      }
+    }
+
+    detectarDistribucion()
+
+    return () => {
+      isMounted = false
+      controller.abort()
+    }
+  }, [analisisId, data?.tipo])
+
   // Gráfico de momento de muerte/ocurrencia
   const getMomentoChart = () => {
     const distribucion = data.momento_muerte?.distribucion || data.momento_ocurrencia?.distribucion
@@ -271,6 +557,15 @@ function ChartsTab({ data, analisisId }) {
 
     const labels = Object.keys(distribucion)
     const values = Object.values(distribucion)
+    const text = buildPercentLabels(values)
+
+    const barColors = [
+      CHART_COLORS.blue,
+      CHART_COLORS.purple,
+      CHART_COLORS.orange,
+      CHART_COLORS.green,
+      CHART_COLORS.red,
+    ].slice(0, values.length)
 
     return (
       <Plot
@@ -279,11 +574,13 @@ function ChartsTab({ data, analisisId }) {
           x: labels,
           y: values,
           marker: {
-            color: ['#4d7fd4', '#7aaee8', '#a8cdf0', '#dceeff'],
-            line: { color: '#2a5298', width: 1.5 }
+            color: barColors,
+            line: { color: CHART_COLORS.slate, width: 1.2 }
           },
-          text: values.map(v => v.toString()),
+          text,
           textposition: 'outside',
+          cliponaxis: false,
+          hovertemplate: '<b>%{x}</b><br>Casos: %{y}<br>%{text}<extra></extra>',
         }]}
         layout={{
           title: data.tipo === 'mortalidad' ? 'Momento de la Muerte' : 'Momento de Ocurrencia',
@@ -292,11 +589,12 @@ function ChartsTab({ data, analisisId }) {
           paper_bgcolor: 'transparent',
           plot_bgcolor: 'rgba(255,255,255,0.9)',
           font: { family: 'Plus Jakarta Sans, sans-serif' },
-          height: 400,
-          margin: { t: 50, b: 100, l: 60, r: 40 }
+          height: 380,
+          margin: { t: 56, b: 96, l: 60, r: 30 },
         }}
+        useResizeHandler={true}
         config={{ responsive: true, displayModeBar: false }}
-        style={{ width: '100%' }}
+        style={{ width: '100%', height: '100%' }}
       />
     )
   }
@@ -306,40 +604,58 @@ function ChartsTab({ data, analisisId }) {
     if (!data.causas_cie10?.top_causas) return null
 
     const causas = data.causas_cie10.top_causas.slice(0, 10)
-    const labels = causas.map(c => c.codigo)
+    const codes = causas.map(c => normalizeCie10(c.codigo))
     const values = causas.map(c => c.casos)
+    const tickText = codes.map(c => formatCie10Label(c))
+    const text = buildPercentLabels(values)
+
+    const palette = [
+      CHART_COLORS.blue,
+      CHART_COLORS.purple,
+      CHART_COLORS.orange,
+      CHART_COLORS.red,
+      CHART_COLORS.green,
+    ]
+    const barColors = values.map((_, i) => palette[i % palette.length])
 
     return (
       <Plot
         data={[{
           type: 'bar',
           x: values,
-          y: labels,
+          y: codes,
           orientation: 'h',
           marker: {
-            color: values,
-            colorscale: [
-              [0, '#f0f7ff'],
-              [0.5, '#7aaee8'],
-              [1, '#2a5298']
-            ],
-            line: { color: '#1e3a5f', width: 1 }
+            color: barColors,
+            line: { color: CHART_COLORS.slate, width: 1 }
           },
-          text: values.map(v => v.toString()),
+          text,
           textposition: 'outside',
+          cliponaxis: false,
+          hovertemplate:
+            '<b>%{y}</b><br>' +
+            'Casos: %{x}<br>' +
+            '%{text}<extra></extra>'
         }]}
         layout={{
           title: 'Top 10 Causas Básicas (CIE-10)',
           xaxis: { title: 'Número de Casos' },
-          yaxis: { title: '', automargin: true },
+          yaxis: {
+            title: '',
+            automargin: true,
+            tickmode: 'array',
+            tickvals: codes,
+            ticktext: tickText,
+          },
           paper_bgcolor: 'transparent',
           plot_bgcolor: 'rgba(255,255,255,0.9)',
           font: { family: 'Plus Jakarta Sans, sans-serif' },
           height: 500,
           margin: { t: 50, l: 120, r: 40, b: 60 }
         }}
+        useResizeHandler={true}
         config={{ responsive: true, displayModeBar: false }}
-        style={{ width: '100%' }}
+        style={{ width: '100%', height: '100%' }}
       />
     )
   }
@@ -348,34 +664,142 @@ function ChartsTab({ data, analisisId }) {
   const getDemorasChart = () => {
     if (!data.demoras) return null
 
-    const labels = Object.values(data.demoras).map(d => d.nombre)
-    const values = Object.values(data.demoras).map(d => d.porcentaje)
+    const items = Object.values(data.demoras)
+    const labels = items.map(d => d.nombre)
+    const percentages = items.map(d => d.porcentaje)
+    const counts = items.map(d => d.casos_con_demora)
+    const text = labels.map((_, i) => `${counts[i]} casos (${percentages[i].toFixed(1)}%)`)
+
+    const palette = [CHART_COLORS.red, CHART_COLORS.orange, CHART_COLORS.purple, CHART_COLORS.blue]
+    const barColors = labels.map((_, i) => palette[i % palette.length])
 
     return (
       <Plot
         data={[{
-          type: 'pie',
-          labels: labels,
-          values: values,
-          hole: 0.4,
+          type: 'bar',
+          x: percentages,
+          y: labels,
+          orientation: 'h',
           marker: {
-            colors: ['#c0392b', '#e74c3c', '#f39c12', '#f1c40f']
+            color: barColors,
+            line: { color: CHART_COLORS.slate, width: 1 }
           },
-          text: values.map(v => `${v.toFixed(1)}%`),
-          textposition: 'inside',
-          textfont: { color: 'white', size: 13, weight: 'bold' }
+          text,
+          textposition: 'outside',
+          cliponaxis: false,
+          hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>',
         }]}
         layout={{
-          title: 'Distribución de Demoras (%)',
+          title: 'Demoras en la atención (casos y %)',
+          xaxis: {
+            title: 'Porcentaje de casos',
+            ticksuffix: '%',
+            rangemode: 'tozero',
+            gridcolor: CHART_COLORS.grid,
+          },
+          yaxis: {
+            title: '',
+            automargin: true,
+          },
           paper_bgcolor: 'transparent',
+          plot_bgcolor: 'rgba(255,255,255,0.9)',
           font: { family: 'Plus Jakarta Sans, sans-serif' },
-          height: 450,
-          showlegend: true,
-          legend: { orientation: 'v', x: 1, y: 0.5 }
+          height: 420,
+          margin: { t: 56, l: 120, r: 30, b: 60 },
         }}
+        useResizeHandler={true}
         config={{ responsive: true, displayModeBar: false }}
-        style={{ width: '100%' }}
+        style={{ width: '100%', height: '100%' }}
       />
+    )
+  }
+
+  const getExtraChart = () => {
+    if (data?.tipo !== 'mortalidad') return null
+
+    if (extraChartLoading) {
+      return (
+        <div className="chart-container">
+          <div className="loading" style={{ padding: '40px 20px' }}>
+            <div className="spinner"></div>
+            <p>Analizando columna adicional (edad/departamento/municipio/régimen/EPS)...</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!extraChartLoading && extraChartError) {
+      return (
+        <div className="chart-container">
+          <div className="error-view" style={{ padding: '30px 20px' }}>
+            <p>⚠️ {extraChartError}</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!extraChartLoading && !extraChartError && !extraChart) return null
+
+    const text = buildPercentLabels(extraChart.values, extraChart.total)
+    const palette = [CHART_COLORS.blue, CHART_COLORS.purple, CHART_COLORS.orange, CHART_COLORS.red, CHART_COLORS.green]
+    const barColors = extraChart.values.map((_, i) => palette[i % palette.length])
+
+    const trace = extraChart.orientation === 'h'
+      ? {
+          type: 'bar',
+          x: extraChart.values,
+          y: extraChart.labels,
+          orientation: 'h',
+          marker: { color: barColors, line: { color: CHART_COLORS.slate, width: 1 } },
+          text,
+          textposition: 'outside',
+          cliponaxis: false,
+          hovertemplate: '<b>%{y}</b><br>Casos: %{x}<br>%{text}<extra></extra>',
+        }
+      : {
+          type: 'bar',
+          x: extraChart.labels,
+          y: extraChart.values,
+          orientation: 'v',
+          marker: { color: barColors, line: { color: CHART_COLORS.slate, width: 1 } },
+          text,
+          textposition: 'outside',
+          cliponaxis: false,
+          hovertemplate: '<b>%{x}</b><br>Casos: %{y}<br>%{text}<extra></extra>',
+        }
+
+    return (
+      <div className="chart-container">
+        <div className="chart-meta">
+          <div className="chart-subtitle">{extraChart.subtitle}</div>
+        </div>
+        <Plot
+          data={[trace]}
+          layout={{
+            title: extraChart.title,
+            xaxis: {
+              title: extraChart.orientation === 'h' ? extraChart.xTitle : extraChart.xTitle,
+              automargin: true,
+              gridcolor: CHART_COLORS.grid,
+            },
+            yaxis: {
+              title: extraChart.yTitle,
+              automargin: true,
+              gridcolor: CHART_COLORS.grid,
+            },
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'rgba(255,255,255,0.9)',
+            font: { family: 'Plus Jakarta Sans, sans-serif' },
+            height: extraChart.orientation === 'h' ? 520 : 420,
+            margin: extraChart.orientation === 'h'
+              ? { t: 56, b: 70, l: 160, r: 30 }
+              : { t: 56, b: 90, l: 60, r: 30 },
+          }}
+          useResizeHandler={true}
+          config={{ responsive: true, displayModeBar: false }}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </div>
     )
   }
 
@@ -387,6 +811,7 @@ function ChartsTab({ data, analisisId }) {
 
       {data.tipo === 'mortalidad' && (
         <>
+          {getExtraChart()}
           <div className="chart-container">
             {getCausasChart()}
           </div>
@@ -454,8 +879,9 @@ function ChartsTab({ data, analisisId }) {
                 height: 650,
                 margin: { t: 60, b: 140, l: 140, r: 60 },
               }}
+              useResizeHandler={true}
               config={{ responsive: true, displayModeBar: false }}
-              style={{ width: '100%' }}
+              style={{ width: '100%', height: '100%' }}
             />
           )}
 

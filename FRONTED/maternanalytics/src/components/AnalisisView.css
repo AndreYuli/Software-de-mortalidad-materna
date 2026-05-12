@@ -307,6 +307,19 @@
   border-radius: 12px;
   padding: 24px;
   border: 1.5px solid rgba(42, 82, 152, 0.08);
+  overflow: hidden;
+}
+
+.chart-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.chart-subtitle {
+  font-size: 12px;
+  color: var(--text-light);
 }
 
 /* Clustering Tab */
@@ -514,5 +527,9 @@
 
   .chart-container {
     padding: 16px;
+  }
+
+  .charts-tab {
+    gap: 22px;
   }
 }
