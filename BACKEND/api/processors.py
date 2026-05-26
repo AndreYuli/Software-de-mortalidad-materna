@@ -11,6 +11,44 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.spatial.distance import pdist
 
 
+def preparar_dataframe_analisis(df):
+    """Normaliza el DataFrame y elimina filas vacias o duplicadas exactas para analisis."""
+    normalizado = df.copy()
+    total_original = len(normalizado)
+
+    if total_original == 0:
+        return normalizado, {'total_original': 0, 'filas_vacias_omitidas': 0, 'filas_duplicadas_omitidas': 0}
+
+    columnas_texto = normalizado.select_dtypes(include=['object']).columns
+    for columna in columnas_texto:
+        normalizado[columna] = normalizado[columna].apply(
+            lambda valor: valor.strip() if isinstance(valor, str) else valor
+        )
+
+    sin_vacias = normalizado.dropna(how='all')
+    filas_vacias_omitidas = total_original - len(sin_vacias)
+    sin_duplicadas = sin_vacias.drop_duplicates().reset_index(drop=True)
+    filas_duplicadas_omitidas = len(sin_vacias) - len(sin_duplicadas)
+
+    return sin_duplicadas, {
+        'total_original': total_original,
+        'filas_vacias_omitidas': filas_vacias_omitidas,
+        'filas_duplicadas_omitidas': filas_duplicadas_omitidas,
+    }
+
+
+def es_valor_positivo(valor):
+    if pd.isna(valor):
+        return False
+    if isinstance(valor, bool):
+        return valor
+    if isinstance(valor, (int, float)):
+        return float(valor) != 0
+
+    texto = str(valor).strip().lower()
+    return texto in {'1', 'si', 'sí', 's', 'true', 'x', 'yes', 'y'}
+
+
 class MortalidadProcessor:
     """Procesador de datos de Mortalidad Materna (Evento 550)."""
     
@@ -114,9 +152,9 @@ class MortalidadProcessor:
         resultado = {}
         for key, col in demoras_cols.items():
             if col in self.df.columns:
-                # Contar valores positivos (1 = Sí hubo demora)
+                # Contar valores positivos (1, Sí, X, true, etc.)
                 total = self.df[col].notna().sum()
-                con_demora = (self.df[col] == 1).sum()
+                con_demora = self.df[col].apply(es_valor_positivo).sum()
                 resultado[key] = {
                     'nombre': self.DEMORAS[key],
                     'casos_con_demora': int(con_demora),
@@ -337,9 +375,8 @@ class MorbilidadProcessor:
         
         for col, nombre in self.CRITERIOS_INCLUSION.items():
             if col in self.df.columns:
-                # Contar casos positivos (1 = Sí)
                 total = self.df[col].notna().sum()
-                casos = (self.df[col] == 1).sum()
+                casos = self.df[col].apply(es_valor_positivo).sum()
                 resultado[col] = {
                     'nombre': nombre,
                     'casos': int(casos),
@@ -483,10 +520,12 @@ def procesar_archivo_analisis(archivo_path, tipo):
     """
     try:
         df = pd.read_excel(archivo_path, engine='openpyxl')
+        df, limpieza = preparar_dataframe_analisis(df)
         
         if tipo == 'mortalidad':
             processor = MortalidadProcessor(df)
             return {
+                'limpieza_datos': limpieza,
                 'estadisticas_basicas': processor.calcular_estadisticas_basicas(),
                 'momento_muerte': processor.analizar_momento_muerte(),
                 'demoras': processor.analizar_demoras(),
@@ -497,6 +536,7 @@ def procesar_archivo_analisis(archivo_path, tipo):
         elif tipo == 'morbilidad':
             processor = MorbilidadProcessor(df)
             return {
+                'limpieza_datos': limpieza,
                 'estadisticas_basicas': processor.calcular_estadisticas_basicas(),
                 'criterios_inclusion': processor.analizar_criterios_inclusion(),
                 'momento_ocurrencia': processor.analizar_momento_ocurrencia(),

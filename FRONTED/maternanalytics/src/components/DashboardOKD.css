@@ -200,6 +200,84 @@
   padding: 24px;
 }
 
+.analysis-home {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analysis-switcher {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.analysis-switch-btn {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(0, 102, 204, 0.12);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.analysis-switch-btn:hover {
+  border-color: rgba(0, 102, 204, 0.28);
+  box-shadow: 0 10px 24px rgba(0, 102, 204, 0.08);
+}
+
+.analysis-switch-btn.active {
+  border-color: #0066cc;
+  background: linear-gradient(135deg, rgba(231, 245, 255, 0.95), rgba(245, 249, 255, 0.98));
+}
+
+.analysis-switch-btn span {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #151515;
+  margin-bottom: 6px;
+}
+
+.analysis-switch-btn small {
+  display: block;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.analysis-empty-state {
+  padding: 40px;
+  text-align: center;
+}
+
+.analysis-empty-state h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  color: #151515;
+}
+
+.analysis-empty-state p {
+  margin: 0 0 20px;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.primary-action-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #0066cc;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-action-btn:hover {
+  background: #0052a3;
+}
+
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);

@@ -5,6 +5,13 @@ import './AnalisisView.css'
 
 const Plot = PlotlyReact?.default ?? PlotlyReact
 
+const BARRERAS_LABELS = {
+  demora_1: 'Identificación del riesgo',
+  demora_2: 'Decisión de buscar ayuda',
+  demora_3: 'Llegada al servicio de salud',
+  demora_4: 'Atención oportuna y de calidad',
+}
+
 const API_URL = 'http://localhost:8000/api'
 
 const CHART_COLORS = {
@@ -16,6 +23,8 @@ const CHART_COLORS = {
   slate: '#1e3a5f',
   grid: 'rgba(42, 82, 152, 0.08)'
 }
+
+const CLUSTER_COLORS = ['#4d7fd4', '#c0392b', '#2ca02c', '#f39c12', '#6f42c1', '#16a085', '#d35400', '#8e44ad']
 
 const CIE10_DESCRIPTIONS = {
   'O26.6': 'Trastornos del hígado durante el embarazo',
@@ -35,6 +44,32 @@ function normalizeText(value) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/\s+/g, ' ')
+}
+
+function tokenizeHeader(value) {
+  return normalizeText(value)
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+}
+
+function headerMatchesPattern(header, pattern) {
+  const normalizedHeader = normalizeText(header)
+  const normalizedPattern = normalizeText(pattern)
+  if (!normalizedHeader || !normalizedPattern) return false
+
+  if (normalizedHeader === normalizedPattern) return true
+
+  const headerTokens = tokenizeHeader(header)
+  const patternTokens = tokenizeHeader(pattern)
+
+  if (!patternTokens.length) return false
+
+  if (patternTokens.length === 1) {
+    return headerTokens.includes(patternTokens[0])
+  }
+
+  return normalizedHeader.includes(normalizedPattern)
 }
 
 function normalizeCie10(code) {
@@ -70,7 +105,87 @@ function buildPercentLabels(values, totalOverride) {
   })
 }
 
-function AnalisisView({ analisisId, onBack }) {
+function ChartExplanation({ title, text }) {
+  return (
+    <div className="chart-explanation">
+      <strong>{title}</strong>
+      <p>{text}</p>
+    </div>
+  )
+}
+
+function getClusterColor(clusterId) {
+  const normalized = Number(clusterId)
+  if (!Number.isFinite(normalized)) return CLUSTER_COLORS[0]
+  return CLUSTER_COLORS[Math.abs(normalized) % CLUSTER_COLORS.length]
+}
+
+function getReadableFeatureName(featureName) {
+  const normalized = normalizeText(featureName)
+
+  if (normalized.includes('controles prenatales') || normalized.includes('no. cpn')) return 'controles prenatales'
+  if (normalized.includes('semana gestacion') || normalized.includes('edad gestacional')) return 'edad gestacional'
+  if (normalized.includes('estancia hospitalaria')) return 'estancia hospitalaria'
+  if (normalized.includes('total criterios')) return 'criterios de gravedad'
+  if (normalized.includes('gestaciones')) return 'gestaciones'
+  if (normalized.includes('partos vaginales')) return 'partos vaginales'
+  if (normalized.includes('cesareas') || normalized.includes('cesáreas')) return 'cesareas'
+  if (normalized.includes('abortos')) return 'abortos'
+
+  return featureName.replace(/^[\d.]+\s*/, '').toLowerCase()
+}
+
+function buildClusterDescriptor(profile, allProfiles) {
+  const entries = Object.entries(profile?.features || {})
+  if (!entries.length) {
+    return {
+      title: `Perfil ${profile?.cluster_id ?? ''}`.trim(),
+      subtitle: 'Grupo de casos con un patron similar en las variables analizadas.'
+    }
+  }
+
+  const scored = entries.map(([featureName, value]) => {
+    const comparableValues = allProfiles
+      .map(otherProfile => Number(otherProfile?.features?.[featureName]))
+      .filter(number => Number.isFinite(number))
+
+    const baseline = comparableValues.length
+      ? comparableValues.reduce((sum, number) => sum + number, 0) / comparableValues.length
+      : 0
+
+    const safeBaseline = Math.abs(baseline) > 0.001 ? Math.abs(baseline) : 1
+    const relativeDeviation = (Number(value) - baseline) / safeBaseline
+
+    return {
+      featureName,
+      readableName: getReadableFeatureName(featureName),
+      relativeDeviation,
+    }
+  })
+
+  const positiveSignals = scored
+    .filter(item => item.relativeDeviation > 0.15)
+    .sort((left, right) => right.relativeDeviation - left.relativeDeviation)
+
+  if (!positiveSignals.length) {
+    return {
+      title: 'Perfil intermedio',
+      subtitle: 'Grupo con valores mas equilibrados frente a los demas clusters.'
+    }
+  }
+
+  const mainSignals = positiveSignals.slice(0, 2).map(item => item.readableName)
+  const title = mainSignals.length === 1
+    ? `Perfil con mayor ${mainSignals[0]}`
+    : `Perfil con mayor ${mainSignals[0]} y ${mainSignals[1]}`
+
+  return {
+    title,
+    subtitle: 'Nombre descriptivo generado a partir de los promedios del grupo; no corresponde a un diagnostico clinico.'
+  }
+}
+
+function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = false }) {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
   const [clusteringData, setClusteringData] = useState(null)
@@ -130,7 +245,7 @@ function AnalisisView({ analisisId, onBack }) {
 
   if (loading) {
     return (
-      <div className="analisis-view">
+      <div className={`analisis-view${embedded ? ' embedded' : ''}`}>
         <div className="loading">
           <div className="spinner"></div>
           <p>Cargando análisis...</p>
@@ -141,10 +256,10 @@ function AnalisisView({ analisisId, onBack }) {
 
   if (error) {
     return (
-      <div className="analisis-view">
+      <div className={`analisis-view${embedded ? ' embedded' : ''}`}>
         <div className="error-view">
           <p>❌ {error}</p>
-          <button onClick={onBack} className="btn-back">Volver</button>
+          {showBackButton && onBack && <button onClick={onBack} className="btn-back">Volver</button>}
         </div>
       </div>
     )
@@ -153,13 +268,15 @@ function AnalisisView({ analisisId, onBack }) {
   if (!data) return null
 
   return (
-    <div className="analisis-view">
+    <div className={`analisis-view${embedded ? ' embedded' : ''}`}>
       <div className="analisis-header">
-        <button onClick={onBack} className="btn-back-icon">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-        </button>
+        {showBackButton && onBack && (
+          <button onClick={onBack} className="btn-back-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+        )}
         <div className="header-info">
           <h1>{data.tipo === 'mortalidad' ? 'Mortalidad Materna' : 'Morbilidad Materna Extrema'}</h1>
           <p className="filename">{data.nombre_archivo}</p>
@@ -243,16 +360,16 @@ function OverviewTab({ data }) {
 
       {data.demoras && (
         <div className="section">
-          <h2>Análisis de Demoras</h2>
+          <h2>Barreras en la atención</h2>
           <div className="demoras-grid">
             {Object.entries(data.demoras).map(([key, demora]) => (
               <div key={key} className="demora-card">
                 <div className="demora-header">
-                  <span className="demora-numero">{key.replace('demora_', 'Demora ')}</span>
+                  <span className="demora-numero">{BARRERAS_LABELS[key] || demora.nombre}</span>
                   <span className="demora-porcentaje">{demora.porcentaje.toFixed(1)}%</span>
                 </div>
                 <div className="demora-nombre">{demora.nombre}</div>
-                <div className="demora-casos">{demora.casos_con_demora} casos con demora</div>
+                <div className="demora-casos">{demora.casos_con_demora} casos reportaron esta barrera</div>
               </div>
             ))}
           </div>
@@ -377,22 +494,21 @@ function ChartsTab({ data, analisisId }) {
         const normalizedHeaders = headers.map(h => normalizeText(h))
 
         const findIndex = (patterns) => {
-          const pats = patterns.map(p => normalizeText(p))
-          return normalizedHeaders.findIndex(h => pats.some(p => p && h.includes(p)))
+          return headers.findIndex(h => patterns.some(pattern => headerMatchesPattern(h, pattern)))
         }
 
         const candidates = [
           {
-            kind: 'edad',
-            title: 'Distribución por edad (si está disponible)'
+            kind: 'municipio',
+            title: 'Top municipios con más casos (si está disponible)'
           },
           {
             kind: 'departamento',
             title: 'Top departamentos con más casos (si está disponible)'
           },
           {
-            kind: 'municipio',
-            title: 'Top municipios con más casos (si está disponible)'
+            kind: 'edad',
+            title: 'Distribución por edad (si está disponible)'
           },
           {
             kind: 'regimen',
@@ -407,7 +523,7 @@ function ChartsTab({ data, analisisId }) {
         const kindToPatterns = {
           edad: ['edad', 'edad (anos)', 'edad (años)', 'edad anos', 'edad años'],
           departamento: ['departamento', 'depto', 'dpto'],
-          municipio: ['municipio', 'mun'],
+          municipio: ['municipio'],
           regimen: ['regimen', 'régimen', 'afiliacion', 'afiliación'],
           eps: ['eps', 'entidad promotora', 'aseguradora'],
         }
@@ -665,7 +781,7 @@ function ChartsTab({ data, analisisId }) {
     if (!data.demoras) return null
 
     const items = Object.values(data.demoras)
-    const labels = items.map(d => d.nombre)
+    const labels = Object.entries(data.demoras).map(([key, demora]) => BARRERAS_LABELS[key] || demora.nombre)
     const percentages = items.map(d => d.porcentaje)
     const counts = items.map(d => d.casos_con_demora)
     const text = labels.map((_, i) => `${counts[i]} casos (${percentages[i].toFixed(1)}%)`)
@@ -690,7 +806,7 @@ function ChartsTab({ data, analisisId }) {
           hovertemplate: '<b>%{y}</b><br>%{text}<extra></extra>',
         }]}
         layout={{
-          title: 'Demoras en la atención (casos y %)',
+          title: 'Barreras identificadas en la atención (casos y %)',
           xaxis: {
             title: 'Porcentaje de casos',
             ticksuffix: '%',
@@ -770,6 +886,7 @@ function ChartsTab({ data, analisisId }) {
 
     return (
       <div className="chart-container">
+        <h3 className="chart-title">{extraChart.title}</h3>
         <div className="chart-meta">
           <div className="chart-subtitle">{extraChart.subtitle}</div>
         </div>
@@ -799,6 +916,10 @@ function ChartsTab({ data, analisisId }) {
           config={{ responsive: true, displayModeBar: false }}
           style={{ width: '100%', height: '100%' }}
         />
+        <ChartExplanation
+          title="Que significa esta distribucion"
+          text="Esta grafica resume la variable complementaria detectada automaticamente en el archivo. Sirve para ver si una categoria concentra la mayor parte de los casos y comparar rapidamente la diferencia entre grupos."
+        />
       </div>
     )
   }
@@ -806,23 +927,45 @@ function ChartsTab({ data, analisisId }) {
   return (
     <div className="charts-tab">
       <div className="chart-container">
+        <h3 className="chart-title">
+          {data.tipo === 'mortalidad' ? 'Momento de la muerte' : 'Momento de ocurrencia'}
+        </h3>
         {getMomentoChart()}
+        <ChartExplanation
+          title="Que muestra esta grafica"
+          text={
+            data.tipo === 'mortalidad'
+              ? 'Compara en que momento ocurrio la muerte materna. Las barras mas altas indican los momentos que concentran mas casos dentro del archivo analizado.'
+              : 'Compara en que momento ocurrio el evento reportado. Las barras mas altas indican las etapas en las que el evento aparece con mayor frecuencia.'
+          }
+        />
       </div>
 
       {data.tipo === 'mortalidad' && (
         <>
           {getExtraChart()}
           <div className="chart-container">
+            <h3 className="chart-title">Top 10 causas basicas (CIE-10)</h3>
             {getCausasChart()}
+            <ChartExplanation
+              title="Como interpretar los codigos CIE-10"
+              text="Cada barra representa una causa basica registrada en los casos analizados. El codigo identifica el diagnostico y la cantidad muestra cuantas veces aparece en el archivo cargado."
+            />
           </div>
           <div className="chart-container">
+            <h3 className="chart-title">Barreras identificadas en la atencion</h3>
             {getDemorasChart()}
+            <ChartExplanation
+              title="Como interpretar estas barreras"
+              text="Muestran en que etapa de la atencion se reportaron dificultades. El porcentaje indica que proporcion de los casos presento esa barrera y el numero de casos muestra cuantas personas fueron afectadas."
+            />
           </div>
         </>
       )}
 
       {data.tipo === 'morbilidad' && (
         <div className="chart-container">
+          <h3 className="chart-title">Heatmap de correlacion</h3>
           {heatmapLoading && (
             <div className="loading" style={{ padding: '40px 20px' }}>
               <div className="spinner"></div>
@@ -837,52 +980,58 @@ function ChartsTab({ data, analisisId }) {
           )}
 
           {!heatmapLoading && !heatmapError && heatmapData?.correlation_matrix && heatmapData?.columns && (
-            <Plot
-              data={[{
-                type: 'heatmap',
-                x: heatmapData.columns,
-                y: heatmapData.columns,
-                z: heatmapData.correlation_matrix,
-                zmin: -1,
-                zmax: 1,
-                zmid: 0,
-                colorscale: [
-                  [0.0, '#1e3a5f'],
-                  [0.5, '#f0f7ff'],
-                  [1.0, '#c0392b']
-                ],
-                colorbar: {
-                  title: { text: 'Correlación', side: 'right' },
-                  ticksuffix: '',
-                  tickvals: [-1, -0.5, 0, 0.5, 1],
-                },
-                hovertemplate:
-                  '<b>%{y}</b> vs <b>%{x}</b><br>' +
-                  'Correlación: %{z:.2f}<extra></extra>'
-              }]}
-              layout={{
-                title: 'Heatmap de correlación (variables epidemiológicas)',
-                xaxis: {
-                  title: '',
-                  tickangle: -35,
-                  automargin: true,
-                  gridcolor: 'rgba(42, 82, 152, 0.08)',
-                },
-                yaxis: {
-                  title: '',
-                  automargin: true,
-                  gridcolor: 'rgba(42, 82, 152, 0.08)',
-                },
-                paper_bgcolor: 'transparent',
-                plot_bgcolor: 'rgba(255,255,255,0.9)',
-                font: { family: 'Plus Jakarta Sans, sans-serif' },
-                height: 650,
-                margin: { t: 60, b: 140, l: 140, r: 60 },
-              }}
-              useResizeHandler={true}
-              config={{ responsive: true, displayModeBar: false }}
-              style={{ width: '100%', height: '100%' }}
-            />
+            <>
+              <Plot
+                data={[{
+                  type: 'heatmap',
+                  x: heatmapData.columns,
+                  y: heatmapData.columns,
+                  z: heatmapData.correlation_matrix,
+                  zmin: -1,
+                  zmax: 1,
+                  zmid: 0,
+                  colorscale: [
+                    [0.0, '#1e3a5f'],
+                    [0.5, '#f0f7ff'],
+                    [1.0, '#c0392b']
+                  ],
+                  colorbar: {
+                    title: { text: 'Correlación', side: 'right' },
+                    ticksuffix: '',
+                    tickvals: [-1, -0.5, 0, 0.5, 1],
+                  },
+                  hovertemplate:
+                    '<b>%{y}</b> vs <b>%{x}</b><br>' +
+                    'Correlación: %{z:.2f}<extra></extra>'
+                }]}
+                layout={{
+                  title: 'Heatmap de correlación (variables epidemiológicas)',
+                  xaxis: {
+                    title: '',
+                    tickangle: -35,
+                    automargin: true,
+                    gridcolor: 'rgba(42, 82, 152, 0.08)',
+                  },
+                  yaxis: {
+                    title: '',
+                    automargin: true,
+                    gridcolor: 'rgba(42, 82, 152, 0.08)',
+                  },
+                  paper_bgcolor: 'transparent',
+                  plot_bgcolor: 'rgba(255,255,255,0.9)',
+                  font: { family: 'Plus Jakarta Sans, sans-serif' },
+                  height: 650,
+                  margin: { t: 60, b: 140, l: 140, r: 60 },
+                }}
+                useResizeHandler={true}
+                config={{ responsive: true, displayModeBar: false }}
+                style={{ width: '100%', height: '100%' }}
+              />
+              <ChartExplanation
+                title="Como leer este mapa"
+                text="Ayuda a identificar que variables tienden a aparecer juntas. Los tonos mas intensos indican relaciones mas fuertes; los colores cercanos al centro claro muestran relaciones debiles o casi nulas."
+              />
+            </>
           )}
 
           {!heatmapLoading && !heatmapError && (!heatmapData || heatmapData?.error) && (
@@ -947,6 +1096,14 @@ function ClusteringTab({ data, loading, onGenerate, clusterCount, setClusterCoun
     )
   }
 
+  const clusterMarkerColors = data?.clusters?.map(clusterId => getClusterColor(clusterId)) || []
+  const clusterLegend = data?.cluster_profiles?.map(profile => ({
+    id: profile.cluster_id,
+    size: profile.size,
+    color: getClusterColor(profile.cluster_id),
+    descriptor: buildClusterDescriptor(profile, data?.cluster_profiles || []),
+  })) || []
+
   // Gráfico 2D
   const scatter2D = data.pca_2d && (
     <Plot
@@ -957,10 +1114,8 @@ function ClusteringTab({ data, loading, onGenerate, clusterCount, setClusterCoun
         y: data.pca_2d.y,
         marker: {
           size: 10,
-          color: data.clusters,
-          colorscale: 'Viridis',
-          showscale: true,
-          colorbar: { title: 'Cluster' },
+          color: clusterMarkerColors,
+          showscale: false,
           line: { color: 'white', width: 1 }
         },
         text: data.clusters.map((c, i) => `Caso ${i+1}<br>Cluster ${c}`),
@@ -991,10 +1146,8 @@ function ClusteringTab({ data, loading, onGenerate, clusterCount, setClusterCoun
         z: data.pca_3d.z,
         marker: {
           size: 6,
-          color: data.clusters,
-          colorscale: 'Viridis',
-          showscale: true,
-          colorbar: { title: 'Cluster' },
+          color: clusterMarkerColors,
+          showscale: false,
           line: { color: 'white', width: 0.5 }
         },
         text: data.clusters.map((c, i) => `Caso ${i+1}<br>Cluster ${c}`),
@@ -1024,6 +1177,20 @@ function ClusteringTab({ data, loading, onGenerate, clusterCount, setClusterCoun
           <span><strong>{data.n_clusters}</strong> clusters identificados</span>
           <span><strong>{data.n_samples}</strong> casos analizados</span>
         </div>
+        {clusterLegend.length > 0 && (
+          <div className="cluster-legend">
+            {clusterLegend.map((cluster) => (
+              <div key={cluster.id} className="cluster-legend-item">
+                <span className="cluster-legend-dot" style={{ backgroundColor: cluster.color }}></span>
+                <span>{cluster.descriptor.title}</span>
+                <span className="cluster-legend-size">{cluster.size} casos</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="cluster-help-text">
+          Cada color representa un grupo distinto de casos similares. El color no indica gravedad ni prioridad; solo sirve para diferenciar visualmente cada cluster.
+        </p>
       </div>
 
       <div className="chart-container">
@@ -1041,9 +1208,13 @@ function ClusteringTab({ data, loading, onGenerate, clusterCount, setClusterCoun
             {data.cluster_profiles.map((profile) => (
               <div key={profile.cluster_id} className="profile-card">
                 <div className="profile-header">
-                  <span className="profile-label">Cluster {profile.cluster_id}</span>
+                  <div>
+                    <span className="profile-label">{buildClusterDescriptor(profile, data.cluster_profiles).title}</span>
+                    <div className="profile-subtitle">Cluster {profile.cluster_id}</div>
+                  </div>
                   <span className="profile-size">{profile.size} casos</span>
                 </div>
+                <p className="profile-description">{buildClusterDescriptor(profile, data.cluster_profiles).subtitle}</p>
                 <div className="profile-features">
                   {Object.entries(profile.features).map(([key, value]) => (
                     <div key={key} className="feature-item">
