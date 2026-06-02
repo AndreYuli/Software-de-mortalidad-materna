@@ -55,18 +55,27 @@ TIPO_ID_ALIASES = {
 }
 
 
-MORTALIDAD_FECHA_DEFUNCION_COLS = ['5.2 Fecha de defunción', '5.2 Fecha defunción', 'Fecha de defunción']
+MORTALIDAD_FECHA_DEFUNCION_COLS = [
+    '5.2 Fecha de defunción', '5.2 Fecha de defuncion',
+    '5.2 Fecha defunción', '5.2 Fecha defuncion',
+    '5.2 Fecha de defunción (dd/mm/aaaa)', '5.2 Fecha de defuncion (dd/mm/aaaa)',
+    'Fecha de defunción', 'Fecha de defuncion',
+]
 MORTALIDAD_FUENTE_CAUSA_COLS = ['10.2 Fuente de causa de muerte', '10.2 Fuente causa de muerte', 'Fuente causa muerte']
 MORTALIDAD_REMISIONES_COLS = ['8.3 Remisiones', '8.4 Remisiones', 'Remisiones', 'Remisiones oportunas']
 MORTALIDAD_MOMENTO_MUERTE_COLS = ['9.1 Momento de la muerte']
-MORTALIDAD_FECHA_PARTO_COLS = ['9.3 Fecha parto', 'Fecha parto']
+MORTALIDAD_FECHA_PARTO_COLS = ['9.3 Fecha parto (dd/mm/aaaa)', '9.3 Fecha parto', 'Fecha parto (dd/mm/aaaa)', 'Fecha parto']
 MORTALIDAD_HORA_PARTO_COLS = ['9.3 Hora parto', 'Hora parto']
 MORTALIDAD_ATENDIDO_POR_COLS = ['9.5 Atendido por', 'Atendido por']
 MORTALIDAD_NIVEL_PARTO_COLS = ['9.6 Nivel atención parto', 'Nivel atención parto']
 MORTALIDAD_PERSONAL_CPN_COLS = ['8.3 Personal CPN', 'Personal CPN']
 MORTALIDAD_NIVEL_CPN_COLS = ['8.4 Nivel atención CPN', 'Nivel atención CPN']
 
-MORBILIDAD_FECHA_EGRESO_COLS = ['Fecha de egreso', 'Fecha egreso']
+MORBILIDAD_FECHA_EGRESO_COLS = [
+    'Fecha de egreso', 'Fecha egreso',
+    'Fecha de egreso (dd/mm/aaaa)', 'Fecha egreso (dd/mm/aaaa)',
+    'Fecha de egreso (dd/mm/yyyy)', 'Fecha egreso (dd/mm/yyyy)',
+]
 MORBILIDAD_TERMINACION_COLS = ['Terminación de la gestación', 'Terminacion de la gestacion']
 MORBILIDAD_ESTADO_RN_COLS = ['Estado recién nacido', 'Estado recien nacido']
 MORBILIDAD_PESO_RN_COLS = ['Peso RN gramos', 'Peso RN', 'Peso recién nacido']
@@ -463,22 +472,28 @@ def _resolver_identificacion(*, nombres_col, tipo_id_col, numero_id_col, row, nu
         code_field='codigo',
     )
     numero_id = _require_text(_get_value(row, [numero_id_col]), numero_id_col, numero_fila)
+    fecha_nacimiento = _parse_date(_get_value(row, ['Fecha de Nacimiento', 'Fecha de nacimiento', 'Fecha nacimiento']))
 
     return {
         'nombres': nombres,
         'tipo_obj': tipo_identificacion,
         'tipo_codigo': tipo_identificacion.codigo,
         'numero_id': numero_id,
+        'fecha_nacimiento': fecha_nacimiento,
     }
 
 
 def _upsert_paciente(identificacion):
+    defaults = {
+        'nombres_apellidos': identificacion['nombres'],
+    }
+    if identificacion.get('fecha_nacimiento') is not None:
+        defaults['fecha_nacimiento'] = identificacion['fecha_nacimiento']
+
     paciente, creado = Paciente.objects.update_or_create(
         id_tipo=identificacion['tipo_obj'],
         numero_id=identificacion['numero_id'],
-        defaults={
-            'nombres_apellidos': identificacion['nombres'],
-        },
+        defaults=defaults,
     )
     return paciente, creado
 
@@ -730,13 +745,24 @@ def _parse_decimal(value):
     return round(float(value), 1)
 
 
+_EXCEL_SERIAL_ORIGIN = pd.Timestamp('1899-12-30')
+
+
 def _parse_date(value):
     if _is_empty(value):
         return None
-    fecha = pd.to_datetime(value, errors='coerce')
-    if pd.isna(fecha):
-        return None
-    return fecha.date()
+    # Intento 1: conversión estándar con dayfirst=True (DD/MM/YYYY colombiano)
+    fecha = pd.to_datetime(value, errors='coerce', dayfirst=True)
+    if not pd.isna(fecha):
+        return fecha.date()
+    # Intento 2: serial numérico de Excel
+    try:
+        n = int(float(value))
+        if 1000 < n < 100000:
+            return (_EXCEL_SERIAL_ORIGIN + pd.Timedelta(days=n)).date()
+    except (ValueError, TypeError):
+        pass
+    return None
 
 
 def _parse_time(value):

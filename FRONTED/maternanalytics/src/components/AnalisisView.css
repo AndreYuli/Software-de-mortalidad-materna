@@ -66,6 +66,28 @@
   color: var(--text-light);
 }
 
+.filter-active-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-active-badge span {
+  padding: 3px 10px;
+  background: rgba(77, 127, 212, 0.12);
+  color: var(--blue-700);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filter-active-badge .filter-active-count {
+  background: var(--blue-700);
+  color: #fff;
+}
+
 /* Tabs */
 .analisis-tabs {
   display: flex;

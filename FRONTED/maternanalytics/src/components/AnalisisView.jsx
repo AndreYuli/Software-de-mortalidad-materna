@@ -185,7 +185,7 @@ function buildClusterDescriptor(profile, allProfiles) {
   }
 }
 
-function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = false }) {
+function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = false, filterYear = '', filterMonth = '', onAvailableYears = null }) {
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState(null)
   const [clusteringData, setClusteringData] = useState(null)
@@ -201,11 +201,19 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
       try {
         setLoading(true)
         setError(null)
-        const response = await fetch(`${API_URL}/analisis/${analisisId}/completo/`, { signal: controller.signal })
+        const params = new URLSearchParams()
+        if (filterYear) params.append('year', filterYear)
+        if (filterMonth) params.append('month', filterMonth)
+        const qs = params.toString()
+        const url = `${API_URL}/analisis/${analisisId}/completo/${qs ? `?${qs}` : ''}`
+        const response = await fetch(url, { signal: controller.signal })
         const result = await response.json().catch(() => null)
         if (!response.ok) throw new Error(result?.error || 'Error al cargar análisis')
         if (isMounted) {
           setData(result)
+          if (onAvailableYears && Array.isArray(result?.anos_disponibles)) {
+            onAvailableYears(result.anos_disponibles)
+          }
         }
       } catch (err) {
         if (err?.name === 'AbortError') return
@@ -223,7 +231,7 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
       isMounted = false
       controller.abort()
     }
-  }, [analisisId])
+  }, [analisisId, filterYear, filterMonth])
 
   const cargarClustering = async (tipo = 'kmeans') => {
     try {
@@ -280,6 +288,13 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
         <div className="header-info">
           <h1>{data.tipo === 'mortalidad' ? 'Mortalidad Materna' : 'Morbilidad Materna Extrema'}</h1>
           <p className="filename">{data.nombre_archivo}</p>
+          {(filterYear || filterMonth) && (
+            <div className="filter-active-badge">
+              {filterYear && <span>Año {filterYear}</span>}
+              {filterMonth && <span>Mes {filterMonth}</span>}
+              <span className="filter-active-count">{data.estadisticas_basicas?.total_casos ?? 0} casos</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -924,6 +939,207 @@ function ChartsTab({ data, analisisId }) {
     )
   }
 
+  // Institución de referencia - Morbilidad
+  const getInstitucionChart = () => {
+    const inst = data.institucion_referencia
+    if (!inst?.instituciones?.length) return null
+    const palette = [CHART_COLORS.blue, CHART_COLORS.purple, CHART_COLORS.orange, CHART_COLORS.red, CHART_COLORS.green]
+    return (
+      <div className="chart-container">
+        <h3 className="chart-title">Instituciones de referencia (Top {inst.instituciones.length})</h3>
+        <div className="chart-meta">
+          <div className="chart-subtitle">{inst.total_con_dato} casos con institución registrada de {inst.total_casos} totales</div>
+        </div>
+        <Plot
+          data={[{
+            type: 'bar',
+            x: inst.conteos,
+            y: inst.instituciones,
+            orientation: 'h',
+            marker: { color: inst.conteos.map((_, i) => palette[i % palette.length]), line: { color: CHART_COLORS.slate, width: 1 } },
+            text: inst.conteos.map(String),
+            textposition: 'outside',
+            cliponaxis: false,
+            hovertemplate: '<b>%{y}</b><br>Casos: %{x}<extra></extra>',
+          }]}
+          layout={{
+            xaxis: { title: 'Número de casos', gridcolor: CHART_COLORS.grid },
+            yaxis: { automargin: true },
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'rgba(255,255,255,0.9)',
+            font: { family: 'Plus Jakarta Sans, sans-serif' },
+            height: Math.max(300, inst.instituciones.length * 36 + 80),
+            margin: { t: 20, b: 60, l: 220, r: 60 },
+          }}
+          useResizeHandler={true}
+          config={{ responsive: true, displayModeBar: false }}
+          style={{ width: '100%' }}
+        />
+        <ChartExplanation
+          title="Que muestra esta grafica"
+          text="Muestra las instituciones a las que fueron remitidas las pacientes con morbilidad materna extrema. Permite identificar que centros de referencia concentran mas casos."
+        />
+      </div>
+    )
+  }
+
+  // Tiempo de remisión - Boxplot - Morbilidad
+  const getTiempoRemisionChart = () => {
+    const tr = data.tiempo_remision
+    if (!tr?.valores?.length) return null
+    return (
+      <div className="chart-container">
+        <h3 className="chart-title">Tiempo de remisión (horas)</h3>
+        <div className="chart-meta">
+          <div className="chart-subtitle">
+            {tr.total} registros · Mediana: {tr.median.toFixed(1)} h · Promedio: {tr.mean.toFixed(1)} h
+          </div>
+        </div>
+        <Plot
+          data={[{
+            type: 'box',
+            y: tr.valores,
+            name: 'Tiempo remisión',
+            boxpoints: 'outliers',
+            marker: { color: CHART_COLORS.blue, size: 4, opacity: 0.6 },
+            line: { color: CHART_COLORS.slate },
+            fillcolor: 'rgba(77,127,212,0.2)',
+            hovertemplate: '%{y:.1f} horas<extra></extra>',
+          }]}
+          layout={{
+            yaxis: { title: 'Horas', gridcolor: CHART_COLORS.grid },
+            xaxis: { showticklabels: false },
+            paper_bgcolor: 'transparent',
+            plot_bgcolor: 'rgba(255,255,255,0.9)',
+            font: { family: 'Plus Jakarta Sans, sans-serif' },
+            height: 380,
+            margin: { t: 20, b: 40, l: 70, r: 40 },
+          }}
+          useResizeHandler={true}
+          config={{ responsive: true, displayModeBar: false }}
+          style={{ width: '100%' }}
+        />
+        <ChartExplanation
+          title="Como leer este boxplot"
+          text="La caja muestra el rango intercuartílico (Q1–Q3) donde se concentra el 50% de los casos. La línea central es la mediana. Los puntos fuera de los bigotes son valores atípicos."
+        />
+      </div>
+    )
+  }
+
+  // Histograma obstétrico por edad
+  const getObstetricoEdadChart = () => {
+    const obs = data.obstetrico_edad
+    if (!obs || Object.keys(obs).length === 0) return null
+
+    const GRUPO_COLORS = {
+      '<20':  '#f39c12',
+      '20-29': '#4d7fd4',
+      '30-39': '#2ca02c',
+      '≥40':  '#c0392b',
+    }
+
+    return (
+      <>
+        {Object.values(obs).map((variable) => {
+          const grupos = Object.keys(variable.por_edad)
+          const tienePorEdad = grupos.length > 0
+
+          // Filtrar valores del eje que tengan al menos 1 caso en total
+          const idxConDatos = variable.valores_eje
+            .map((v, i) => ({ v, i }))
+            .filter(({ i }) => variable.conteos_total[i] > 0)
+          const xFiltrado = idxConDatos.map(({ v }) => String(v))
+
+          const traces = tienePorEdad
+            ? grupos.map(g => ({
+                type: 'bar',
+                name: `${g} años`,
+                x: xFiltrado,
+                y: idxConDatos.map(({ i }) => variable.por_edad[g]?.[i] ?? 0),
+                marker: {
+                  color: GRUPO_COLORS[g] || CHART_COLORS.blue,
+                  opacity: 0.88,
+                  line: { color: '#fff', width: 1 },
+                },
+                hovertemplate: `<b>${g} años</b><br>${variable.nombre}: %{x}<br>Casos: %{y}<extra></extra>`,
+                textposition: 'none',
+              }))
+            : [{
+                type: 'bar',
+                name: variable.nombre,
+                x: xFiltrado,
+                y: idxConDatos.map(({ i }) => variable.conteos_total[i]),
+                marker: {
+                  color: CHART_COLORS.blue,
+                  opacity: 0.88,
+                  line: { color: '#fff', width: 1 },
+                },
+                hovertemplate: `<b>${variable.nombre}: %{x}</b><br>Casos: %{y}<extra></extra>`,
+              }]
+
+          const totalSuma = variable.conteos_total.reduce((a, b) => a + b, 0)
+
+          return (
+            <div key={variable.nombre} className="chart-container">
+              <h3 className="chart-title">{variable.nombre} por grupo de edad</h3>
+              <div className="chart-meta">
+                <div className="chart-subtitle">
+                  {totalSuma} registros&nbsp;·&nbsp;Promedio: {variable.promedio.toFixed(1)}{' '}
+                  {variable.nombre.toLowerCase()}
+                  {!tienePorEdad && (
+                    <span style={{ marginLeft: 12, color: '#e67e22', fontSize: 12 }}>
+                      ⚠ Sin desglose por edad — las columnas Fecha de Nacimiento o Fecha de egreso no tienen datos válidos
+                    </span>
+                  )}
+                </div>
+              </div>
+              <Plot
+                data={traces}
+                layout={{
+                  barmode: tienePorEdad ? 'stack' : 'relative',
+                  bargap: 0.25,
+                  xaxis: {
+                    title: { text: `Número de ${variable.nombre.toLowerCase()}`, standoff: 12 },
+                    type: 'category',
+                    tickfont: { size: 13 },
+                    showgrid: false,
+                    zeroline: false,
+                  },
+                  yaxis: {
+                    title: { text: 'Casos', standoff: 8 },
+                    gridcolor: CHART_COLORS.grid,
+                    tickformat: 'd',
+                    zeroline: false,
+                  },
+                  legend: {
+                    orientation: 'h',
+                    x: 0.5,
+                    xanchor: 'center',
+                    y: -0.22,
+                    font: { size: 12 },
+                  },
+                  paper_bgcolor: 'transparent',
+                  plot_bgcolor: 'rgba(255,255,255,0.9)',
+                  font: { family: 'Plus Jakarta Sans, sans-serif', size: 13 },
+                  height: 400,
+                  margin: { t: 16, b: 90, l: 56, r: 20 },
+                }}
+                useResizeHandler={true}
+                config={{ responsive: true, displayModeBar: false }}
+                style={{ width: '100%' }}
+              />
+              <ChartExplanation
+                title="Como interpretar este histograma"
+                text={`Cada barra muestra cuántos casos tuvieron ese número de ${variable.nombre.toLowerCase()}. Los colores indican el rango de edad de la paciente: naranja (<20), azul (20-29), verde (30-39) y rojo (≥40). Las barras están apiladas para facilitar la comparación del total.`}
+              />
+            </div>
+          )
+        })}
+      </>
+    )
+  }
+
   return (
     <div className="charts-tab">
       <div className="chart-container">
@@ -960,12 +1176,17 @@ function ChartsTab({ data, analisisId }) {
               text="Muestran en que etapa de la atencion se reportaron dificultades. El porcentaje indica que proporcion de los casos presento esa barrera y el numero de casos muestra cuantas personas fueron afectadas."
             />
           </div>
+          {getObstetricoEdadChart()}
         </>
       )}
 
       {data.tipo === 'morbilidad' && (
-        <div className="chart-container">
-          <h3 className="chart-title">Heatmap de correlacion</h3>
+        <>
+          {getInstitucionChart()}
+          {getTiempoRemisionChart()}
+          {getObstetricoEdadChart()}
+          <div className="chart-container">
+            <h3 className="chart-title">Heatmap de correlacion</h3>
           {heatmapLoading && (
             <div className="loading" style={{ padding: '40px 20px' }}>
               <div className="spinner"></div>
@@ -1040,6 +1261,7 @@ function ChartsTab({ data, analisisId }) {
             </div>
           )}
         </div>
+        </>
       )}
     </div>
   )

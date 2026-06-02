@@ -1,8 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import PropTypes from 'prop-types'
+import PlotlyReact from 'react-plotly.js'
 import './DashboardOKD.css'
 import AnalisisView from './AnalisisView'
 import * as XLSX from 'xlsx'
+
+const Plot = PlotlyReact?.default ?? PlotlyReact
 
 const API_URL = 'http://localhost:8000/api'
 
@@ -267,6 +270,114 @@ UploadCard.propTypes = {
   validating: PropTypes.bool.isRequired,
 }
 
+function CasosCombinados({ latestMortalidad, latestMorbilidad }) {
+  const mortalidadCasos = latestMortalidad?.total_registros ?? 0
+  const morbilidadCasos = latestMorbilidad?.total_registros ?? 0
+  if (mortalidadCasos === 0 && morbilidadCasos === 0) return null
+
+  return (
+    <div className="casos-combinados-card">
+      <h3 className="casos-combinados-title">Cantidad de casos por evento</h3>
+      <Plot
+        data={[{
+          type: 'bar',
+          x: ['Morbilidad Materna Extrema\n(Evento 549)', 'Mortalidad Materna\n(Evento 550)'],
+          y: [morbilidadCasos, mortalidadCasos],
+          marker: {
+            color: ['#2ca02c', '#c0392b'],
+            line: { color: ['#1e7e34', '#922b21'], width: 1.5 },
+          },
+          text: [morbilidadCasos, mortalidadCasos].map(v => v.toLocaleString('es-CO')),
+          textposition: 'outside',
+          cliponaxis: false,
+          hovertemplate: '<b>%{x}</b><br>Casos: <b>%{y}</b><extra></extra>',
+        }]}
+        layout={{
+          height: 260,
+          margin: { t: 16, b: 64, l: 52, r: 20 },
+          paper_bgcolor: 'transparent',
+          plot_bgcolor: 'rgba(255,255,255,0.9)',
+          font: { family: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif', size: 13 },
+          yaxis: { title: 'Número de casos', gridcolor: 'rgba(0,0,0,0.06)' },
+          xaxis: { tickfont: { size: 12 } },
+        }}
+        useResizeHandler={true}
+        config={{ responsive: true, displayModeBar: false }}
+        style={{ width: '100%' }}
+      />
+    </div>
+  )
+}
+
+CasosCombinados.propTypes = {
+  latestMortalidad: PropTypes.shape({ total_registros: PropTypes.number }),
+  latestMorbilidad: PropTypes.shape({ total_registros: PropTypes.number }),
+}
+
+const MESES_ES = [
+  'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+]
+
+function FilterPanel({ year, month, eventos, availableYears, onYearChange, onMonthChange, onEventosChange }) {
+  const toggleEvento = (codigo) => {
+    const isChecked = eventos.includes(codigo)
+    if (isChecked && eventos.length === 1) return
+    onEventosChange(isChecked ? eventos.filter(e => e !== codigo) : [...eventos, codigo])
+  }
+
+  const hasDateFilter = year || month
+
+  return (
+    <div className="filter-panel-okd">
+      <span className="filter-label-okd">Filtros</span>
+
+      <div className="filter-group-okd">
+        <select value={year} onChange={e => onYearChange(e.target.value)} className="filter-select-okd">
+          <option value="">Todos los años</option>
+          {availableYears.map(y => <option key={y} value={String(y)}>{y}</option>)}
+        </select>
+
+        <select value={month} onChange={e => onMonthChange(e.target.value)} className="filter-select-okd">
+          <option value="">Todos los meses</option>
+          {MESES_ES.map((m, i) => <option key={i + 1} value={String(i + 1)}>{m}</option>)}
+        </select>
+
+        {hasDateFilter && (
+          <button className="filter-clear-okd" onClick={() => { onYearChange(''); onMonthChange('') }}>
+            ✕ Limpiar
+          </button>
+        )}
+      </div>
+
+      <div className="filter-divider-okd" />
+
+      <div className="filter-eventos-okd">
+        <label className="filter-check-okd">
+          <input type="checkbox" checked={eventos.includes('549')} onChange={() => toggleEvento('549')} />
+          <span className="check-badge-549">549</span>
+          Morbilidad
+        </label>
+        <label className="filter-check-okd">
+          <input type="checkbox" checked={eventos.includes('550')} onChange={() => toggleEvento('550')} />
+          <span className="check-badge-550">550</span>
+          Mortalidad
+        </label>
+      </div>
+    </div>
+  )
+}
+
+FilterPanel.propTypes = {
+  year: PropTypes.string.isRequired,
+  month: PropTypes.string.isRequired,
+  eventos: PropTypes.arrayOf(PropTypes.string).isRequired,
+  availableYears: PropTypes.arrayOf(PropTypes.number).isRequired,
+  onYearChange: PropTypes.func.isRequired,
+  onMonthChange: PropTypes.func.isRequired,
+  onEventosChange: PropTypes.func.isRequired,
+}
+
 function AnalysisHomeSection({
   analysisType,
   currentAnalysisId,
@@ -274,24 +385,50 @@ function AnalysisHomeSection({
   latestMorbilidad,
   onSelectAnalysisType,
   onGoToUpload,
+  filterYear,
+  filterMonth,
+  filterEventos,
+  availableYears,
+  onAvailableYears,
+  onYearChange,
+  onMonthChange,
+  onEventosChange,
 }) {
+  const showMortalidad = filterEventos.includes('550')
+  const showMorbilidad = filterEventos.includes('549')
+
   return (
     <div className="analysis-home">
+      <CasosCombinados latestMortalidad={latestMortalidad} latestMorbilidad={latestMorbilidad} />
+      <FilterPanel
+        year={filterYear}
+        month={filterMonth}
+        eventos={filterEventos}
+        availableYears={availableYears}
+        onYearChange={onYearChange}
+        onMonthChange={onMonthChange}
+        onEventosChange={onEventosChange}
+      />
+
       <div className="analysis-switcher">
-        <button
-          className={`analysis-switch-btn ${analysisType === 'mortalidad' ? 'active' : ''}`}
-          onClick={() => onSelectAnalysisType('mortalidad')}
-        >
-          <span>Mortalidad</span>
-          <small>{latestMortalidad ? latestMortalidad.nombre_archivo : 'Sin análisis cargado'}</small>
-        </button>
-        <button
-          className={`analysis-switch-btn ${analysisType === 'morbilidad' ? 'active' : ''}`}
-          onClick={() => onSelectAnalysisType('morbilidad')}
-        >
-          <span>Morbilidad</span>
-          <small>{latestMorbilidad ? latestMorbilidad.nombre_archivo : 'Sin análisis cargado'}</small>
-        </button>
+        {showMortalidad && (
+          <button
+            className={`analysis-switch-btn ${analysisType === 'mortalidad' ? 'active' : ''}`}
+            onClick={() => onSelectAnalysisType('mortalidad')}
+          >
+            <span>Mortalidad</span>
+            <small>{latestMortalidad ? latestMortalidad.nombre_archivo : 'Sin análisis cargado'}</small>
+          </button>
+        )}
+        {showMorbilidad && (
+          <button
+            className={`analysis-switch-btn ${analysisType === 'morbilidad' ? 'active' : ''}`}
+            onClick={() => onSelectAnalysisType('morbilidad')}
+          >
+            <span>Morbilidad</span>
+            <small>{latestMorbilidad ? latestMorbilidad.nombre_archivo : 'Sin análisis cargado'}</small>
+          </button>
+        )}
       </div>
 
       {!currentAnalysisId && (
@@ -313,6 +450,9 @@ function AnalysisHomeSection({
           analisisId={currentAnalysisId}
           showBackButton={false}
           embedded={true}
+          filterYear={filterYear}
+          filterMonth={filterMonth}
+          onAvailableYears={onAvailableYears}
         />
       )}
     </div>
@@ -322,14 +462,18 @@ function AnalysisHomeSection({
 AnalysisHomeSection.propTypes = {
   analysisType: PropTypes.oneOf(['mortalidad', 'morbilidad']).isRequired,
   currentAnalysisId: PropTypes.number,
-  latestMortalidad: PropTypes.shape({
-    nombre_archivo: PropTypes.string.isRequired,
-  }),
-  latestMorbilidad: PropTypes.shape({
-    nombre_archivo: PropTypes.string.isRequired,
-  }),
+  latestMortalidad: PropTypes.shape({ nombre_archivo: PropTypes.string.isRequired }),
+  latestMorbilidad: PropTypes.shape({ nombre_archivo: PropTypes.string.isRequired }),
   onSelectAnalysisType: PropTypes.func.isRequired,
   onGoToUpload: PropTypes.func.isRequired,
+  filterYear: PropTypes.string.isRequired,
+  filterMonth: PropTypes.string.isRequired,
+  filterEventos: PropTypes.arrayOf(PropTypes.string).isRequired,
+  availableYears: PropTypes.arrayOf(PropTypes.number).isRequired,
+  onAvailableYears: PropTypes.func.isRequired,
+  onYearChange: PropTypes.func.isRequired,
+  onMonthChange: PropTypes.func.isRequired,
+  onEventosChange: PropTypes.func.isRequired,
 }
 
 function UploadSection({
@@ -429,6 +573,12 @@ export default function DashboardOKD({ onLogout }) {
   const [selectedAnalisisId, setSelectedAnalisisId] = useState(null)
   const [hasAutoOpenedLatest, setHasAutoOpenedLatest] = useState(false)
   const [analisisList, setAnalisisList] = useState([])
+
+  // Filtros
+  const [filterYear, setFilterYear] = useState('')
+  const [filterMonth, setFilterMonth] = useState('')
+  const [filterEventos, setFilterEventos] = useState(['549', '550'])
+  const [availableYears, setAvailableYears] = useState([])
 
   // Estados para carga de archivos
   const [mortalidadFile, setMortalidadFile] = useState(null)
@@ -540,9 +690,23 @@ export default function DashboardOKD({ onLogout }) {
   const handleSelectAnalysisType = (tipo) => {
     setAnalysisType(tipo)
     setActiveView('analisis')
-
     const nextAnalysis = tipo === 'mortalidad' ? latestMortalidad : latestMorbilidad
     setSelectedAnalisisId(nextAnalysis?.id || null)
+  }
+
+  const handleEventosChange = (nextEventos) => {
+    setFilterEventos(nextEventos)
+    setAvailableYears([])
+    setFilterYear('')
+    setFilterMonth('')
+    if (analysisType === 'morbilidad' && !nextEventos.includes('549') && nextEventos.includes('550')) {
+      setAnalysisType('mortalidad')
+      setSelectedAnalisisId(latestMortalidad?.id || null)
+    }
+    if (analysisType === 'mortalidad' && !nextEventos.includes('550') && nextEventos.includes('549')) {
+      setAnalysisType('morbilidad')
+      setSelectedAnalisisId(latestMorbilidad?.id || null)
+    }
   }
 
   const pageTitle = {
@@ -650,6 +814,14 @@ export default function DashboardOKD({ onLogout }) {
               latestMorbilidad={latestMorbilidad}
               onSelectAnalysisType={handleSelectAnalysisType}
               onGoToUpload={setActiveView}
+              filterYear={filterYear}
+              filterMonth={filterMonth}
+              filterEventos={filterEventos}
+              availableYears={availableYears}
+              onAvailableYears={setAvailableYears}
+              onYearChange={setFilterYear}
+              onMonthChange={setFilterMonth}
+              onEventosChange={handleEventosChange}
             />
           )}
 

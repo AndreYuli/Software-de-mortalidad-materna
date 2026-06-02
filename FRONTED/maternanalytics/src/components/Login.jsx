@@ -1,34 +1,37 @@
 import { useState } from 'react'
 import './Login.css'
 
-const FAKE_CREDENTIALS = {
-  email: 'analista@vidamaterna.gov.co',
-  password: 'VidaMaterna2025',
-}
+const API_URL = 'http://localhost:8000/api'
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onRegister }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
-    setTimeout(() => {
-      if (email === FAKE_CREDENTIALS.email && password === FAKE_CREDENTIALS.password) {
-        const nameFromEmail = email.split('@')[0] || 'Usuario'
-        const prettyName = nameFromEmail
-          .replace(/[._-]+/g, ' ')
-          .replace(/\b\w/g, (c) => c.toUpperCase())
-        localStorage.setItem('username', prettyName)
-        onLogin()
-      } else {
-        setError('Correo o contraseña incorrectos.')
-        setIsLoading(false)
+    try {
+      const res = await fetch(`${API_URL}/auth/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Correo o contraseña incorrectos.')
+        return
       }
-    }, 1200)
+      localStorage.setItem('username', data.nombre)
+      localStorage.setItem('user_email', data.email)
+      onLogin()
+    } catch {
+      setError('No se pudo conectar al servidor. Verifica que el backend esté activo.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -123,7 +126,8 @@ export default function Login({ onLogin }) {
           </form>
 
           <p className="footer-text">
-            ¿No tienes una cuenta? <a href="#">Solicitar acceso</a>
+            ¿No tienes una cuenta?{' '}
+            <a href="#" onClick={(e) => { e.preventDefault(); onRegister() }}>Crear cuenta</a>
           </p>
         </div>
 

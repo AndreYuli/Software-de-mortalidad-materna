@@ -12,7 +12,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .models import Analisis, CasoMorbilidad, CasoMortalidad, Paciente, VMorbilidadCompleta, VMortalidadCompleta
+from django.contrib.auth.hashers import check_password, make_password
+
+from .models import Analisis, CasoMorbilidad, CasoMortalidad, Paciente, Usuario, VMorbilidadCompleta, VMortalidadCompleta
 from .serializers import (
     AnalisisSerializer,
     MorbilidadCompletaSerializer,
@@ -45,7 +47,11 @@ COLUMNAS_MORTALIDAD = [
     COLUMNA_NUM_CPN_MORTALIDAD, '8.2 Semana inicio CPN', COLUMNA_MOMENTO_MUERTE,
     '9.2 Semana gestación', '9.4 Tipo de parto', COLUMNA_CAUSA_BASICA_CIE10,
     '10.3.1 Demora 1', '10.3.2 Demora 2', '10.3.3 Demora 3', '10.3.4 Demora 4',
+    'Fecha de Nacimiento',
 ]
+
+# Columnas opcionales que se canonicalizan si están presentes (no bloquean la carga)
+COLUMNAS_OPCIONALES_MORTALIDAD = ['5.2 Fecha de defunción']
 
 COLUMNAS_MORBILIDAD = [
     'Nombres y apellidos', 'Tipo de ID', 'N° identificación',
@@ -56,6 +62,7 @@ COLUMNAS_MORBILIDAD = [
     'Preeclampsia', 'Ruptura uterina', 'Ingreso UCI', 'Cirugía adicional',
     'Transfusión', 'Total criterios', 'Causa principal CIE-10',
     'Días estancia hospitalaria', 'Días estancia UCI',
+    'Fecha de Nacimiento', 'Fecha de egreso',
 ]
 
 COLUMNAS_REQUERIDAS = {
@@ -75,11 +82,20 @@ ALIAS_COLUMNAS = {
         'Causa principal CIE-10': ['Causa principal cie10', 'Causa principal CIE10'],
         'Días estancia hospitalaria': ['Dias estancia hospitalaria'],
         'Días estancia UCI': ['Dias estancia UCI'],
+        'Fecha de Nacimiento': ['Fecha de nacimiento', 'Fecha nacimiento'],
+        'Fecha de egreso': ['Fecha egreso', 'Fecha de egreso (dd/mm/aaaa)', 'Fecha egreso (dd/mm/aaaa)', 'Fecha de egreso (dd/mm/yyyy)', 'Fecha egreso (dd/mm/yyyy)'],
     },
     'mortalidad': {
         COLUMNA_TIPO_ID_MORTALIDAD: ['B. Tipo de ID', 'B Tipo ID'],
         COLUMNA_NUMERO_ID_MORTALIDAD: ['C. Numero ID', 'C Número ID'],
         COLUMNA_NUM_CPN_MORTALIDAD: ['8.1 N° CPN', '8.1 Nº CPN', '8.1 Numero CPN'],
+        'Fecha de Nacimiento': ['Fecha de nacimiento', 'Fecha nacimiento', 'Fecha de Nacimiento (dd/mm/aaaa)', 'Fecha nacimiento (dd/mm/aaaa)'],
+        '5.2 Fecha de defunción': [
+            '5.2 Fecha defunción', 'Fecha de defunción', 'Fecha defunción',
+            '5.2 Fecha de defunción (dd/mm/aaaa)', '5.2 Fecha de defuncion (dd/mm/aaaa)',
+            '5.2 Fecha de defuncion', '5.2 Fecha defuncion',
+            'Fecha de defuncion', 'Fecha defuncion',
+        ],
     },
 }
 
@@ -280,6 +296,9 @@ MORTALIDAD_ANALISIS_MAPPING = {
     'tipo_id': 'B. Tipo ID',
     'numero_id': 'C. Número ID',
     'sitio_defuncion': '5.1 Sitio de Defunción',
+    'fecha_defuncion': '5.2 Fecha de defunción',
+    'fecha_nacimiento': 'Fecha de Nacimiento',
+    'edad': 'Edad',
     'convivencia': '6.1 Convivencia',
     'escolaridad': '6.3 Escolaridad',
     'regulacion_fecundidad': '6.4 Regulación Fecundidad',
@@ -492,23 +511,132 @@ def detalle_analisis(request, pk):
     return Response(AnalisisSerializer(analisis).data)
 
 
+_EXCEL_ORIGIN = pd.Timestamp('1899-12-30')
+
+
+def _parse_valor_fecha(v):
+    """Parsea un valor individual: datetime nativo, serial Excel o string DD/MM/YYYY."""
+    if v is None:
+        return pd.NaT
+    try:
+        if pd.isna(v):
+            return pd.NaT
+    except (TypeError, ValueError):
+        pass
+    # Ya es un objeto fecha/datetime
+    if hasattr(v, 'date') or hasattr(v, 'year'):
+        try:
+            return pd.Timestamp(v)
+        except Exception:
+            pass
+    # Serial numérico de Excel (rango ~1902-2173 equivale a 1000-100000)
+    try:
+        n = float(v)
+        if 1000 < n < 100000:
+            return _EXCEL_ORIGIN + pd.Timedelta(days=int(n))
+    except (ValueError, TypeError):
+        pass
+    # String con formato DD/MM/YYYY (colombiano)
+    try:
+        ts = pd.to_datetime(str(v), dayfirst=True, errors='coerce')
+        if not pd.isna(ts):
+            return ts
+    except Exception:
+        pass
+    return pd.NaT
+
+
+def _parse_serie_fechas(serie):
+    """Parsea una serie de fechas: datetime, serial Excel o string DD/MM/YYYY."""
+    if pd.api.types.is_datetime64_any_dtype(serie):
+        return serie
+    parsed = [_parse_valor_fecha(v) for v in serie]
+    return pd.Series(parsed, index=serie.index, dtype='datetime64[ns]')
+
+
+def _candidatos_fecha(tipo):
+    if tipo == 'mortalidad':
+        return [
+            '9.3 Fecha parto (dd/mm/aaaa)', '9.3 Fecha parto',
+            'Fecha parto (dd/mm/aaaa)', 'Fecha parto',
+            '5.2 Fecha de defunción', '5.2 Fecha de defuncion',
+            'Fecha de defunción', 'Fecha de defuncion',
+        ]
+    return [
+        'Fecha de egreso', 'Fecha egreso',
+        'Fecha de egreso (dd/mm/aaaa)', 'Fecha egreso (dd/mm/aaaa)',
+        'Fecha de egreso (dd/mm/yyyy)', 'Fecha egreso (dd/mm/yyyy)',
+    ]
+
+
+def _detectar_col_fecha(df, tipo):
+    candidatos = _candidatos_fecha(tipo)
+    candidatos_norm = {_normalizar_encabezado(c) for c in candidatos}
+    for col in df.columns:
+        if col in candidatos or _normalizar_encabezado(col) in candidatos_norm:
+            return col
+    return None
+
+
+def _extraer_anos_disponibles(df, tipo):
+    col = _detectar_col_fecha(df, tipo)
+    if col is not None:
+        fechas = _parse_serie_fechas(df[col])
+        anos = sorted(fechas.dropna().dt.year.unique().astype(int).tolist())
+        if anos:
+            return anos
+    return []
+
+
+def _enriquecer_df_con_fecha(df, tipo):
+    """No-op: la detección ahora cubre todos los formatos de columna conocidos."""
+    return df
+
+
+def _filtrar_dataframe_por_fecha(df, tipo, year, month):
+    if not (year or month):
+        return df
+    col = _detectar_col_fecha(df, tipo)
+    if col is None:
+        return df
+    fechas = _parse_serie_fechas(df[col])
+    mask = pd.Series([True] * len(df), index=df.index)
+    if year:
+        mask &= fechas.dt.year == int(year)
+    if month:
+        mask &= fechas.dt.month == int(month)
+    return df[mask].reset_index(drop=True)
+
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def analisis_completo(request, pk):
     """
     GET /api/analisis/<id>/completo/
     Genera análisis completo con estadísticas, clustering y visualizaciones.
+    Acepta query params: year, month para filtrar por fecha.
     """
     try:
         analisis = Analisis.objects.get(pk=pk)
     except Analisis.DoesNotExist:
         return Response({'error': ERROR_ANALISIS_NO_ENCONTRADO}, status=status.HTTP_404_NOT_FOUND)
-    
+
+    year = request.query_params.get('year', '').strip() or None
+    month = request.query_params.get('month', '').strip() or None
+
     # Leer archivo y procesar
     try:
         df = pd.read_excel(analisis.archivo.path, engine='openpyxl')
+        df = _canonizar_columnas_dataframe(df, analisis.tipo)
         df, limpieza = preparar_dataframe_analisis(df)
-        
+
+        # Si el Excel no tiene columna de fecha, la enriquecemos desde la BD
+        df = _enriquecer_df_con_fecha(df, analisis.tipo)
+
+        anos_disponibles = _extraer_anos_disponibles(df, analisis.tipo)
+
+        df = _filtrar_dataframe_por_fecha(df, analisis.tipo, year, month)
+
         if analisis.tipo == 'mortalidad':
             processor = MortalidadProcessor(df)
             resultado = {
@@ -521,6 +649,9 @@ def analisis_completo(request, pk):
                 'momento_muerte': processor.analizar_momento_muerte(),
                 'demoras': processor.analizar_demoras(),
                 'causas_cie10': processor.analizar_causas_cie10(top_n=15),
+                'obstetrico_edad': processor.analizar_obstetrico_por_edad(),
+                'anos_disponibles': anos_disponibles,
+                'filtros_activos': {'year': year, 'month': month},
             }
         else:  # morbilidad
             processor = MorbilidadProcessor(df)
@@ -533,10 +664,15 @@ def analisis_completo(request, pk):
                 'estadisticas_basicas': processor.calcular_estadisticas_basicas(),
                 'criterios_inclusion': processor.analizar_criterios_inclusion(),
                 'momento_ocurrencia': processor.analizar_momento_ocurrencia(),
+                'institucion_referencia': processor.analizar_institucion_referencia(),
+                'tiempo_remision': processor.analizar_tiempo_remision(),
+                'obstetrico_edad': processor.analizar_obstetrico_por_edad(),
+                'anos_disponibles': anos_disponibles,
+                'filtros_activos': {'year': year, 'month': month},
             }
-        
+
         return Response(resultado)
-    
+
     except Exception as e:
         return Response(
             {'error': f'Error al procesar el análisis: {str(e)}'},
@@ -664,5 +800,50 @@ def listar_mortalidad_sivigila(request):
     limite = obtener_limite(request)
     casos = VMortalidadCompleta.objects.order_by('id_caso')[:limite]
     return Response(MortalidadCompletaSerializer(casos, many=True).data)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def register_usuario(request):
+    nombre = request.data.get('nombre', '').strip()
+    email = request.data.get('email', '').strip().lower()
+    password = request.data.get('password', '')
+
+    if not nombre or not email or not password:
+        return Response({'error': 'Todos los campos son requeridos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if len(password) < 6:
+        return Response({'error': 'La contraseña debe tener al menos 6 caracteres.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    if Usuario.objects.filter(email=email).exists():
+        return Response({'error': 'Ya existe una cuenta con este correo electrónico.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    usuario = Usuario.objects.create(
+        nombre=nombre,
+        email=email,
+        password_hash=make_password(password),
+    )
+    return Response({'id': usuario.id, 'nombre': usuario.nombre, 'email': usuario.email}, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_usuario(request):
+    email = request.data.get('email', '').strip().lower()
+    password = request.data.get('password', '')
+
+    if not email or not password:
+        return Response({'error': 'Correo y contraseña son requeridos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        usuario = Usuario.objects.get(email=email)
+    except Usuario.DoesNotExist:
+        return Response({'error': 'Correo o contraseña incorrectos.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not check_password(password, usuario.password_hash):
+        return Response({'error': 'Correo o contraseña incorrectos.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    localStorage_nombre = usuario.nombre
+    return Response({'id': usuario.id, 'nombre': localStorage_nombre, 'email': usuario.email})
 
 

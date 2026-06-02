@@ -39,6 +39,20 @@ class SivigilaImportacion(models.Model):
         verbose_name_plural = 'Importaciones SIVIGILA'
 
 
+class Usuario(models.Model):
+    nombre = models.CharField(max_length=150)
+    email = models.EmailField(unique=True)
+    password_hash = models.CharField(max_length=255)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Usuario'
+        verbose_name_plural = 'Usuarios'
+
+    def __str__(self):
+        return f'{self.nombre} <{self.email}>'
+
+
 from .sivigila_models import (  # noqa: E402
     AntecedenteMaterno,
     AntecedentePartoPuerperio,

@@ -12,4 +12,6 @@ urlpatterns = [
     path('sivigila/pacientes/', views.listar_pacientes, name='listar-pacientes'),
     path('sivigila/morbilidad/', views.listar_morbilidad_sivigila, name='listar-morbilidad-sivigila'),
     path('sivigila/mortalidad/', views.listar_mortalidad_sivigila, name='listar-mortalidad-sivigila'),
+    path('auth/register/', views.register_usuario, name='register-usuario'),
+    path('auth/login/', views.login_usuario, name='login-usuario'),
 ]

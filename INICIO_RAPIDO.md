@@ -32,10 +32,10 @@ El backend estará disponible en: **http://localhost:8000**
 cd C:\Users\lopez\Documents\UNIVERSIDAD\Software-de-mortalidad-materna\FRONTED\maternanalytics
 
 # Instalar dependencias (si no están instaladas)
-node "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" install
+pnpm install
 
 # Iniciar servidor de desarrollo
-node "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" run dev
+pnpm dev
 ```
 
 El frontend estará disponible en: **http://localhost:5173**
@@ -175,8 +175,8 @@ python manage.py runserver
 
 ### **Ver logs del frontend**
 ```powershell
-cd FRONTED/maternanalytics
-node "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" run dev
+cd C:\Users\lopez\Documents\UNIVERSIDAD\Software-de-mortalidad-materna\FRONTED\maternanalytics
+pnpm dev
 # Los logs aparecen en consola y navegador (F12)
 ```
 
@@ -191,11 +191,13 @@ python manage.py migrate
 
 ### **Limpiar instalación frontend**
 ```powershell
-cd FRONTED/maternanalytics
+cd C:\Users\lopez\Documents\UNIVERSIDAD\Software-de-mortalidad-materna\FRONTED\maternanalytics
 # Eliminar node_modules
-rmdir /s node_modules
+rmdir /s /q node_modules
+# Eliminar lockfile
+del pnpm-lock.yaml
 # Reinstalar
-node "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" install
+pnpm install
 ```
 
 ---
@@ -244,7 +246,7 @@ Para probar el sistema, usa archivos Excel con esta estructura:
 
 1. Abre **2 terminales PowerShell**
 2. Terminal 1: `cd BACKEND && python manage.py runserver`
-3. Terminal 2: `cd FRONTED/maternanalytics && node "C:\...\npm-cli.js" run dev`
+3. Terminal 2: `cd FRONTED/maternanalytics && pnpm dev`
 4. Abre **http://localhost:5173** en tu navegador
 5. ¡Comienza a analizar datos!
 
