@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import Login from './components/Login'
+import Register from './components/Register'
 import DashboardOKD from './components/DashboardOKD'
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false)
+  const [view, setView] = useState('login')
 
-  return loggedIn
-    ? <DashboardOKD onLogout={() => setLoggedIn(false)} />
-    : <Login onLogin={() => setLoggedIn(true)} />
+  if (view === 'dashboard') return <DashboardOKD onLogout={() => setView('login')} />
+  if (view === 'register') return <Register onRegistered={() => setView('login')} onBack={() => setView('login')} />
+  return <Login onLogin={() => setView('dashboard')} onRegister={() => setView('register')} />
 }
 
 export default App

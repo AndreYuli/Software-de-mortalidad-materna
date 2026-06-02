@@ -11,6 +11,105 @@ from scipy.cluster.hierarchy import dendrogram, linkage
 from scipy.spatial.distance import pdist
 
 
+_EXCEL_ORIGIN = pd.Timestamp('1899-12-30')
+
+
+def _parse_fecha_robusta(serie):
+    """Parsea una serie de fechas: datetime, serial Excel (1000-100000) o string DD/MM/YYYY."""
+    if pd.api.types.is_datetime64_any_dtype(serie):
+        return serie
+    resultado = []
+    for v in serie:
+        ts = pd.NaT
+        if v is None:
+            pass
+        elif hasattr(v, 'year'):
+            try:
+                ts = pd.Timestamp(v)
+            except Exception:
+                pass
+        else:
+            try:
+                n = float(v)
+                if 1000 < n < 100000:
+                    ts = _EXCEL_ORIGIN + pd.Timedelta(days=int(n))
+            except (ValueError, TypeError):
+                try:
+                    ts = pd.to_datetime(str(v), dayfirst=True, errors='coerce')
+                except Exception:
+                    pass
+        resultado.append(ts)
+    return pd.Series(resultado, index=serie.index, dtype='datetime64[ns]')
+
+
+def preparar_dataframe_analisis(df):
+    """Normaliza el DataFrame y elimina filas vacias o duplicadas exactas para analisis."""
+    normalizado = df.copy()
+    total_original = len(normalizado)
+
+    if total_original == 0:
+        return normalizado, {'total_original': 0, 'filas_vacias_omitidas': 0, 'filas_duplicadas_omitidas': 0}
+
+    # Calcular Edad si 'Fecha de Nacimiento' y alguna columna de fecha del caso existen
+    birth_col = 'Fecha de Nacimiento'
+    event_col_candidates = [
+        '9.3 Fecha parto (dd/mm/aaaa)', '9.3 Fecha parto',
+        '5.2 Fecha de defunción', '5.2 Fecha de defuncion',
+        'Fecha de egreso', 'Fecha de egreso (dd/mm/aaaa)',
+    ]
+
+    if birth_col in normalizado.columns:
+        event_col = next((c for c in event_col_candidates if c in normalizado.columns), None)
+        print(f"[EDAD] birth_col={birth_col!r} event_col={event_col!r} cols={list(normalizado.columns)}")
+
+        if event_col:
+            try:
+                nacs = _parse_fecha_robusta(normalizado[birth_col])
+                evs = _parse_fecha_robusta(normalizado[event_col])
+                print(f"[EDAD] nacs muestra: {nacs.dropna().head(3).tolist()}")
+                print(f"[EDAD] evs  muestra: {evs.dropna().head(3).tolist()}")
+                years = evs.dt.year - nacs.dt.year
+                before_birthday = (evs.dt.month < nacs.dt.month) | (
+                    (evs.dt.month == nacs.dt.month) & (evs.dt.day < nacs.dt.day)
+                )
+                edades = years - before_birthday.astype(int)
+                normalizado['Edad'] = edades.where((edades >= 0) & (edades <= 120))
+                print(f"[EDAD] edades válidas: {normalizado['Edad'].dropna().count()} de {len(normalizado)}")
+            except Exception as exc:
+                print(f"[EDAD] ERROR: {exc}")
+    else:
+        print(f"[EDAD] '{birth_col}' no está en el dataframe. Columnas: {list(normalizado.columns)}")
+
+    columnas_texto = normalizado.select_dtypes(include=['object']).columns
+    for columna in columnas_texto:
+        normalizado[columna] = normalizado[columna].apply(
+            lambda valor: valor.strip() if isinstance(valor, str) else valor
+        )
+
+    sin_vacias = normalizado.dropna(how='all')
+    filas_vacias_omitidas = total_original - len(sin_vacias)
+    sin_duplicadas = sin_vacias.drop_duplicates().reset_index(drop=True)
+    filas_duplicadas_omitidas = len(sin_vacias) - len(sin_duplicadas)
+
+    return sin_duplicadas, {
+        'total_original': total_original,
+        'filas_vacias_omitidas': filas_vacias_omitidas,
+        'filas_duplicadas_omitidas': filas_duplicadas_omitidas,
+    }
+
+
+def es_valor_positivo(valor):
+    if pd.isna(valor):
+        return False
+    if isinstance(valor, bool):
+        return valor
+    if isinstance(valor, (int, float)):
+        return float(valor) != 0
+
+    texto = str(valor).strip().lower()
+    return texto in {'1', 'si', 'sí', 's', 'true', 'x', 'yes', 'y'}
+
+
 class MortalidadProcessor:
     """Procesador de datos de Mortalidad Materna (Evento 550)."""
     
@@ -79,6 +178,11 @@ class MortalidadProcessor:
             'controles_prenatales_promedio': None,
         }
         
+        if 'Edad' in self.df.columns:
+            edades = self.df['Edad'].dropna()
+            if not edades.empty:
+                stats['edad_promedio'] = float(edades.mean())
+
         if '6.5 Gestaciones' in self.df.columns:
             stats['gestaciones_promedio'] = float(self.df['6.5 Gestaciones'].mean())
         
@@ -114,9 +218,9 @@ class MortalidadProcessor:
         resultado = {}
         for key, col in demoras_cols.items():
             if col in self.df.columns:
-                # Contar valores positivos (1 = Sí hubo demora)
+                # Contar valores positivos (1, Sí, X, true, etc.)
                 total = self.df[col].notna().sum()
-                con_demora = (self.df[col] == 1).sum()
+                con_demora = self.df[col].apply(es_valor_positivo).sum()
                 resultado[key] = {
                     'nombre': self.DEMORAS[key],
                     'casos_con_demora': int(con_demora),
@@ -129,9 +233,9 @@ class MortalidadProcessor:
         """Analiza las causas básicas de muerte (CIE-10)."""
         if '10.1 Causa básica CIE-10' not in self.df.columns:
             return {}
-        
+
         causas = self.df['10.1 Causa básica CIE-10'].value_counts().head(top_n)
-        
+
         return {
             'top_causas': [
                 {'codigo': str(codigo), 'casos': int(casos)}
@@ -139,7 +243,53 @@ class MortalidadProcessor:
             ],
             'total_causas_unicas': int(self.df['10.1 Causa básica CIE-10'].nunique())
         }
-    
+
+    def analizar_obstetrico_por_edad(self):
+        """Histograma de variables obstétricas comparadas por grupo de edad."""
+        variables = [
+            ('6.5 Gestaciones', 'Gestaciones'),
+            ('6.6 Partos Vaginales', 'Partos vaginales'),
+            ('6.7 Cesáreas', 'Cesáreas'),
+            ('6.10 Abortos', 'Abortos'),
+        ]
+        grupos_edad = [
+            {'label': '<20', 'min': 0, 'max': 19},
+            {'label': '20-29', 'min': 20, 'max': 29},
+            {'label': '30-39', 'min': 30, 'max': 39},
+            {'label': '≥40', 'min': 40, 'max': 120},
+        ]
+        tiene_edad = 'Edad' in self.df.columns
+        resultado = {}
+
+        for col, nombre in variables:
+            if col not in self.df.columns:
+                continue
+            serie = pd.to_numeric(self.df[col], errors='coerce').dropna()
+            if len(serie) < 2:
+                continue
+            max_val = min(int(serie.max()), 10)
+            valores_eje = list(range(0, max_val + 1))
+            conteos_total = [int((serie == v).sum()) for v in valores_eje]
+
+            por_edad = {}
+            if tiene_edad:
+                edades = pd.to_numeric(self.df['Edad'], errors='coerce')
+                for grupo in grupos_edad:
+                    mask = (edades >= grupo['min']) & (edades <= grupo['max'])
+                    subgrupo = pd.to_numeric(self.df.loc[mask, col], errors='coerce').dropna()
+                    if len(subgrupo) > 0:
+                        por_edad[grupo['label']] = [int((subgrupo == v).sum()) for v in valores_eje]
+
+            resultado[col] = {
+                'nombre': nombre,
+                'valores_eje': valores_eje,
+                'conteos_total': conteos_total,
+                'por_edad': por_edad,
+                'promedio': float(serie.mean()),
+                'total': int(len(serie)),
+            }
+        return resultado
+
     def clustering_factores_riesgo(self, n_clusters=3):
         """
         Realiza clustering K-means sobre factores de riesgo.
@@ -309,11 +459,17 @@ class MorbilidadProcessor:
         """Calcula estadísticas descriptivas básicas."""
         stats = {
             'total_casos': len(self.df),
+            'edad_promedio': None,
             'estancia_hospitalaria_promedio': None,
             'estancia_uci_promedio': None,
             'criterios_promedio': None,
         }
         
+        if 'Edad' in self.df.columns:
+            edades = self.df['Edad'].dropna()
+            if not edades.empty:
+                stats['edad_promedio'] = float(edades.mean())
+
         if 'Días estancia hospitalaria' in self.df.columns:
             stats['estancia_hospitalaria_promedio'] = float(
                 self.df['Días estancia hospitalaria'].mean()
@@ -337,9 +493,8 @@ class MorbilidadProcessor:
         
         for col, nombre in self.CRITERIOS_INCLUSION.items():
             if col in self.df.columns:
-                # Contar casos positivos (1 = Sí)
                 total = self.df[col].notna().sum()
-                casos = (self.df[col] == 1).sum()
+                casos = self.df[col].apply(es_valor_positivo).sum()
                 resultado[col] = {
                     'nombre': nombre,
                     'casos': int(casos),
@@ -352,16 +507,116 @@ class MorbilidadProcessor:
         """Analiza el momento de ocurrencia de la morbilidad."""
         if 'Momento ocurrencia' not in self.df.columns:
             return {}
-        
+
         distribucion = self.df['Momento ocurrencia'].value_counts().to_dict()
-        
+
         return {
             'distribucion': {
                 self.MOMENTO_OCURRENCIA.get(k, f'Código {k}'): int(v)
                 for k, v in distribucion.items()
             }
         }
-    
+
+    _INST_REF_COLS = [
+        'Institución referencia 1', 'Institucion referencia 1',
+        'Institución de referencia 1', 'Institucion de referencia 1',
+    ]
+    _TIEMPO_REM_COLS = [
+        'Tiempo remisión (h)', 'Tiempo remision (h)',
+        'Tiempo remisión horas', 'Tiempo remision horas',
+    ]
+
+    def _find_col(self, candidates):
+        for c in candidates:
+            if c in self.df.columns:
+                return c
+        return None
+
+    def analizar_institucion_referencia(self):
+        """Distribución de casos por institución de referencia (Evento 549)."""
+        col = self._find_col(self._INST_REF_COLS)
+        if col is None:
+            return {}
+        serie = self.df[col].dropna().astype(str).str.strip()
+        serie = serie[~serie.str.lower().isin({'', 'nan', 'none', 'null', 'sin dato'})]
+        if len(serie) == 0:
+            return {}
+        top = serie.value_counts().head(15)
+        return {
+            'instituciones': top.index.tolist(),
+            'conteos': [int(v) for v in top.values],
+            'total_con_dato': int(len(serie)),
+            'total_casos': int(len(self.df)),
+        }
+
+    def analizar_tiempo_remision(self):
+        """Datos para boxplot de tiempo de remisión en horas."""
+        col = self._find_col(self._TIEMPO_REM_COLS)
+        if col is None:
+            return {}
+        serie = pd.to_numeric(self.df[col], errors='coerce').dropna()
+        serie = serie[serie >= 0]
+        if len(serie) < 3:
+            return {}
+        q1 = float(serie.quantile(0.25))
+        q3 = float(serie.quantile(0.75))
+        return {
+            'valores': serie.clip(upper=serie.quantile(0.99)).head(500).tolist(),
+            'min': float(serie.min()),
+            'q1': q1,
+            'median': float(serie.median()),
+            'mean': float(serie.mean()),
+            'q3': q3,
+            'max': float(serie.max()),
+            'total': int(len(serie)),
+        }
+
+    def analizar_obstetrico_por_edad(self):
+        """Histograma de variables obstétricas comparadas por grupo de edad."""
+        variables = [
+            ('N° gestaciones', 'Gestaciones'),
+            ('Partos vaginales', 'Partos vaginales'),
+            ('Cesáreas', 'Cesáreas'),
+            ('Abortos', 'Abortos'),
+        ]
+        grupos_edad = [
+            {'label': '<20', 'min': 0, 'max': 19},
+            {'label': '20-29', 'min': 20, 'max': 29},
+            {'label': '30-39', 'min': 30, 'max': 39},
+            {'label': '≥40', 'min': 40, 'max': 120},
+        ]
+        tiene_edad = 'Edad' in self.df.columns
+        resultado = {}
+
+        for col, nombre in variables:
+            if col not in self.df.columns:
+                continue
+            serie = pd.to_numeric(self.df[col], errors='coerce').dropna()
+            if len(serie) < 2:
+                continue
+            max_val = min(int(serie.max()), 10)
+            valores_eje = list(range(0, max_val + 1))
+            conteos_total = [int((serie == v).sum()) for v in valores_eje]
+
+            por_edad = {}
+            if tiene_edad:
+                edades = pd.to_numeric(self.df['Edad'], errors='coerce')
+                for grupo in grupos_edad:
+                    mask = (edades >= grupo['min']) & (edades <= grupo['max'])
+                    subgrupo = pd.to_numeric(self.df.loc[mask, col], errors='coerce').dropna()
+                    if len(subgrupo) > 0:
+                        por_edad[grupo['label']] = [int((subgrupo == v).sum()) for v in valores_eje]
+
+            resultado[col] = {
+                'nombre': nombre,
+                'valores_eje': valores_eje,
+                'conteos_total': conteos_total,
+                'por_edad': por_edad,
+                'promedio': float(serie.mean()),
+                'total': int(len(serie)),
+            }
+        return resultado
+
     def clustering_perfiles_morbilidad(self, n_clusters=3):
         """
         Clustering de perfiles de morbilidad materna.
@@ -483,10 +738,12 @@ def procesar_archivo_analisis(archivo_path, tipo):
     """
     try:
         df = pd.read_excel(archivo_path, engine='openpyxl')
+        df, limpieza = preparar_dataframe_analisis(df)
         
         if tipo == 'mortalidad':
             processor = MortalidadProcessor(df)
             return {
+                'limpieza_datos': limpieza,
                 'estadisticas_basicas': processor.calcular_estadisticas_basicas(),
                 'momento_muerte': processor.analizar_momento_muerte(),
                 'demoras': processor.analizar_demoras(),
@@ -497,6 +754,7 @@ def procesar_archivo_analisis(archivo_path, tipo):
         elif tipo == 'morbilidad':
             processor = MorbilidadProcessor(df)
             return {
+                'limpieza_datos': limpieza,
                 'estadisticas_basicas': processor.calcular_estadisticas_basicas(),
                 'criterios_inclusion': processor.analizar_criterios_inclusion(),
                 'momento_ocurrencia': processor.analizar_momento_ocurrencia(),

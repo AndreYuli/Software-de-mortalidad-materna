@@ -18,6 +18,13 @@
   padding: 32px 48px;
 }
 
+.analisis-view.embedded {
+  height: auto;
+  min-height: 100%;
+  padding: 0;
+  background: transparent;
+}
+
 /* Header */
 .analisis-header {
   display: flex;
@@ -57,6 +64,28 @@
 .header-info .filename {
   font-size: 13px;
   color: var(--text-light);
+}
+
+.filter-active-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.filter-active-badge span {
+  padding: 3px 10px;
+  background: rgba(77, 127, 212, 0.12);
+  color: var(--blue-700);
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.filter-active-badge .filter-active-count {
+  background: var(--blue-700);
+  color: #fff;
 }
 
 /* Tabs */
@@ -310,6 +339,14 @@
   overflow: hidden;
 }
 
+.chart-title {
+  margin: 0 0 14px;
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  line-height: 1.15;
+  color: var(--blue-900);
+}
+
 .chart-meta {
   display: flex;
   align-items: center;
@@ -320,6 +357,28 @@
 .chart-subtitle {
   font-size: 12px;
   color: var(--text-light);
+}
+
+.chart-explanation {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(240, 247, 255, 0.95), rgba(232, 240, 252, 0.9));
+  border: 1px solid rgba(42, 82, 152, 0.12);
+}
+
+.chart-explanation strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--blue-900);
+}
+
+.chart-explanation p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-mid);
 }
 
 /* Clustering Tab */
@@ -436,6 +495,45 @@
   font-size: 18px;
 }
 
+.cluster-legend {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.cluster-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(77, 127, 212, 0.08);
+  color: var(--text-mid);
+  font-size: 13px;
+}
+
+.cluster-legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.cluster-legend-size {
+  color: var(--blue-700);
+  font-weight: 600;
+}
+
+.cluster-help-text {
+  margin: 14px auto 0;
+  max-width: 760px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-light);
+}
+
 /* Cluster Profiles */
 .cluster-profiles {
   margin-top: 32px;
@@ -478,6 +576,12 @@
   letter-spacing: 0.5px;
 }
 
+.profile-subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-light);
+}
+
 .profile-size {
   font-size: 13px;
   font-weight: 600;
@@ -485,6 +589,13 @@
   background: rgba(77, 127, 212, 0.1);
   padding: 4px 10px;
   border-radius: 12px;
+}
+
+.profile-description {
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-mid);
 }
 
 .profile-features {

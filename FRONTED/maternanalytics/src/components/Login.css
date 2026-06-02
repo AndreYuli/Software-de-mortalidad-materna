@@ -135,6 +135,10 @@ html,body{height:100%;font-family:'Plus Jakarta Sans',sans-serif;background:var(
 
 .error-msg{font-size:13px;color:#c0392b;background:#ffeaea;border:1px solid #f5c6cb;border-radius:8px;padding:10px 14px;margin-bottom:16px;text-align:center}
 
+.register-success{display:flex;flex-direction:column;align-items:center;gap:16px;padding:32px 16px;text-align:center;animation:fadeUp 0.5s ease-out}
+.register-success svg{width:56px;height:56px;color:#2ca02c;stroke:#2ca02c}
+.register-success p{font-size:15px;color:var(--text-mid);line-height:1.6}
+
 .bottom-bar{
   position:absolute;bottom:24px;left:0;right:0;text-align:center;
   font-size:11px;color:var(--text-light);letter-spacing:0.3px;

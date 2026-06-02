@@ -7,7 +7,7 @@ Sistema de análisis y visualización de datos de mortalidad materna, desarrolla
 Antes de comenzar, asegúrate de tener instalado:
 
 - **Python 3.8+** (recomendado: Python 3.10 o superior)
-- **Node.js 16+** y **npm** (recomendado: Node.js 18 o superior)
+- **Node.js 16+** y **pnpm** (recomendado: Node.js 18 o superior)
 - **Git**
 
 ## 🚀 Instalación y Configuración
@@ -67,12 +67,12 @@ Antes de comenzar, asegúrate de tener instalado:
 2. **Instala las dependencias:**
 
    ```bash
-   npm install
+   pnpm install
    ```
 3. **Inicia el servidor de desarrollo:**
 
    ```bash
-   npm run dev
+   pnpm dev
    ```
 
    El frontend estará disponible en: `http://localhost:5173` (o el puerto que Vite asigne)
@@ -142,16 +142,16 @@ python manage.py test
 
 ```bash
 # Iniciar en modo desarrollo
-npm run dev
+pnpm dev
 
 # Construir para producción
-npm run build
+pnpm build
 
 # Vista previa de la build de producción
-npm run preview
+pnpm preview
 
 # Ejecutar linter
-npm run lint
+pnpm lint
 ```
 
 ## 🌐 URLs Importantes

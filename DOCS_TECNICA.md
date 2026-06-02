@@ -83,11 +83,11 @@ python manage.py runserver
 ```bash
 cd FRONTED/maternanalytics
 
-# Instalar dependencias (usando node directamente)
-node "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" install
+# Instalar dependencias
+pnpm install
 
 # Iniciar desarrollo
-node "C:\Program Files\nodejs\node_modules\npm\bin\npm-cli.js" run dev
+pnpm dev
 ```
 
 ---
@@ -280,7 +280,7 @@ CRITERIOS_INCLUSION = {
 - Revisar que las columnas numéricas tengan valores válidos
 
 ### **Gráficos no se muestran**
-- Verificar que Plotly esté instalado: `npm list react-plotly.js`
+- Verificar que Plotly esté instalado: `pnpm list react-plotly.js`
 - Limpiar caché del navegador
 
 ### **Backend no responde**
