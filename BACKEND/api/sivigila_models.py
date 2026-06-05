@@ -1,7 +1,15 @@
+"""Modelos ORM de las tablas SIVIGILA (unmanaged).
+
+Todos los modelos de este módulo tienen managed=False porque las tablas
+son creadas y mantenidas por el esquema SIVIGILA externo, no por
+las migraciones de Django.
+"""
 from django.db import models
 
 
 class CatConvivencia(models.Model):
+    """Catálogo de tipos de convivencia de la paciente (campo 6.1)."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=30)
 
@@ -11,6 +19,8 @@ class CatConvivencia(models.Model):
 
 
 class CatEscolaridad(models.Model):
+    """Catálogo de niveles de escolaridad (campo 6.3)."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=30)
 
@@ -20,6 +30,8 @@ class CatEscolaridad(models.Model):
 
 
 class CatFuenteCausaMuerte(models.Model):
+    """Catálogo de fuentes de la causa básica de muerte."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=30)
 
@@ -29,6 +41,8 @@ class CatFuenteCausaMuerte(models.Model):
 
 
 class CatGrupoCausa(models.Model):
+    """Catálogo de grupos de causa según clasificación epidemiológica."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=60)
 
@@ -38,6 +52,8 @@ class CatGrupoCausa(models.Model):
 
 
 class CatMomentoMuerte(models.Model):
+    """Catálogo de momentos de la muerte (campo 9.1 del Evento 550)."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=30)
 
@@ -47,6 +63,8 @@ class CatMomentoMuerte(models.Model):
 
 
 class CatNivelAtencion(models.Model):
+    """Catálogo de niveles de atención en salud (I, II, III, IV)."""
+
     id = models.SmallIntegerField(primary_key=True)
     nivel = models.CharField(max_length=3, unique=True)
 
@@ -56,6 +74,8 @@ class CatNivelAtencion(models.Model):
 
 
 class CatPersonalSalud(models.Model):
+    """Catálogo de tipos de personal de salud que atendió a la paciente."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=30)
 
@@ -65,6 +85,8 @@ class CatPersonalSalud(models.Model):
 
 
 class CatRegulacionFecundidad(models.Model):
+    """Catálogo de métodos de regulación de fecundidad (campo 6.4)."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=50)
 
@@ -74,6 +96,8 @@ class CatRegulacionFecundidad(models.Model):
 
 
 class CatRemisiones(models.Model):
+    """Catálogo de tipos de remisión oportuna durante el CPN."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=15)
 
@@ -83,6 +107,8 @@ class CatRemisiones(models.Model):
 
 
 class CatSitioDefuncion(models.Model):
+    """Catálogo de sitios donde ocurrió la defunción (campo 5.1)."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=60)
 
@@ -92,6 +118,8 @@ class CatSitioDefuncion(models.Model):
 
 
 class CatTerminacionGestacion(models.Model):
+    """Catálogo de tipos de terminación de la gestación."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=30)
 
@@ -101,6 +129,8 @@ class CatTerminacionGestacion(models.Model):
 
 
 class CatTipoId(models.Model):
+    """Catálogo de tipos de documento de identificación (CC, CE, TI, etc.)."""
+
     id = models.SmallIntegerField(primary_key=True)
     codigo = models.CharField(max_length=5, unique=True)
     descripcion = models.CharField(max_length=50)
@@ -111,6 +141,8 @@ class CatTipoId(models.Model):
 
 
 class CatTipoParto(models.Model):
+    """Catálogo de tipos de parto (vaginal, cesárea, etc.)."""
+
     id = models.SmallIntegerField(primary_key=True)
     descripcion = models.CharField(max_length=20)
 
@@ -120,6 +152,8 @@ class CatTipoParto(models.Model):
 
 
 class Paciente(models.Model):
+    """Datos demográficos básicos de la paciente SIVIGILA."""
+
     id_paciente = models.AutoField(primary_key=True)
     nombres_apellidos = models.CharField(max_length=200)
     id_tipo = models.ForeignKey(CatTipoId, models.DO_NOTHING)
@@ -134,8 +168,12 @@ class Paciente(models.Model):
 
 
 class CasoMorbilidad(models.Model):
+    """Caso de Morbilidad Materna Extrema (Evento SIVIGILA 549)."""
+
     id_caso = models.AutoField(primary_key=True)
-    id_paciente = models.ForeignKey(Paciente, models.DO_NOTHING, db_column='id_paciente')
+    id_paciente = models.ForeignKey(
+        Paciente, models.DO_NOTHING, db_column='id_paciente',
+    )
     fecha_egreso = models.DateField(blank=True, null=True)
     creado_en = models.DateTimeField(blank=True, null=True)
 
@@ -145,12 +183,18 @@ class CasoMorbilidad(models.Model):
 
 
 class Referencia(models.Model):
+    """Datos de remisión y tiempos de traslado del caso de morbilidad."""
+
     id_referencia = models.AutoField(primary_key=True)
-    id_caso = models.ForeignKey(CasoMorbilidad, models.DO_NOTHING, db_column='id_caso')
+    id_caso = models.ForeignKey(
+        CasoMorbilidad, models.DO_NOTHING, db_column='id_caso',
+    )
     remitida = models.IntegerField()
     institucion_ref_1 = models.CharField(max_length=200, blank=True, null=True)
     institucion_ref_2 = models.CharField(max_length=200, blank=True, null=True)
-    tiempo_remision_h = models.DecimalField(max_digits=6, decimal_places=1, blank=True, null=True)
+    tiempo_remision_h = models.DecimalField(
+        max_digits=6, decimal_places=1, blank=True, null=True,
+    )
 
     class Meta:
         managed = False
@@ -158,8 +202,12 @@ class Referencia(models.Model):
 
 
 class AntecedentesObstetricos(models.Model):
+    """Antecedentes obstétricos del caso de morbilidad (gestaciones, partos, etc.)."""
+
     id_antecedente = models.AutoField(primary_key=True)
-    id_caso = models.ForeignKey(CasoMorbilidad, models.DO_NOTHING, db_column='id_caso')
+    id_caso = models.ForeignKey(
+        CasoMorbilidad, models.DO_NOTHING, db_column='id_caso',
+    )
     num_gestaciones = models.SmallIntegerField(blank=True, null=True)
     partos_vaginales = models.SmallIntegerField(blank=True, null=True)
     cesareas = models.SmallIntegerField(blank=True, null=True)
@@ -169,10 +217,16 @@ class AntecedentesObstetricos(models.Model):
     muertos = models.SmallIntegerField(blank=True, null=True)
     vivos = models.SmallIntegerField(blank=True, null=True)
     fecha_ultima_gestacion = models.DateField(blank=True, null=True)
-    id_regulacion_fecundidad = models.ForeignKey(CatRegulacionFecundidad, models.DO_NOTHING, db_column='id_regulacion_fecundidad', blank=True, null=True)
+    id_regulacion_fecundidad = models.ForeignKey(
+        CatRegulacionFecundidad, models.DO_NOTHING,
+        db_column='id_regulacion_fecundidad', blank=True, null=True,
+    )
     num_controles_prenatales = models.SmallIntegerField(blank=True, null=True)
     semanas_inicio_cpn = models.SmallIntegerField(blank=True, null=True)
-    id_terminacion_gestacion = models.ForeignKey(CatTerminacionGestacion, models.DO_NOTHING, db_column='id_terminacion_gestacion', blank=True, null=True)
+    id_terminacion_gestacion = models.ForeignKey(
+        CatTerminacionGestacion, models.DO_NOTHING,
+        db_column='id_terminacion_gestacion', blank=True, null=True,
+    )
     edad_gestacional_sem = models.SmallIntegerField(blank=True, null=True)
     momento_ocurrencia = models.CharField(max_length=7, blank=True, null=True)
     estado_recien_nacido = models.CharField(max_length=6, blank=True, null=True)
@@ -185,8 +239,12 @@ class AntecedentesObstetricos(models.Model):
 
 
 class CriteriosEnfermedad(models.Model):
+    """Criterios de enfermedad específica que califican el caso como MME."""
+
     id_criterio_enf = models.AutoField(primary_key=True)
-    id_caso = models.ForeignKey(CasoMorbilidad, models.DO_NOTHING, db_column='id_caso')
+    id_caso = models.ForeignKey(
+        CasoMorbilidad, models.DO_NOTHING, db_column='id_caso',
+    )
     eclampsia = models.IntegerField()
     sepsis_sistemica_severa = models.IntegerField()
     hemorragia_obstetrica = models.IntegerField()
@@ -210,8 +268,12 @@ class CriteriosEnfermedad(models.Model):
 
 
 class CriteriosFallaOrganica(models.Model):
+    """Criterios de falla orgánica que califican el caso como MME."""
+
     id_criterio_falla = models.AutoField(primary_key=True)
-    id_caso = models.ForeignKey(CasoMorbilidad, models.DO_NOTHING, db_column='id_caso')
+    id_caso = models.ForeignKey(
+        CasoMorbilidad, models.DO_NOTHING, db_column='id_caso',
+    )
     falla_cardiaca = models.IntegerField()
     falla_vascular = models.IntegerField()
     falla_renal = models.IntegerField()
@@ -227,8 +289,12 @@ class CriteriosFallaOrganica(models.Model):
 
 
 class CriteriosManejo(models.Model):
+    """Criterios de manejo que califican el caso como MME."""
+
     id_criterio_manejo = models.AutoField(primary_key=True)
-    id_caso = models.ForeignKey(CasoMorbilidad, models.DO_NOTHING, db_column='id_caso')
+    id_caso = models.ForeignKey(
+        CasoMorbilidad, models.DO_NOTHING, db_column='id_caso',
+    )
     ingreso_uci = models.IntegerField()
     cirugia_adicional = models.IntegerField()
     transfusion = models.IntegerField()
@@ -246,8 +312,12 @@ class CriteriosManejo(models.Model):
 
 
 class ManejoHospitalario(models.Model):
+    """Datos de manejo hospitalario del caso de morbilidad."""
+
     id_manejo = models.AutoField(primary_key=True)
-    id_caso = models.ForeignKey(CasoMorbilidad, models.DO_NOTHING, db_column='id_caso')
+    id_caso = models.ForeignKey(
+        CasoMorbilidad, models.DO_NOTHING, db_column='id_caso',
+    )
     dias_estancia_hosp = models.SmallIntegerField(blank=True, null=True)
     dias_estancia_uci = models.SmallIntegerField(blank=True, null=True)
     unidades_transfundidas = models.SmallIntegerField(blank=True, null=True)
@@ -262,10 +332,17 @@ class ManejoHospitalario(models.Model):
 
 
 class CausasMorbilidad(models.Model):
+    """Causas CIE-10 asociadas al caso de morbilidad materna extrema."""
+
     id_causa = models.AutoField(primary_key=True)
-    id_caso = models.ForeignKey(CasoMorbilidad, models.DO_NOTHING, db_column='id_caso')
+    id_caso = models.ForeignKey(
+        CasoMorbilidad, models.DO_NOTHING, db_column='id_caso',
+    )
     causa_principal_cie10 = models.CharField(max_length=10)
-    id_grupo_causa = models.ForeignKey(CatGrupoCausa, models.DO_NOTHING, db_column='id_grupo_causa', blank=True, null=True)
+    id_grupo_causa = models.ForeignKey(
+        CatGrupoCausa, models.DO_NOTHING,
+        db_column='id_grupo_causa', blank=True, null=True,
+    )
     causa_asociada_2 = models.CharField(max_length=10, blank=True, null=True)
     causa_asociada_3 = models.CharField(max_length=10, blank=True, null=True)
     causa_asociada_4 = models.CharField(max_length=10, blank=True, null=True)
@@ -276,9 +353,15 @@ class CausasMorbilidad(models.Model):
 
 
 class CasoMortalidad(models.Model):
+    """Caso de Mortalidad Materna (Evento SIVIGILA 550)."""
+
     id_caso = models.AutoField(primary_key=True)
-    id_paciente = models.ForeignKey(Paciente, models.DO_NOTHING, db_column='id_paciente')
-    id_sitio_defuncion = models.ForeignKey(CatSitioDefuncion, models.DO_NOTHING, db_column='id_sitio_defuncion')
+    id_paciente = models.ForeignKey(
+        Paciente, models.DO_NOTHING, db_column='id_paciente',
+    )
+    id_sitio_defuncion = models.ForeignKey(
+        CatSitioDefuncion, models.DO_NOTHING, db_column='id_sitio_defuncion',
+    )
     fecha_defuncion = models.DateField(blank=True, null=True)
     creado_en = models.DateTimeField(blank=True, null=True)
 
@@ -288,11 +371,22 @@ class CasoMortalidad(models.Model):
 
 
 class AntecedenteMaterno(models.Model):
-    id_caso = models.OneToOneField(CasoMortalidad, models.DO_NOTHING, db_column='id_caso', primary_key=True)
-    id_convivencia = models.ForeignKey(CatConvivencia, models.DO_NOTHING, db_column='id_convivencia')
+    """Antecedentes maternos del caso de mortalidad (convivencia, escolaridad, etc.)."""
+
+    id_caso = models.OneToOneField(
+        CasoMortalidad, models.DO_NOTHING,
+        db_column='id_caso', primary_key=True,
+    )
+    id_convivencia = models.ForeignKey(
+        CatConvivencia, models.DO_NOTHING, db_column='id_convivencia',
+    )
     otro_convivencia = models.CharField(max_length=100, blank=True, null=True)
-    id_escolaridad = models.ForeignKey(CatEscolaridad, models.DO_NOTHING, db_column='id_escolaridad')
-    id_regulacion_fec = models.ForeignKey(CatRegulacionFecundidad, models.DO_NOTHING, db_column='id_regulacion_fec')
+    id_escolaridad = models.ForeignKey(
+        CatEscolaridad, models.DO_NOTHING, db_column='id_escolaridad',
+    )
+    id_regulacion_fec = models.ForeignKey(
+        CatRegulacionFecundidad, models.DO_NOTHING, db_column='id_regulacion_fec',
+    )
     gestaciones = models.SmallIntegerField(blank=True, null=True)
     partos_vaginales = models.SmallIntegerField(blank=True, null=True)
     cesareas = models.SmallIntegerField(blank=True, null=True)
@@ -306,7 +400,12 @@ class AntecedenteMaterno(models.Model):
 
 
 class AntecedenteRiesgo(models.Model):
-    id_caso = models.OneToOneField(CasoMortalidad, models.DO_NOTHING, db_column='id_caso', primary_key=True)
+    """Factores de riesgo presentes en la paciente antes del evento."""
+
+    id_caso = models.OneToOneField(
+        CasoMortalidad, models.DO_NOTHING,
+        db_column='id_caso', primary_key=True,
+    )
     sin_antecedentes = models.IntegerField()
     hipertension_cronica = models.IntegerField()
     cardiopatias = models.IntegerField()
@@ -339,7 +438,12 @@ class AntecedenteRiesgo(models.Model):
 
 
 class ComplicacionEmbarazo(models.Model):
-    id_caso = models.OneToOneField(CasoMortalidad, models.DO_NOTHING, db_column='id_caso', primary_key=True)
+    """Complicaciones que se presentaron durante el embarazo."""
+
+    id_caso = models.OneToOneField(
+        CasoMortalidad, models.DO_NOTHING,
+        db_column='id_caso', primary_key=True,
+    )
     preeclampsia = models.IntegerField()
     eclampsia = models.IntegerField()
     sindrome_hellp = models.IntegerField()
@@ -355,7 +459,9 @@ class ComplicacionEmbarazo(models.Model):
     embarazo_no_deseado = models.IntegerField()
     violencia_gestante = models.IntegerField()
     otras_complicaciones = models.IntegerField()
-    desc_otras_complicaciones = models.CharField(max_length=300, blank=True, null=True)
+    desc_otras_complicaciones = models.CharField(
+        max_length=300, blank=True, null=True,
+    )
     gestacion_violencia_sexual = models.IntegerField()
     feto_incompatible_vida = models.IntegerField()
     sintomas_depresivos = models.IntegerField()
@@ -366,12 +472,25 @@ class ComplicacionEmbarazo(models.Model):
 
 
 class ControlPrenatal(models.Model):
-    id_caso = models.OneToOneField(CasoMortalidad, models.DO_NOTHING, db_column='id_caso', primary_key=True)
+    """Datos del control prenatal del caso de mortalidad."""
+
+    id_caso = models.OneToOneField(
+        CasoMortalidad, models.DO_NOTHING,
+        db_column='id_caso', primary_key=True,
+    )
     num_cpn = models.SmallIntegerField(blank=True, null=True)
     semana_inicio_cpn = models.SmallIntegerField(blank=True, null=True)
-    id_personal_cpn = models.ForeignKey(CatPersonalSalud, models.DO_NOTHING, db_column='id_personal_cpn', blank=True, null=True)
-    id_nivel_atencion_cpn = models.ForeignKey(CatNivelAtencion, models.DO_NOTHING, db_column='id_nivel_atencion_cpn', blank=True, null=True)
-    id_remisiones = models.ForeignKey(CatRemisiones, models.DO_NOTHING, db_column='id_remisiones')
+    id_personal_cpn = models.ForeignKey(
+        CatPersonalSalud, models.DO_NOTHING,
+        db_column='id_personal_cpn', blank=True, null=True,
+    )
+    id_nivel_atencion_cpn = models.ForeignKey(
+        CatNivelAtencion, models.DO_NOTHING,
+        db_column='id_nivel_atencion_cpn', blank=True, null=True,
+    )
+    id_remisiones = models.ForeignKey(
+        CatRemisiones, models.DO_NOTHING, db_column='id_remisiones',
+    )
     compl_feto_rn_cie10 = models.CharField(max_length=10, blank=True, null=True)
 
     class Meta:
@@ -380,15 +499,31 @@ class ControlPrenatal(models.Model):
 
 
 class AntecedentePartoPuerperio(models.Model):
-    id_caso = models.OneToOneField(CasoMortalidad, models.DO_NOTHING, db_column='id_caso', primary_key=True)
-    id_momento_muerte = models.ForeignKey(CatMomentoMuerte, models.DO_NOTHING, db_column='id_momento_muerte')
+    """Datos del parto y puerperio del caso de mortalidad."""
+
+    id_caso = models.OneToOneField(
+        CasoMortalidad, models.DO_NOTHING,
+        db_column='id_caso', primary_key=True,
+    )
+    id_momento_muerte = models.ForeignKey(
+        CatMomentoMuerte, models.DO_NOTHING, db_column='id_momento_muerte',
+    )
     semana_gestacion_muerte = models.SmallIntegerField(blank=True, null=True)
     fecha_parto = models.DateField(blank=True, null=True)
     hora_parto = models.TimeField(blank=True, null=True)
-    id_tipo_parto = models.ForeignKey(CatTipoParto, models.DO_NOTHING, db_column='id_tipo_parto', blank=True, null=True)
-    id_atendido_por = models.ForeignKey(CatPersonalSalud, models.DO_NOTHING, db_column='id_atendido_por', blank=True, null=True)
+    id_tipo_parto = models.ForeignKey(
+        CatTipoParto, models.DO_NOTHING,
+        db_column='id_tipo_parto', blank=True, null=True,
+    )
+    id_atendido_por = models.ForeignKey(
+        CatPersonalSalud, models.DO_NOTHING,
+        db_column='id_atendido_por', blank=True, null=True,
+    )
     otro_atencion_parto = models.CharField(max_length=100, blank=True, null=True)
-    id_nivel_atencion_parto = models.ForeignKey(CatNivelAtencion, models.DO_NOTHING, db_column='id_nivel_atencion_parto', blank=True, null=True)
+    id_nivel_atencion_parto = models.ForeignKey(
+        CatNivelAtencion, models.DO_NOTHING,
+        db_column='id_nivel_atencion_parto', blank=True, null=True,
+    )
 
     class Meta:
         managed = False
@@ -396,9 +531,16 @@ class AntecedentePartoPuerperio(models.Model):
 
 
 class CausaMuerte(models.Model):
-    id_caso = models.OneToOneField(CasoMortalidad, models.DO_NOTHING, db_column='id_caso', primary_key=True)
+    """Causa básica de muerte y demoras en la atención (Evento 550)."""
+
+    id_caso = models.OneToOneField(
+        CasoMortalidad, models.DO_NOTHING,
+        db_column='id_caso', primary_key=True,
+    )
     causa_basica_cie10 = models.CharField(max_length=10)
-    id_fuente_causa = models.ForeignKey(CatFuenteCausaMuerte, models.DO_NOTHING, db_column='id_fuente_causa')
+    id_fuente_causa = models.ForeignKey(
+        CatFuenteCausaMuerte, models.DO_NOTHING, db_column='id_fuente_causa',
+    )
     demora_1 = models.IntegerField()
     demora_2 = models.IntegerField()
     demora_3 = models.IntegerField()
@@ -410,6 +552,8 @@ class CausaMuerte(models.Model):
 
 
 class VMorbilidadCompleta(models.Model):
+    """Vista SQL que consolida todos los campos del Evento 549 por caso."""
+
     id_caso = models.IntegerField(primary_key=True)
     nombres_apellidos = models.CharField(max_length=200, blank=True, null=True)
     tipo_id = models.CharField(max_length=5, blank=True, null=True)
@@ -419,7 +563,9 @@ class VMorbilidadCompleta(models.Model):
     fecha_egreso = models.DateField(blank=True, null=True)
     remitida = models.IntegerField(blank=True, null=True)
     institucion_ref_1 = models.CharField(max_length=200, blank=True, null=True)
-    tiempo_remision_h = models.DecimalField(max_digits=6, decimal_places=1, blank=True, null=True)
+    tiempo_remision_h = models.DecimalField(
+        max_digits=6, decimal_places=1, blank=True, null=True,
+    )
     num_gestaciones = models.SmallIntegerField(blank=True, null=True)
     partos_vaginales = models.SmallIntegerField(blank=True, null=True)
     cesareas = models.SmallIntegerField(blank=True, null=True)
@@ -455,6 +601,8 @@ class VMorbilidadCompleta(models.Model):
 
 
 class VMortalidadCompleta(models.Model):
+    """Vista SQL que consolida todos los campos del Evento 550 por caso."""
+
     id_caso = models.IntegerField(primary_key=True)
     nombres_apellidos = models.CharField(max_length=200, blank=True, null=True)
     tipo_id = models.CharField(max_length=5, blank=True, null=True)
