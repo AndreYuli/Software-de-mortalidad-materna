@@ -410,13 +410,16 @@ INSERT OR IGNORE INTO cat_grupo_causa VALUES
 
 
 def forward(apps, schema_editor):
-    """Crea tablas SIVIGILA y puebla catálogos solo si no existen."""
+    """Crea tablas SIVIGILA y puebla catálogos solo si no existen.
+
+    Solo se ejecuta en SQLite (desarrollo local). En MySQL y PostgreSQL
+    las tablas SIVIGILA ya existen en el esquema externo.
+    """
     vendor = schema_editor.connection.vendor
     conn = schema_editor.connection
 
-    # En MySQL las tablas SIVIGILA ya existen en el esquema externo;
-    # solo las creamos en SQLite para desarrollo local
-    if vendor == 'mysql':
+    # En MySQL y PostgreSQL las tablas SIVIGILA ya existen
+    if vendor in ('mysql', 'postgresql'):
         return
 
     with conn.cursor() as cursor:

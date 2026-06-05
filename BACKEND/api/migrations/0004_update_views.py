@@ -137,9 +137,23 @@ _MORTALIDAD_BODY = """
     LEFT JOIN cat_fuente_causa_muerte fc ON fc.id = cm_causa.id_fuente_causa
 """
 
-# Expresiones de edad compatibles por motor
+# Expresiones de edad compatibles por motor de base de datos
 _EDAD_MORBILIDAD_MYSQL = 'TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, c.fecha_egreso)'
 _EDAD_MORTALIDAD_MYSQL = 'TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, c.fecha_defuncion)'
+
+# PostgreSQL: usa AGE() que devuelve un intervalo, EXTRACT saca el año
+_EDAD_MORBILIDAD_PG = (
+    "CASE WHEN p.fecha_nacimiento IS NOT NULL AND c.fecha_egreso IS NOT NULL "
+    "THEN EXTRACT(YEAR FROM AGE(c.fecha_egreso, p.fecha_nacimiento))::INTEGER "
+    "ELSE NULL END"
+)
+_EDAD_MORTALIDAD_PG = (
+    "CASE WHEN p.fecha_nacimiento IS NOT NULL AND c.fecha_defuncion IS NOT NULL "
+    "THEN EXTRACT(YEAR FROM AGE(c.fecha_defuncion, p.fecha_nacimiento))::INTEGER "
+    "ELSE NULL END"
+)
+
+# SQLite: no soporta TIMESTAMPDIFF ni AGE; usa julianday
 _EDAD_MORBILIDAD_SQLITE = (
     "CASE WHEN p.fecha_nacimiento IS NOT NULL AND c.fecha_egreso IS NOT NULL "
     "THEN CAST((julianday(c.fecha_egreso) - julianday(p.fecha_nacimiento)) / 365.25 AS INTEGER) "
@@ -159,6 +173,18 @@ def _crear_vistas(schema_editor):
     if vendor == 'mysql':
         edad_morb = _EDAD_MORBILIDAD_MYSQL
         edad_mort = _EDAD_MORTALIDAD_MYSQL
+        schema_editor.execute(
+            'CREATE OR REPLACE VIEW v_morbilidad_completa AS '
+            + _MORBILIDAD_BODY.format(edad_expr=edad_morb)
+        )
+        schema_editor.execute(
+            'CREATE OR REPLACE VIEW v_mortalidad_completa AS '
+            + _MORTALIDAD_BODY.format(edad_expr=edad_mort)
+        )
+    elif vendor == 'postgresql':
+        # PostgreSQL soporta CREATE OR REPLACE VIEW y AGE()
+        edad_morb = _EDAD_MORBILIDAD_PG
+        edad_mort = _EDAD_MORTALIDAD_PG
         schema_editor.execute(
             'CREATE OR REPLACE VIEW v_morbilidad_completa AS '
             + _MORBILIDAD_BODY.format(edad_expr=edad_morb)
