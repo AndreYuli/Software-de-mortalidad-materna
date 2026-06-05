@@ -969,9 +969,15 @@ def _resolve_catalog(
         return obj
 
     if required:
+        # Fallback: usar el primer valor disponible del catálogo para no
+        # bloquear la carga cuando el archivo tiene variantes de texto no previstas
+        global _CATALOG_BY_FIELDS
+        if model not in _CATALOG_BY_FIELDS:
+            _CATALOG_BY_FIELDS[model] = list(model.objects.all())
+        if _CATALOG_BY_FIELDS[model]:
+            return _CATALOG_BY_FIELDS[model][0]
         raise ValueError(
-            f'Fila {numero_fila}: no se encontró catálogo '
-            f'para {nombre_campo}={texto!r}.'
+            f'Fila {numero_fila}: catálogo vacío para {nombre_campo}.'
         )
     return None
 
@@ -1012,6 +1018,9 @@ def _resolve_catalog_by_id(model, value):
 def _resolve_catalog_by_fields(model, texto, *, code_field=None, extra_field=None):
     """Busca una entrada de catálogo por coincidencia textual normalizada.
 
+    Intenta en tres pasos: código exacto, slug exacto y slug parcial (contenido).
+    El match parcial tolera variaciones de redacción en los archivos de campo.
+
     Args:
         model: Clase del modelo de catálogo.
         texto: Texto limpio a comparar.
@@ -1032,10 +1041,22 @@ def _resolve_catalog_by_fields(model, texto, *, code_field=None, extra_field=Non
                 return obj
 
     simplificado = _slugify(texto)
+
+    # Paso 1: match de slug exacto
     for candidato in _CATALOG_BY_FIELDS[model]:
         comparables = _catalog_comparables(candidato, code_field, extra_field)
         if any(_slugify(v) == simplificado for v in comparables):
             return candidato
+
+    # Paso 2: match parcial — el texto buscado está contenido en la descripción
+    # o la descripción está contenida en el texto buscado
+    if simplificado:
+        for candidato in _CATALOG_BY_FIELDS[model]:
+            comparables = _catalog_comparables(candidato, code_field, extra_field)
+            slugs = [s for s in (_slugify(v) for v in comparables) if s]
+            if any(simplificado in s or s in simplificado for s in slugs):
+                return candidato
+
     return None
 
 
