@@ -537,6 +537,17 @@ def _filtrar_dataframe_por_fecha(df, tipo, year, month):
 MESES_ABREV = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
                'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
+def _sanitize_json(obj):
+    """Reemplaza nan/inf de numpy/pandas con None para que json.dumps no falle."""
+    import math
+    if isinstance(obj, dict):
+        return {k: _sanitize_json(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_json(v) for v in obj]
+    if isinstance(obj, float) and (math.isnan(obj) or math.isinf(obj)):
+        return None
+    return obj
+
 def _calcular_distribucion_mensual(df, tipo):
     col = _detectar_col_fecha(df, tipo)
     if col is None:
@@ -795,7 +806,7 @@ def analisis_completo(
                 'distribucion_mensual': _calcular_distribucion_mensual(df, 'morbilidad'),
                 'filtros_activos': {'year': year, 'month': month},
             }
-        return resultado
+        return _sanitize_json(resultado)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -838,7 +849,7 @@ def clustering_analisis(pk: int, req: ClusteringRequest, db: Session = Depends(g
         resultado['tipo_clustering'] = req.tipo_clustering
         resultado['limpieza_datos'] = limpieza
         
-        return resultado
+        return _sanitize_json(resultado)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -877,7 +888,7 @@ def heatmap_correlacion(pk: int, db: Session = Depends(get_db)):
         resultado['analisis_id'] = analisis.id
         resultado['limpieza_datos'] = limpieza
 
-        return resultado
+        return _sanitize_json(resultado)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
