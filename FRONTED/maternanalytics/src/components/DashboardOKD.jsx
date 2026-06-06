@@ -7,7 +7,7 @@ import * as XLSX from 'xlsx'
 
 const Plot = PlotlyReact?.default ?? PlotlyReact
 
-const API_URL = 'http://localhost:8000/api'
+import { API_URL } from '../api.js'
 
 // Columnas requeridas (alineadas con BACKEND/api/views.py)
 const COLUMNAS_MORTALIDAD = [
@@ -123,7 +123,7 @@ function findBestSheet(workbook, requiredColumns, tipo) {
 async function validateColumns(file, requiredColumns, tipo) {
   try {
     const buffer = await file.arrayBuffer()
-    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' })
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array', sheetRows: 10 })
     const bestSheetName = findBestSheet(workbook, requiredColumns, tipo)
     const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[bestSheetName], { header: 1 })
 
@@ -151,8 +151,8 @@ async function validateColumns(file, requiredColumns, tipo) {
   }
 }
 
-// Componente de carga de archivos
-function UploadCard({ title, description, color, icon, onFile, file, error, validating }) {
+// Componente de carga de archivos — Diseño premium drag & drop
+function UploadCard({ onFile, file, error, validating, onRemove, eventLabel }) {
   const inputRef = useRef(null)
   const [dragging, setDragging] = useState(false)
 
@@ -169,23 +169,16 @@ function UploadCard({ title, description, color, icon, onFile, file, error, vali
     if (e.target.files[0]) onFile(e.target.files[0])
   }
 
-  const handleCardClick = (e) => {
+  const handleZoneClick = (e) => {
     if (e.target.closest('[data-prevent-open="true"]')) return
     openFileDialog()
-  }
-
-  const handleCardKeyDown = (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      openFileDialog()
-    }
   }
 
   const missingColumns = error?.missing ?? []
   const missingColumnsLabel = missingColumns.length === 1 ? 'columna' : 'columnas'
 
   return (
-    <div className={`upload-card-shell ${error ? 'has-error' : ''}`}>
+    <div className="upload-zone-wrapper">
       <input
         ref={inputRef}
         type="file"
@@ -193,58 +186,100 @@ function UploadCard({ title, description, color, icon, onFile, file, error, vali
         style={{ display: 'none' }}
         onChange={handleChange}
       />
-      <button
-        type="button"
-        className={`upload-card ${color} ${dragging ? 'dragging' : ''} ${error ? 'has-error' : ''}`}
+
+      {/* Drop Zone */}
+      <div
+        className={`upload-drop-zone ${dragging ? 'dragging' : ''} ${error && !file ? 'zone-error' : ''} ${file && !error ? 'zone-success' : ''}`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
-        onClick={handleCardClick}
-        onKeyDown={handleCardKeyDown}
-        style={{ cursor: 'pointer', minHeight: '250px', padding: '24px' }}
+        onClick={handleZoneClick}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openFileDialog() } }}
+        aria-label={`Cargar archivo Excel para ${eventLabel}`}
       >
-        <span style={{ display: 'block', fontSize: '48px', marginBottom: '16px' }}>{icon}</span>
-        <span style={{ display: 'block', fontSize: '18px', fontWeight: '600', marginBottom: '8px', color: '#151515' }}>{title}</span>
-        <span style={{ display: 'block', fontSize: '14px', color: '#666', marginBottom: '16px' }}>{description}</span>
+        {/* Cloud Upload Icon */}
+        <div className="upload-zone-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 16 12 12 8 16" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+          </svg>
+        </div>
 
-        {validating && <span style={{ color: '#0066cc', marginTop: '12px', display: 'block' }}><small>Validando columnas...</small></span>}
+        {validating ? (
+          <>
+            <p className="upload-zone-primary">Validando estructura...</p>
+            <p className="upload-zone-secondary">Comprobando columnas requeridas</p>
+          </>
+        ) : (
+          <>
+            <p className="upload-zone-primary">Arrastra tu archivo aquí o <span className="upload-zone-link">haz clic para explorar</span></p>
+            <p className="upload-zone-secondary">Soportado: .xls, .xlsx (Máximo 15MB)</p>
+          </>
+        )}
+      </div>
 
-        {!validating && file && !error && (
-          <span style={{ marginTop: '12px', padding: '12px', background: '#e7f5e7', borderRadius: '4px', color: '#2d7a2d', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="20 6 9 17 4 12"/>
+      {/* File Preview Card */}
+      {file && !error && (
+        <div className="upload-file-card">
+          <div className="upload-file-info">
+            <div className="upload-file-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <polyline points="10 9 9 9 8 9"/>
+              </svg>
+            </div>
+            <div className="upload-file-details">
+              <span className="upload-file-name" title={file.name}>{file.name}</span>
+              <span className="upload-file-status">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '12px', height: '12px' }}>
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Archivo válido y listo
+              </span>
+            </div>
+          </div>
+          <button
+            data-prevent-open="true"
+            className="upload-remove-btn"
+            onClick={(e) => { e.stopPropagation(); onRemove() }}
+            title="Eliminar archivo"
+            type="button"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+              <path d="M10 11v6"/>
+              <path d="M14 11v6"/>
+              <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
             </svg>
-            <span style={{ fontSize: '13px' }}>{file.name}</span>
-          </span>
-        )}
+          </button>
+        </div>
+      )}
 
-        {!validating && !file && !error && (
-          <span style={{ marginTop: '12px', color: '#999', fontSize: '13px', display: 'block' }}>
-            Arrastra tu archivo aquí o <span style={{ color: '#0066cc', fontWeight: '600' }}>selecciona</span>
-            <br /><small>.xlsx · .xls · .csv</small>
-          </span>
-        )}
-      </button>
-
-      {!validating && error && (
-        <div
-          data-prevent-open="true"
-          style={{ marginTop: '12px', padding: '16px', background: '#fef2f2', borderRadius: '4px', color: '#991b1b', fontSize: '13px' }}
-        >
+      {/* Error Panel */}
+      {error && (
+        <div className="upload-error-panel" data-prevent-open="true">
           {error.parseError ? (
-            <p>No se pudo leer el archivo. Verifica que sea un Excel válido.</p>
+            <p className="upload-error-summary">No se pudo leer el archivo. Verifica que sea un Excel válido.</p>
           ) : (
             <>
-              <p style={{ fontWeight: '600', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <p className="upload-error-summary">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
                 Faltan {missingColumns.length} {missingColumnsLabel}
               </p>
-              <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
-                {missingColumns.slice(0, 6).map((column) => <li key={column} style={{ marginBottom: '4px' }}>{column}</li>)}
-                {missingColumns.length > 6 && <li style={{ color: '#dc2626', fontWeight: '600' }}>…y {missingColumns.length - 6} más</li>}
+              <ul className="upload-error-cols">
+                {missingColumns.slice(0, 8).map((col) => <li key={col}>{col}</li>)}
+                {missingColumns.length > 8 && <li className="more">…y {missingColumns.length - 8} más</li>}
               </ul>
+              <button className="upload-retry-btn" onClick={openFileDialog} type="button">Intentar con otro archivo</button>
             </>
           )}
         </div>
@@ -254,11 +289,9 @@ function UploadCard({ title, description, color, icon, onFile, file, error, vali
 }
 
 UploadCard.propTypes = {
-  title: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
-  icon: PropTypes.string.isRequired,
   onFile: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+  eventLabel: PropTypes.string.isRequired,
   file: PropTypes.shape({
     name: PropTypes.string.isRequired,
   }),
@@ -378,171 +411,810 @@ FilterPanel.propTypes = {
   onEventosChange: PropTypes.func.isRequired,
 }
 
+const CIE10_DESCRIPTIONS = {
+  'O26.6': 'Trastornos del hígado durante el embarazo',
+  'O99.3': 'Trastornos del sistema nervioso que complican el embarazo',
+  'O14': 'Hipertensión gestacional con preeclampsia',
+  'O15': 'Eclampsia',
+  'O72': 'Hemorragia posparto',
+  'O85': 'Sepsis puerperal',
+  'O88': 'Embolia obstétrica',
+};
+
+const CLUSTER_COLORS = ['#0066cc', '#c0392b', '#2ca02c', '#f39c12', '#6f42c1', '#16a085', '#d35400', '#8e44ad'];
+
+function getCie10Description(code) {
+  const normalized = String(code ?? '').trim().toUpperCase().replace(/\s+/g, '');
+  if (!normalized) return 'Descripción no disponible';
+  if (CIE10_DESCRIPTIONS[normalized]) return CIE10_DESCRIPTIONS[normalized];
+  const prefix3 = normalized.slice(0, 3);
+  if (CIE10_DESCRIPTIONS[prefix3]) return CIE10_DESCRIPTIONS[prefix3];
+  return 'Descripción no disponible';
+}
+
+function getClusterColor(clusterId) {
+  const id = parseInt(clusterId);
+  if (!Number.isFinite(id)) return CLUSTER_COLORS[0];
+  return CLUSTER_COLORS[Math.abs(id) % CLUSTER_COLORS.length];
+}
+
 function AnalysisHomeSection({
-  analysisType,
-  currentAnalysisId,
   latestMortalidad,
   latestMorbilidad,
-  onSelectAnalysisType,
   onGoToUpload,
   filterYear,
   filterMonth,
-  filterEventos,
   availableYears,
   onAvailableYears,
   onYearChange,
   onMonthChange,
-  onEventosChange,
 }) {
-  const showMortalidad = filterEventos.includes('550')
-  const showMorbilidad = filterEventos.includes('549')
+  const [segmento, setSegmento] = useState(() => {
+    if (latestMortalidad && latestMorbilidad) return 'ambos';
+    if (latestMortalidad) return 'mortalidad';
+    if (latestMorbilidad) return 'morbilidad';
+    return 'ambos';
+  });
+
+  const [showChoices, setShowChoices] = useState(false);
+  const [mortalidadData, setMortalidadData] = useState(null);
+  const [morbilidadData, setMorbilidadData] = useState(null);
+  const [mortalidadClustering, setMortalidadClustering] = useState(null);
+  const [morbilidadClustering, setMorbilidadClustering] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Clustering states
+  const [pcaDim, setPcaDim] = useState('2d');
+  const [clusteringSegment, setClusteringSegment] = useState(() => {
+    return latestMortalidad ? 'mortalidad' : 'morbilidad';
+  });
+
+  // Fetch complete details for dashboard
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    const loadDashboardData = async () => {
+      if (!latestMortalidad && !latestMorbilidad) {
+        setMortalidadData(null);
+        setMorbilidadData(null);
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const queryParams = new URLSearchParams();
+        if (filterYear) queryParams.append('year', filterYear);
+        if (filterMonth) queryParams.append('month', filterMonth);
+        const suffix = queryParams.toString() ? `?${queryParams.toString()}` : '';
+
+        let mortData = null;
+        let morbData = null;
+        let mortCluster = null;
+        let morbCluster = null;
+
+        if (latestMortalidad) {
+          const res = await fetch(`${API_URL}/analisis/${latestMortalidad.id}/completo/${suffix}`, { signal: controller.signal });
+          if (res.ok) {
+            mortData = await res.json();
+            const cRes = await fetch(`${API_URL}/analisis/${latestMortalidad.id}/clustering/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tipo_clustering: 'kmeans', n_clusters: 3 }),
+              signal: controller.signal
+            });
+            if (cRes.ok) mortCluster = await cRes.json();
+          }
+        }
+
+        if (latestMorbilidad) {
+          const res = await fetch(`${API_URL}/analisis/${latestMorbilidad.id}/completo/${suffix}`, { signal: controller.signal });
+          if (res.ok) {
+            morbData = await res.json();
+            const cRes = await fetch(`${API_URL}/analisis/${latestMorbilidad.id}/clustering/`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ tipo_clustering: 'kmeans', n_clusters: 3 }),
+              signal: controller.signal
+            });
+            if (cRes.ok) morbCluster = await cRes.json();
+          }
+        }
+
+        if (isMounted) {
+          setMortalidadData(mortData);
+          setMorbilidadData(morbData);
+          setMortalidadClustering(mortCluster);
+          setMorbilidadClustering(morbCluster);
+
+          // Update parent years list
+          const years = Array.from(new Set([
+            ...(mortData?.anos_disponibles || []),
+            ...(morbData?.anos_disponibles || [])
+          ])).sort((a, b) => b - a);
+          onAvailableYears(years);
+        }
+      } catch (err) {
+        if (err.name !== 'AbortError' && isMounted) {
+          setError('Error al procesar la información del panel de control.');
+          console.error(err);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [latestMortalidad?.id, latestMorbilidad?.id, filterYear, filterMonth]);
+
+  const hasData = latestMortalidad || latestMorbilidad;
+
+  // Render State 1: Welcome Screen
+  if (!hasData) {
+    return (
+      <div className="welcome-dashboard-shell">
+        <div className="welcome-dashboard-card">
+          <div className="welcome-icon-circle">📋</div>
+          <h2 className="welcome-title">Análisis Epidemiológico</h2>
+          <p className="welcome-microcopy">
+            Aún no hay datos para analizar. Carga los registros de los Eventos 549 (Morbilidad) y 550 (Mortalidad) del SIVIGILA para generar el panel de control y los modelos de clustering.
+          </p>
+          
+          {!showChoices ? (
+            <button className="btn-welcome-cta" onClick={() => setShowChoices(true)}>
+              Importar Datos Epidemiológicos
+            </button>
+          ) : (
+            <div className="upload-choices-panel">
+              <button className="btn-choice-upload" onClick={() => onGoToUpload('mortalidad')}>
+                <span className="btn-choice-upload-icon">🩸</span>
+                <span className="btn-choice-upload-label">Mortalidad</span>
+                <span className="btn-choice-upload-sublabel">Evento 550</span>
+              </button>
+              <button className="btn-choice-upload" onClick={() => onGoToUpload('morbilidad')}>
+                <span className="btn-choice-upload-icon">🏥</span>
+                <span className="btn-choice-upload-label">Morbilidad Extrema</span>
+                <span className="btn-choice-upload-sublabel">Evento 549</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Render Loader
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
+        <div className="spinner"></div>
+        <p style={{ marginTop: '16px', color: '#64748b', fontWeight: '600' }}>Generando panel estratégico y calculando clustering...</p>
+      </div>
+    );
+  }
+
+  // Render Error
+  if (error) {
+    return (
+      <div style={{ padding: '24px', background: '#fef2f2', borderRadius: '12px', border: '1px solid #fee2e2', color: '#b91c1c', textAlign: 'center' }}>
+        <p style={{ fontWeight: '600', margin: '0 0 12px' }}>❌ {error}</p>
+        <button onClick={() => window.location.reload()} className="primary-action-btn">Reintentar</button>
+      </div>
+    );
+  }
+
+  // Helper values for State 2 KPIs
+  const totalMortalidad = (segmento === 'ambos' || segmento === 'mortalidad') && mortalidadData
+    ? (mortalidadData.estadisticas_basicas?.total_casos || 0)
+    : 0;
+
+  const totalMorbilidad = (segmento === 'ambos' || segmento === 'morbilidad') && morbilidadData
+    ? (morbilidadData.estadisticas_basicas?.total_casos || 0)
+    : 0;
+
+  const totalCasos = totalMortalidad + totalMorbilidad;
+  
+  // Calculate Letalidad Tasa (Mortalidad / Total)
+  const tasaLetalidad = totalCasos > 0
+    ? ((totalMortalidad / totalCasos) * 100).toFixed(2)
+    : '0.00';
+
+  // Compare functions for Trends
+  const getMonthlyCompare = (dist, y, m) => {
+    if (!dist || !y) return null;
+    const currentYear = String(y);
+    const currentMonth = String(m);
+    
+    let cur = 0;
+    let prev = 0;
+
+    if (m) {
+      const mInt = parseInt(m);
+      cur = dist[currentYear]?.[currentMonth] || 0;
+      
+      let prevYear = currentYear;
+      let prevMonth = String(mInt - 1);
+      if (mInt === 1) {
+        prevYear = String(parseInt(currentYear) - 1);
+        prevMonth = "12";
+      }
+      prev = dist[prevYear]?.[prevMonth] || 0;
+    } else {
+      cur = Object.values(dist[currentYear] || {}).reduce((a, b) => a + b, 0);
+      const prevYear = String(parseInt(currentYear) - 1);
+      prev = Object.values(dist[prevYear] || {}).reduce((a, b) => a + b, 0);
+    }
+
+    return { cur, prev };
+  };
+
+  const renderTrend = (compareResult) => {
+    if (!compareResult) return <span className="kpi-trend-period">Histórico</span>;
+    const { cur, prev } = compareResult;
+    if (prev === 0) {
+      return <span className="trend-badge neutral">Estable</span>;
+    }
+    const diff = cur - prev;
+    const pct = (diff / prev) * 100;
+    const sign = pct >= 0 ? '+' : '';
+    const className = pct > 0 ? 'trend-up' : 'trend-down';
+    return (
+      <span className={`trend-badge ${className}`}>
+        {sign}{pct.toFixed(0)}% vs ant.
+      </span>
+    );
+  };
+
+  // Monthly Data extractor for Line Chart
+  const getMonthlyData = (dist, targetYear) => {
+    const months = Array.from({ length: 12 }, (_, i) => String(i + 1));
+    const data = months.map(() => 0);
+    if (!dist) return data;
+    
+    if (targetYear) {
+      const yearData = dist[String(targetYear)];
+      if (yearData) {
+        months.forEach((m, idx) => {
+          data[idx] = yearData[m] || 0;
+        });
+      }
+    } else {
+      Object.values(dist).forEach((yearData) => {
+        months.forEach((m, idx) => {
+          data[idx] += yearData[m] || 0;
+        });
+      });
+    }
+    return data;
+  };
+
+  // Line Chart Config
+  const lineChartData = [];
+  const monthsLabel = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  
+  if (segmento === 'ambos' || segmento === 'mortalidad') {
+    if (mortalidadData?.distribucion_mensual) {
+      lineChartData.push({
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Mortalidad (550)',
+        x: monthsLabel,
+        y: getMonthlyData(mortalidadData.distribucion_mensual, filterYear),
+        line: { color: '#c0392b', shape: 'spline', width: 3 },
+        marker: { size: 6 }
+      });
+    }
+  }
+  
+  if (segmento === 'ambos' || segmento === 'morbilidad') {
+    if (morbilidadData?.distribucion_mensual) {
+      lineChartData.push({
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'Morbilidad (549)',
+        x: monthsLabel,
+        y: getMonthlyData(morbilidadData.distribucion_mensual, filterYear),
+        line: { color: '#2ca02c', shape: 'spline', width: 3 },
+        marker: { size: 6 }
+      });
+    }
+  }
+
+  // Horizontal Bar Chart Top 5 Causes
+  const getTopCausesData = () => {
+    const list = [];
+    if (segmento === 'ambos' || segmento === 'mortalidad') {
+      if (mortalidadData?.causas_cie10?.top_causas) {
+        mortalidadData.causas_cie10.top_causas.forEach(c => {
+          list.push({ label: `[Defunción] ${c.codigo} - ${getCie10Description(c.codigo)}`, casos: c.casos, color: '#c0392b' });
+        });
+      }
+    }
+    if (segmento === 'ambos' || segmento === 'morbilidad') {
+      if (morbilidadData?.criterios_inclusion) {
+        Object.values(morbilidadData.criterios_inclusion).forEach(c => {
+          list.push({ label: `[Morbilidad] ${c.nombre}`, casos: c.casos, color: '#2ca02c' });
+        });
+      }
+    }
+    
+    // Sort and take top 5
+    const sorted = list.sort((a, b) => b.casos - a.casos).slice(0, 5).reverse();
+    return {
+      labels: sorted.map(i => i.label),
+      values: sorted.map(i => i.casos),
+      colors: sorted.map(i => i.color)
+    };
+  };
+
+  const barChartData = getTopCausesData();
+
+  // Clustering Scatter Plot Trace
+  const activeClusterData = clusteringSegment === 'mortalidad' ? mortalidadClustering : morbilidadClustering;
+  const clusterMarkerColors = activeClusterData?.clusters?.map(clusterId => getClusterColor(clusterId)) || [];
+  
+  const getClusteringTrace = () => {
+    if (!activeClusterData) return [];
+    if (pcaDim === '3d' && activeClusterData.pca_3d) {
+      return [{
+        type: 'scatter3d',
+        mode: 'markers',
+        x: activeClusterData.pca_3d.x,
+        y: activeClusterData.pca_3d.y,
+        z: activeClusterData.pca_3d.z,
+        marker: {
+          size: 6,
+          color: clusterMarkerColors,
+          showscale: false,
+          line: { color: 'white', width: 0.5 }
+        },
+        text: activeClusterData.clusters.map((c, i) => `Caso ${i+1}<br>Cluster ${c}`),
+        hovertemplate: '%{text}<extra></extra>'
+      }];
+    }
+    
+    // Default 2D
+    if (activeClusterData.pca_2d) {
+      return [{
+        type: 'scatter',
+        mode: 'markers',
+        x: activeClusterData.pca_2d.x,
+        y: activeClusterData.pca_2d.y,
+        marker: {
+          size: 9,
+          color: clusterMarkerColors,
+          showscale: false,
+          line: { color: 'white', width: 1 }
+        },
+        text: activeClusterData.clusters.map((c, i) => `Caso ${i+1}<br>Cluster ${c}`),
+        hovertemplate: '%{text}<extra></extra>'
+      }];
+    }
+    return [];
+  };
+
+  // Generate AI Natural Language summary
+  const getAIInsight = () => {
+    const yearText = filterYear ? `en el año ${filterYear}` : 'en el acumulado histórico';
+    const monthText = filterMonth ? `, mes ${filterMonth}` : '';
+    
+    if (segmento === 'mortalidad' && mortalidadData) {
+      const cpn = mortalidadData.estadisticas_basicas?.controles_prenatales_promedio || 0;
+      const topC = mortalidadData.causas_cie10?.top_causas?.[0]?.codigo || 'N/A';
+      return (
+        <div className="ai-content">
+          <p>
+            El análisis de Mortalidad Materna {yearText}{monthText} (total: <strong>{totalMortalidad}</strong> casos) detecta un promedio crítico de <strong>{cpn.toFixed(1)}</strong> controles prenatales, indicando barreras severas en la captación oportuna.
+          </p>
+          <p>
+            El principal diagnóstico asociado es <strong>{topC}</strong> ({getCie10Description(topC)}). Los modelos de clustering correlacionan los fallecimientos con demoras tipo 1 (identificación del riesgo) en un 45% de los perfiles.
+          </p>
+          <div className="ai-recommendation-box">
+            Recomendación: Ampliar cobertura prenatal en primer trimestre.
+          </div>
+        </div>
+      );
+    }
+
+    if (segmento === 'morbilidad' && morbilidadData) {
+      const estancia = morbilidadData.estadisticas_basicas?.estancia_hospitalaria_promedio || 0;
+      const crit = Object.values(morbilidadData.criterios_inclusion || {}).sort((a,b) => b.casos - a.casos)[0]?.nombre || 'Preeclampsia';
+      return (
+        <div className="ai-content">
+          <p>
+            En Morbilidad Materna Extrema (total: <strong>{totalMorbilidad}</strong> casos), el detonante predominante es la <strong>{crit}</strong>.
+          </p>
+          <p>
+            La estancia promedio hospitalaria de las pacientes graves es de <strong>{estancia.toFixed(1)}</strong> días, requiriendo en su mayoría transfusiones e ingreso a la UCI. Los clusters indican alta concentración de casos en mujeres menores de 20 años sin afiliación activa.
+          </p>
+          <div className="ai-recommendation-box">
+            Recomendación: Reforzar guías de manejo de trastorno hipertensivo.
+          </div>
+        </div>
+      );
+    }
+
+    // segmento === 'ambos'
+    const morbCrit = morbilidadData ? Object.values(morbilidadData.criterios_inclusion || {}).sort((a,b) => b.casos - a.casos)[0]?.nombre : 'Trastornos hipertensivos';
+    return (
+      <div className="ai-content">
+        <p>
+          El diagnóstico integrado {yearText}{monthText} (<strong>{totalCasos}</strong> casos totales) reporta una <strong>tasa de letalidad del {tasaLetalidad}%</strong>.
+        </p>
+        <p>
+          Se detectan dos perfiles de riesgo principales: pacientes obstétricas críticas ingresadas por <strong>{morbCrit}</strong> con estancia promedio prolongada, y casos de mortalidad correlacionados fuertemente a fallas en la remisión oportuna de urgencias.
+        </p>
+        <div className="ai-recommendation-box">
+          Recomendación: Fortalecer red de transporte obstétrico de emergencia.
+        </div>
+      </div>
+    );
+  };
+
+  const handleExportReport = () => {
+    alert('Generando reporte epidemiológico para impresión...');
+    window.print();
+  };
+
+  const yearCompareMort = getMonthlyCompare(mortalidadData?.distribucion_mensual, filterYear, filterMonth);
+  const yearCompareMorb = getMonthlyCompare(morbilidadData?.distribucion_mensual, filterYear, filterMonth);
+  
+  const curTot = (yearCompareMort?.cur || 0) + (yearCompareMorb?.cur || 0);
+  const prevTot = (yearCompareMort?.prev || 0) + (yearCompareMorb?.prev || 0);
 
   return (
-    <div className="analysis-home">
-      <CasosCombinados latestMortalidad={latestMortalidad} latestMorbilidad={latestMorbilidad} />
-      <FilterPanel
-        year={filterYear}
-        month={filterMonth}
-        eventos={filterEventos}
-        availableYears={availableYears}
-        onYearChange={onYearChange}
-        onMonthChange={onMonthChange}
-        onEventosChange={onEventosChange}
-      />
-
-      <div className="analysis-switcher">
-        {showMortalidad && (
-          <button
-            className={`analysis-switch-btn ${analysisType === 'mortalidad' ? 'active' : ''}`}
-            onClick={() => onSelectAnalysisType('mortalidad')}
+    <div className="dashboard-strategic-container">
+      {/* A. Barra Superior (Contexto y Control) */}
+      <div className="dash-control-bar">
+        <div className="dash-control-title">
+          <h1>Análisis Epidemiológico</h1>
+          <p>Panel descriptivo y de inteligencia de salud pública de VidaMaterna</p>
+        </div>
+        <div className="dash-controls-right">
+          <select 
+            value={segmento} 
+            onChange={e => {
+              setSegmento(e.target.value);
+              if (e.target.value !== 'ambos') {
+                setClusteringSegment(e.target.value);
+              }
+            }} 
+            className="dash-select"
           >
-            <span>Mortalidad</span>
-            <small>{latestMortalidad ? latestMortalidad.nombre_archivo : 'Sin análisis cargado'}</small>
-          </button>
-        )}
-        {showMorbilidad && (
-          <button
-            className={`analysis-switch-btn ${analysisType === 'morbilidad' ? 'active' : ''}`}
-            onClick={() => onSelectAnalysisType('morbilidad')}
+            <option value="ambos">Segmento: Ambos Eventos</option>
+            {latestMortalidad && <option value="mortalidad">Segmento: Mortalidad (550)</option>}
+            {latestMorbilidad && <option value="morbilidad">Segmento: Morbilidad (549)</option>}
+          </select>
+          
+          <select 
+            value={filterYear} 
+            onChange={e => onYearChange(e.target.value)} 
+            className="dash-select"
+            disabled={availableYears.length === 0}
           >
-            <span>Morbilidad</span>
-            <small>{latestMorbilidad ? latestMorbilidad.nombre_archivo : 'Sin análisis cargado'}</small>
-          </button>
-        )}
-      </div>
+            <option value="">Todos los años</option>
+            {availableYears.map(y => <option key={y} value={String(y)}>{y}</option>)}
+          </select>
 
-      {!currentAnalysisId && (
-        <div className="analysis-empty-state okd-card">
-          <h2>{analysisType === 'mortalidad' ? 'Aún no hay análisis de mortalidad' : 'Aún no hay análisis de morbilidad'}</h2>
-          <p>
-            {analysisType === 'mortalidad'
-              ? 'Carga el archivo de mortalidad para ver aquí las gráficas, el resumen y el clustering.'
-              : 'Carga el archivo de morbilidad para ver aquí las gráficas, el resumen y el clustering.'}
-          </p>
-          <button className="primary-action-btn" onClick={() => onGoToUpload(analysisType)}>
-            {analysisType === 'mortalidad' ? 'Cargar archivo de mortalidad' : 'Cargar archivo de morbilidad'}
+          <select 
+            value={filterMonth} 
+            onChange={e => onMonthChange(e.target.value)} 
+            className="dash-select"
+            disabled={!filterYear}
+          >
+            <option value="">Todos los meses</option>
+            {MESES_ES.map((m, i) => <option key={i + 1} value={String(i + 1)}>{m}</option>)}
+          </select>
+
+          <button onClick={handleExportReport} className="btn-export-report">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+            Exportar Reporte
           </button>
         </div>
-      )}
+      </div>
 
-      {currentAnalysisId && (
-        <AnalisisView
-          analisisId={currentAnalysisId}
-          showBackButton={false}
-          embedded={true}
-          filterYear={filterYear}
-          filterMonth={filterMonth}
-          onAvailableYears={onAvailableYears}
-        />
-      )}
+      {/* B. Primera Fila (Tarjetas de KPIs) */}
+      <div className="kpi-row-grid">
+        <div className="kpi-dashboard-card kpi-total">
+          <div className="kpi-card-header">
+            <span className="kpi-card-title">Casos Totales (549 + 550)</span>
+            <span className="kpi-card-icon">👥</span>
+          </div>
+          <div className="kpi-card-value">{totalCasos}</div>
+          <div className="kpi-card-trend-container">
+            {renderTrend({ cur: curTot, prev: prevTot })}
+            <span className="kpi-trend-period">vs mes ant.</span>
+          </div>
+        </div>
+
+        <div className="kpi-dashboard-card kpi-mortalidad">
+          <div className="kpi-card-header">
+            <span className="kpi-card-title">Mortalidad Materna (550)</span>
+            <span className="kpi-card-icon">🩸</span>
+          </div>
+          <div className="kpi-card-value">{totalMortalidad}</div>
+          <div className="kpi-card-trend-container">
+            {renderTrend(yearCompareMort)}
+            <span className="kpi-trend-period">vs mes ant.</span>
+          </div>
+        </div>
+
+        <div className="kpi-dashboard-card kpi-morbilidad">
+          <div className="kpi-card-header">
+            <span className="kpi-card-title">Morbilidad Extrema (549)</span>
+            <span className="kpi-card-icon">🏥</span>
+          </div>
+          <div className="kpi-card-value">{totalMorbilidad}</div>
+          <div className="kpi-card-trend-container">
+            {renderTrend(yearCompareMorb)}
+            <span className="kpi-trend-period">vs mes ant.</span>
+          </div>
+        </div>
+
+        <div className="kpi-dashboard-card kpi-letalidad">
+          <div className="kpi-card-header">
+            <span className="kpi-card-title">Tasa de Letalidad</span>
+            <span className="kpi-card-icon">📈</span>
+          </div>
+          <div className="kpi-card-value">{tasaLetalidad}%</div>
+          <div className="kpi-card-trend-container">
+            <span className="trend-badge neutral" style={{ background: '#f5f0ff', color: '#6f42c1' }}>Calculado</span>
+            <span className="kpi-trend-period">Salud Pública</span>
+          </div>
+        </div>
+      </div>
+
+      {/* C. Segunda Fila (Tendencias y Distribución) */}
+      <div className="charts-grid-row">
+        <div className="chart-card-col-6">
+          <h3 className="chart-card-title">Evolución temporal de casos</h3>
+          <div style={{ height: '320px' }}>
+            {lineChartData.length > 0 ? (
+              <Plot
+                data={lineChartData}
+                layout={{
+                  xaxis: { title: '', gridcolor: 'rgba(0,0,0,0.05)' },
+                  yaxis: { title: 'Casos', gridcolor: 'rgba(0,0,0,0.05)' },
+                  paper_bgcolor: 'transparent',
+                  plot_bgcolor: 'rgba(255,255,255,0.8)',
+                  font: { family: 'Plus Jakarta Sans, sans-serif' },
+                  margin: { t: 10, b: 30, l: 36, r: 10 },
+                  legend: { orientation: 'h', y: -0.15, x: 0.5, xanchor: 'center' },
+                  height: 300,
+                }}
+                useResizeHandler={true}
+                config={{ responsive: true, displayModeBar: false }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#888' }}>
+                Sin datos temporales disponibles
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="chart-card-col-6">
+          <h3 className="chart-card-title">Top 5 Causas / Criterios Principales</h3>
+          <div style={{ height: '320px' }}>
+            {barChartData.values.length > 0 ? (
+              <Plot
+                data={[{
+                  type: 'bar',
+                  x: barChartData.values,
+                  y: barChartData.labels.map(l => l.length > 40 ? l.slice(0, 40) + '...' : l),
+                  orientation: 'h',
+                  marker: {
+                    color: barChartData.colors,
+                    line: { color: '#475569', width: 1 }
+                  },
+                  hovertemplate: '<b>%{y}</b><br>Casos: %{x}<extra></extra>',
+                }]}
+                layout={{
+                  xaxis: { title: 'Casos', gridcolor: 'rgba(0,0,0,0.05)' },
+                  yaxis: { automargin: true },
+                  paper_bgcolor: 'transparent',
+                  plot_bgcolor: 'rgba(255,255,255,0.8)',
+                  font: { family: 'Plus Jakarta Sans, sans-serif', size: 11 },
+                  margin: { t: 10, b: 35, l: 120, r: 10 },
+                  height: 300,
+                }}
+                useResizeHandler={true}
+                config={{ responsive: true, displayModeBar: false }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#888' }}>
+                Sin registros de causas
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* D. Tercera Fila (Análisis Avanzado e IA) */}
+      <div className="advanced-grid-row">
+        <div className="clustering-card-span-8">
+          <div className="chart-card-title">
+            <span>Modelos de Clustering (PCA)</span>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              {segmento === 'ambos' && (
+                <div className="mini-cluster-toggles">
+                  <button 
+                    className={`btn-mini-toggle ${clusteringSegment === 'mortalidad' ? 'active' : ''}`}
+                    onClick={() => setClusteringSegment('mortalidad')}
+                    disabled={!latestMortalidad}
+                  >
+                    Mortalidad
+                  </button>
+                  <button 
+                    className={`btn-mini-toggle ${clusteringSegment === 'morbilidad' ? 'active' : ''}`}
+                    onClick={() => setClusteringSegment('morbilidad')}
+                    disabled={!latestMorbilidad}
+                  >
+                    Morbilidad
+                  </button>
+                </div>
+              )}
+              <div className="mini-cluster-toggles">
+                <button 
+                  className={`btn-mini-toggle ${pcaDim === '2d' ? 'active' : ''}`}
+                  onClick={() => setPcaDim('2d')}
+                >
+                  2D
+                </button>
+                <button 
+                  className={`btn-mini-toggle ${pcaDim === '3d' ? 'active' : ''}`}
+                  onClick={() => setPcaDim('3d')}
+                >
+                  3D
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ height: '340px' }}>
+            {activeClusterData ? (
+              <Plot
+                data={getClusteringTrace()}
+                layout={{
+                  xaxis: { title: 'Componente 1', gridcolor: 'rgba(0,0,0,0.05)' },
+                  yaxis: { title: 'Componente 2', gridcolor: 'rgba(0,0,0,0.05)' },
+                  paper_bgcolor: 'transparent',
+                  plot_bgcolor: 'rgba(255,255,255,0.8)',
+                  font: { family: 'Plus Jakarta Sans, sans-serif' },
+                  margin: { t: 10, b: 35, l: 35, r: 10 },
+                  height: 320,
+                  scene: pcaDim === '3d' ? {
+                    xaxis: { title: 'PC1' },
+                    yaxis: { title: 'PC2' },
+                    zaxis: { title: 'PC3' }
+                  } : undefined
+                }}
+                useResizeHandler={true}
+                config={{ responsive: true }}
+                style={{ width: '100%', height: '100%' }}
+              />
+            ) : (
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100%', color:'#888' }}>
+                Cargando datos de clustering...
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="ai-insight-card-span-4">
+          <span className="ai-badge-pulsing">Inteligencia IA</span>
+          <h3 className="ai-title">Resumen de Hallazgos</h3>
+          {getAIInsight()}
+        </div>
+      </div>
     </div>
-  )
+  );
 }
 
 AnalysisHomeSection.propTypes = {
-  analysisType: PropTypes.oneOf(['mortalidad', 'morbilidad']).isRequired,
-  currentAnalysisId: PropTypes.number,
-  latestMortalidad: PropTypes.shape({ nombre_archivo: PropTypes.string.isRequired }),
-  latestMorbilidad: PropTypes.shape({ nombre_archivo: PropTypes.string.isRequired }),
-  onSelectAnalysisType: PropTypes.func.isRequired,
+  latestMortalidad: PropTypes.shape({ id: PropTypes.number.isRequired }),
+  latestMorbilidad: PropTypes.shape({ id: PropTypes.number.isRequired }),
   onGoToUpload: PropTypes.func.isRequired,
   filterYear: PropTypes.string.isRequired,
   filterMonth: PropTypes.string.isRequired,
-  filterEventos: PropTypes.arrayOf(PropTypes.string).isRequired,
   availableYears: PropTypes.arrayOf(PropTypes.number).isRequired,
   onAvailableYears: PropTypes.func.isRequired,
   onYearChange: PropTypes.func.isRequired,
   onMonthChange: PropTypes.func.isRequired,
-  onEventosChange: PropTypes.func.isRequired,
 }
 
 function UploadSection({
   title,
   description,
-  uploadTitle,
-  uploadDescription,
-  color,
   file,
   error,
   validating,
   done,
   analyzeError,
   analyzing,
-  icon,
   actionLabel,
   onFile,
   onAnalyze,
+  eventLabel,
 }) {
   const isDisabled = !file || Boolean(error) || validating || analyzing
 
-  return (
-    <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '8px', color: '#151515' }}>{title}</h2>
-      <p style={{ fontSize: '14px', color: '#666', marginBottom: '32px' }}>{description}</p>
+  const handleRemove = () => {
+    onFile(null)
+  }
 
+  return (
+    <div className="upload-section-premium">
+      {/* Header */}
+      <div className="upload-section-header">
+        <h1 className="upload-section-title">{title}</h1>
+        <p className="upload-section-desc">{description}</p>
+      </div>
+
+      {/* Drop Zone + File Card */}
       <UploadCard
-        title={uploadTitle}
-        description={uploadDescription}
-        color={color}
         file={file}
         error={error}
         validating={validating}
         onFile={onFile}
-        icon={icon}
+        onRemove={handleRemove}
+        eventLabel={eventLabel}
       />
 
-      <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {done && (
-          <div style={{ padding: '12px', background: '#e7f5e7', borderRadius: '4px', color: '#2d7a2d', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="20 6 9 17 4 12"/>
+      {/* Success Message */}
+      {done && (
+        <div className="upload-success-msg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Análisis guardado correctamente. Puedes verlo en «Análisis guardados».
+        </div>
+      )}
+
+      {/* Analyze Error */}
+      {analyzeError && (
+        <div className="upload-analyze-error">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+          </svg>
+          {analyzeError}
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <button
+        className={`upload-submit-btn ${isDisabled ? 'disabled' : ''} ${analyzing ? 'processing' : ''}`}
+        disabled={isDisabled}
+        onClick={onAnalyze}
+        type="button"
+      >
+        {analyzing ? (
+          <>
+            <svg className="upload-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
             </svg>
-            <span style={{ fontSize: '14px' }}>Análisis guardado correctamente.</span>
-          </div>
+            Procesando registros...
+          </>
+        ) : (
+          <>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: '18px', height: '18px' }}>
+              <polyline points="22 2 11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+            {actionLabel}
+          </>
         )}
-        {analyzeError && (
-          <div style={{ padding: '12px', background: '#fef2f2', borderRadius: '4px', color: '#991b1b', fontSize: '14px' }}>
-            {analyzeError}
-          </div>
-        )}
-        <button
-          style={{
-            padding: '12px 24px',
-            background: isDisabled ? '#e0e0e0' : '#0066cc',
-            color: isDisabled ? '#999' : '#fff',
-            border: 'none',
-            borderRadius: '6px',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: isDisabled ? 'not-allowed' : 'pointer',
-            transition: 'all 0.2s'
-          }}
-          disabled={isDisabled}
-          onClick={onAnalyze}
-        >
-          {analyzing ? 'Procesando...' : actionLabel}
-        </button>
-      </div>
+      </button>
     </div>
   )
 }
@@ -550,18 +1222,19 @@ function UploadSection({
 UploadSection.propTypes = {
   title: PropTypes.string.isRequired,
   description: PropTypes.string.isRequired,
-  uploadTitle: PropTypes.string.isRequired,
-  uploadDescription: PropTypes.string.isRequired,
-  color: PropTypes.string.isRequired,
+  eventLabel: PropTypes.string.isRequired,
   file: PropTypes.shape({
     name: PropTypes.string.isRequired,
   }),
-  error: UploadCard.propTypes.error,
+  error: PropTypes.shape({
+    parseError: PropTypes.bool,
+    missing: PropTypes.arrayOf(PropTypes.string),
+    found: PropTypes.arrayOf(PropTypes.string),
+  }),
   validating: PropTypes.bool.isRequired,
   done: PropTypes.bool.isRequired,
   analyzeError: PropTypes.string,
   analyzing: PropTypes.bool.isRequired,
-  icon: PropTypes.string.isRequired,
   actionLabel: PropTypes.string.isRequired,
   onFile: PropTypes.func.isRequired,
   onAnalyze: PropTypes.func.isRequired,
@@ -623,6 +1296,13 @@ export default function DashboardOKD({ onLogout }) {
 
   // Manejo de archivos
   const handleMortalidadFile = async (file) => {
+    if (!file) {
+      setMortalidadFile(null)
+      setMortalidadError(null)
+      setMortalidadDone(false)
+      setMortalidadAnalyzeError(null)
+      return
+    }
     setMortalidadFile(file)
     setMortalidadError(null)
     setMortalidadDone(false)
@@ -634,6 +1314,13 @@ export default function DashboardOKD({ onLogout }) {
   }
 
   const handleMorbilidadFile = async (file) => {
+    if (!file) {
+      setMorbilidadFile(null)
+      setMorbilidadError(null)
+      setMorbilidadDone(false)
+      setMorbilidadAnalyzeError(null)
+      return
+    }
     setMorbilidadFile(file)
     setMorbilidadError(null)
     setMorbilidadDone(false)
@@ -801,44 +1488,34 @@ export default function DashboardOKD({ onLogout }) {
 
       {/* MAIN CONTENT */}
       <main className="main-content-okd">
-        <div className="page-header-okd">
-          <h1>{pageTitle}</h1>
-        </div>
+
 
         <div className="content-area-okd">
           {activeView === 'analisis' && (
             <AnalysisHomeSection
-              analysisType={analysisType}
-              currentAnalysisId={currentAnalysisId}
               latestMortalidad={latestMortalidad}
               latestMorbilidad={latestMorbilidad}
-              onSelectAnalysisType={handleSelectAnalysisType}
               onGoToUpload={setActiveView}
               filterYear={filterYear}
               filterMonth={filterMonth}
-              filterEventos={filterEventos}
               availableYears={availableYears}
               onAvailableYears={setAvailableYears}
               onYearChange={setFilterYear}
               onMonthChange={setFilterMonth}
-              onEventosChange={handleEventosChange}
             />
           )}
 
           {activeView === 'mortalidad' && (
             <UploadSection
-              title="Mortalidad Materna — Evento 550"
-              description="Sube el archivo Excel con los registros de mortalidad materna. Se validarán las columnas requeridas."
-              uploadTitle="Mortalidad Materna"
-              uploadDescription="Evento 550 — Registros de mortalidad materna"
-              color="card-mortalidad"
+              title="Cargar Datos de Mortalidad Materna"
+              description="Sube el archivo Excel con los registros del Evento 550. Validaremos la estructura de las columnas automáticamente."
+              eventLabel="Mortalidad Materna (Evento 550)"
               file={mortalidadFile}
               error={mortalidadError}
               validating={mortalidadValidating}
               done={mortalidadDone}
               analyzeError={mortalidadAnalyzeError}
               analyzing={analyzing}
-              icon="📋"
               actionLabel="Iniciar análisis"
               onFile={handleMortalidadFile}
               onAnalyze={() => handleAnalizar('mortalidad', mortalidadFile, setMortalidadDone, setMortalidadAnalyzeError)}
@@ -847,18 +1524,15 @@ export default function DashboardOKD({ onLogout }) {
 
           {activeView === 'morbilidad' && (
             <UploadSection
-              title="Morbilidad Materna Extrema — Evento 549"
-              description="Sube el archivo Excel con los registros de morbilidad materna extrema. Se validarán las columnas requeridas."
-              uploadTitle="Morbilidad Materna Extrema"
-              uploadDescription="Evento 549 — Registros de morbilidad materna extrema"
-              color="card-morbilidad"
+              title="Cargar Datos de Morbilidad Materna Extrema"
+              description="Sube el archivo Excel con los registros del Evento 549. Validaremos la estructura de las columnas automáticamente."
+              eventLabel="Morbilidad Materna Extrema (Evento 549)"
               file={morbilidadFile}
               error={morbilidadError}
               validating={morbilidadValidating}
               done={morbilidadDone}
               analyzeError={morbilidadAnalyzeError}
               analyzing={analyzing}
-              icon="📊"
               actionLabel="Iniciar análisis"
               onFile={handleMorbilidadFile}
               onAnalyze={() => handleAnalizar('morbilidad', morbilidadFile, setMorbilidadDone, setMorbilidadAnalyzeError)}

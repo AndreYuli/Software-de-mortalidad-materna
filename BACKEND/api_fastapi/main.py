@@ -534,6 +534,23 @@ def _filtrar_dataframe_por_fecha(df, tipo, year, month):
     return df[mask].reset_index(drop=True)
 
 
+MESES_ABREV = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun',
+               'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
+
+def _calcular_distribucion_mensual(df, tipo):
+    col = _detectar_col_fecha(df, tipo)
+    if col is None:
+        return {}
+    fechas = _parse_serie_fechas(df[col]).dropna()
+    if fechas.empty:
+        return {}
+    conteos = fechas.dt.month.value_counts().sort_index()
+    return {
+        'labels': [MESES_ABREV[m - 1] for m in conteos.index],
+        'values': [int(v) for v in conteos.values],
+    }
+
+
 # --- REST API Endpoints ---
 
 # Auth Endpoints
@@ -757,6 +774,7 @@ def analisis_completo(
                 'causas_cie10': processor.analizar_causas_cie10(top_n=15),
                 'obstetrico_edad': processor.analizar_obstetrico_por_edad(),
                 'anos_disponibles': anos_disponibles,
+                'distribucion_mensual': _calcular_distribucion_mensual(df, 'mortalidad'),
                 'filtros_activos': {'year': year, 'month': month},
             }
         else:  # morbilidad
@@ -774,6 +792,7 @@ def analisis_completo(
                 'tiempo_remision': processor.analizar_tiempo_remision(),
                 'obstetrico_edad': processor.analizar_obstetrico_por_edad(),
                 'anos_disponibles': anos_disponibles,
+                'distribucion_mensual': _calcular_distribucion_mensual(df, 'morbilidad'),
                 'filtros_activos': {'year': year, 'month': month},
             }
         return resultado
@@ -857,12 +876,74 @@ def heatmap_correlacion(pk: int, db: Session = Depends(get_db)):
         
         resultado['analisis_id'] = analisis.id
         resultado['limpieza_datos'] = limpieza
-        
+
         return resultado
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al generar heatmap: {str(e)}"
+        )
+
+
+@app.get("/api/analisis/{pk}/extra-columna/")
+def extra_columna_analisis(pk: int, db: Session = Depends(get_db)):
+    analisis = db.query(Analisis).filter(Analisis.id == pk).first()
+    if not analisis:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=ERROR_ANALISIS_NO_ENCONTRADO
+        )
+    if analisis.tipo != 'mortalidad':
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Extra columna solo disponible para análisis de mortalidad"
+        )
+
+    clean_path = analisis.archivo.lstrip("/")
+    full_path = Path(clean_path)
+    if not full_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="El archivo físico del análisis no existe en el servidor."
+        )
+
+    try:
+        df = pd.read_excel(full_path, engine='openpyxl')
+        df = _canonizar_columnas_dataframe(df, 'mortalidad')
+        df, _ = preparar_dataframe_analisis(df)
+
+        COLUMNAS_EXTRA = [
+            ('5.1 Sitio de Defunción', 'Distribución por Sitio de Defunción', 'Sitio', 'Casos'),
+            ('6.3 Escolaridad', 'Distribución por Nivel de Escolaridad', 'Escolaridad', 'Casos'),
+            ('6.1 Convivencia', 'Distribución por Convivencia', 'Convivencia', 'Casos'),
+        ]
+
+        for col, titulo, x_title, y_title in COLUMNAS_EXTRA:
+            if col not in df.columns:
+                continue
+            serie = df[col].dropna().astype(str).str.strip()
+            serie = serie[~serie.str.lower().isin({'', 'nan', 'none', 'null'})]
+            if len(serie) == 0:
+                continue
+            conteos = serie.value_counts()
+            return {
+                'chart': {
+                    'title': titulo,
+                    'subtitle': f'Total: {len(serie)} casos con dato registrado',
+                    'labels': conteos.index.tolist(),
+                    'values': [int(v) for v in conteos.values],
+                    'total': int(len(serie)),
+                    'xTitle': x_title,
+                    'yTitle': y_title,
+                    'orientation': 'h',
+                }
+            }
+
+        return {'chart': None}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al procesar extra columna: {str(e)}"
         )
 
 

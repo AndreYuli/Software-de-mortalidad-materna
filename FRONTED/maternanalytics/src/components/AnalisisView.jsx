@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import PlotlyReact from 'react-plotly.js'
-import * as XLSX from 'xlsx'
 import './AnalisisView.css'
 
 const Plot = PlotlyReact?.default ?? PlotlyReact
@@ -12,7 +11,7 @@ const BARRERAS_LABELS = {
   demora_4: 'Atención oportuna y de calidad',
 }
 
-const API_URL = 'http://localhost:8000/api'
+import { API_URL } from '../api.js'
 
 const CHART_COLORS = {
   blue: '#4d7fd4',
@@ -415,13 +414,14 @@ function ChartsTab({ data, analisisId }) {
   const [heatmapData, setHeatmapData] = useState(null)
   const [heatmapLoading, setHeatmapLoading] = useState(false)
   const [heatmapError, setHeatmapError] = useState(null)
+  const [heatmapRequested, setHeatmapRequested] = useState(false)
 
   const [extraChart, setExtraChart] = useState(null)
   const [extraChartLoading, setExtraChartLoading] = useState(false)
   const [extraChartError, setExtraChartError] = useState(null)
 
   useEffect(() => {
-    if (data?.tipo !== 'morbilidad') return
+    if (data?.tipo !== 'morbilidad' || !heatmapRequested) return
 
     let isMounted = true
     const controller = new AbortController()
@@ -434,8 +434,7 @@ function ChartsTab({ data, analisisId }) {
         const payload = await response.json().catch(() => ({}))
 
         if (!response.ok) {
-          const backendMsg = payload?.error || 'No se pudo generar el heatmap.'
-          throw new Error(backendMsg)
+          throw new Error(payload?.error || 'No se pudo generar el heatmap.')
         }
 
         if (payload?.error) {
@@ -462,7 +461,7 @@ function ChartsTab({ data, analisisId }) {
       isMounted = false
       controller.abort()
     }
-  }, [analisisId, data?.tipo])
+  }, [analisisId, data?.tipo, heatmapRequested])
 
   useEffect(() => {
     if (data?.tipo !== 'mortalidad') return
@@ -470,198 +469,16 @@ function ChartsTab({ data, analisisId }) {
     let isMounted = true
     const controller = new AbortController()
 
-    const detectarDistribucion = async () => {
+    const cargarExtraChart = async () => {
       setExtraChartLoading(true)
       setExtraChartError(null)
       try {
-        // 1) Obtener URL del archivo guardado
-        const detailRes = await fetch(`${API_URL}/analisis/${analisisId}/`, { signal: controller.signal })
-        const detail = await detailRes.json().catch(() => null)
-        if (!detailRes.ok) throw new Error(detail?.error || 'No se pudo leer el análisis.')
-
-        const archivoUrl = detail?.archivo
-        if (!archivoUrl) {
-          if (isMounted) setExtraChart(null)
-          return
-        }
-
-        const absoluteUrl = archivoUrl.startsWith('http') ? archivoUrl : `http://localhost:8000${archivoUrl}`
-        const fileRes = await fetch(absoluteUrl, { signal: controller.signal })
-        if (!fileRes.ok) throw new Error('No se pudo descargar el Excel asociado al análisis.')
-
-        // 2) Leer Excel en el frontend para detectar columnas adicionales
-        const buf = await fileRes.arrayBuffer()
-        const wb = XLSX.read(buf, { type: 'array' })
-        const sheetName = wb.SheetNames?.[0]
-        const ws = sheetName ? wb.Sheets[sheetName] : null
-        if (!ws) {
-          if (isMounted) setExtraChart(null)
-          return
-        }
-
-        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null })
-        if (!rows || rows.length < 2) {
-          if (isMounted) setExtraChart(null)
-          return
-        }
-
-        const headers = (rows[0] || []).map(h => (h ?? '').toString().trim())
-        const normalizedHeaders = headers.map(h => normalizeText(h))
-
-        const findIndex = (patterns) => {
-          return headers.findIndex(h => patterns.some(pattern => headerMatchesPattern(h, pattern)))
-        }
-
-        const candidates = [
-          {
-            kind: 'municipio',
-            title: 'Top municipios con más casos (si está disponible)'
-          },
-          {
-            kind: 'departamento',
-            title: 'Top departamentos con más casos (si está disponible)'
-          },
-          {
-            kind: 'edad',
-            title: 'Distribución por edad (si está disponible)'
-          },
-          {
-            kind: 'regimen',
-            title: 'Distribución por régimen (si está disponible)'
-          },
-          {
-            kind: 'eps',
-            title: 'Top EPS con más casos (si está disponible)'
-          },
-        ]
-
-        const kindToPatterns = {
-          edad: ['edad', 'edad (anos)', 'edad (años)', 'edad anos', 'edad años'],
-          departamento: ['departamento', 'depto', 'dpto'],
-          municipio: ['municipio'],
-          regimen: ['regimen', 'régimen', 'afiliacion', 'afiliación'],
-          eps: ['eps', 'entidad promotora', 'aseguradora'],
-        }
-
-        let chosen = null
-        for (const c of candidates) {
-          const idx = findIndex(kindToPatterns[c.kind] || [])
-          if (idx >= 0) {
-            chosen = { kind: c.kind, idx, title: c.title, header: headers[idx] }
-            break
-          }
-        }
-
-        if (!chosen) {
-          if (isMounted) setExtraChart(null)
-          return
-        }
-
-        const dataRows = rows.slice(1)
-
-        const cleanCell = (v) => {
-          const s = (v ?? '').toString().trim()
-          if (!s) return null
-          const lowered = normalizeText(s)
-          if (lowered === 'nan' || lowered === 'null' || lowered === 'none' || lowered === 'sin dato') return null
-          return s
-        }
-
-        if (chosen.kind === 'edad') {
-          const edades = dataRows
-            .map(r => r?.[chosen.idx])
-            .map(v => {
-              const n = typeof v === 'number' ? v : Number.parseFloat((v ?? '').toString().replace(',', '.'))
-              return Number.isFinite(n) ? n : null
-            })
-            .filter(n => n !== null && n >= 0 && n <= 120)
-
-          if (edades.length < 3) {
-            if (isMounted) setExtraChart(null)
-            return
-          }
-
-          const buckets = [
-            { label: '<15', min: 0, max: 14.999 },
-            { label: '15-19', min: 15, max: 19.999 },
-            { label: '20-24', min: 20, max: 24.999 },
-            { label: '25-29', min: 25, max: 29.999 },
-            { label: '30-34', min: 30, max: 34.999 },
-            { label: '35-39', min: 35, max: 39.999 },
-            { label: '40+', min: 40, max: 120 },
-          ]
-
-          const counts = buckets.map(b => edades.filter(e => e >= b.min && e <= b.max).length)
-          const total = counts.reduce((a, b) => a + b, 0)
-          if (total <= 0) {
-            if (isMounted) setExtraChart(null)
-            return
-          }
-
-          if (isMounted) {
-            setExtraChart({
-              type: 'bar',
-              orientation: 'v',
-              title: 'Distribución por edad',
-              subtitle: `Columna detectada: ${chosen.header}`,
-              labels: buckets.map(b => b.label),
-              values: counts,
-              total,
-              xTitle: 'Rango de edad (años)',
-              yTitle: 'Casos'
-            })
-          }
-          return
-        }
-
-        // Categorías (departamento/municipio/régimen/EPS)
-        const cats = dataRows
-          .map(r => cleanCell(r?.[chosen.idx]))
-          .filter(Boolean)
-
-        if (cats.length < 3) {
-          if (isMounted) setExtraChart(null)
-          return
-        }
-
-        const countsMap = new Map()
-        for (const v of cats) {
-          const key = v.toString().trim()
-          countsMap.set(key, (countsMap.get(key) || 0) + 1)
-        }
-
-        const sorted = Array.from(countsMap.entries()).sort((a, b) => b[1] - a[1])
-        const top = sorted.slice(0, 10)
-        const rest = sorted.slice(10)
-        const otherCount = rest.reduce((sum, [, c]) => sum + c, 0)
-        const labels = top.map(([k]) => k)
-        const values = top.map(([, c]) => c)
-        if (otherCount > 0) {
-          labels.push('Otros')
-          values.push(otherCount)
-        }
-
-        const total = values.reduce((a, b) => a + b, 0)
-        const titleMap = {
-          departamento: 'Top departamentos',
-          municipio: 'Top municipios',
-          regimen: 'Distribución por régimen',
-          eps: 'Top EPS'
-        }
-
-        if (isMounted) {
-          setExtraChart({
-            type: 'bar',
-            orientation: 'h',
-            title: titleMap[chosen.kind] || 'Distribución',
-            subtitle: `Columna detectada: ${chosen.header}`,
-            labels,
-            values,
-            total,
-            xTitle: 'Casos',
-            yTitle: ''
-          })
-        }
+        const response = await fetch(`${API_URL}/analisis/${analisisId}/extra-columna/`, {
+          signal: controller.signal,
+        })
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload?.error || 'No se pudo cargar columna adicional.')
+        if (isMounted) setExtraChart(payload.chart ?? null)
       } catch (err) {
         if (err?.name === 'AbortError') return
         if (isMounted) {
@@ -673,12 +490,8 @@ function ChartsTab({ data, analisisId }) {
       }
     }
 
-    detectarDistribucion()
-
-    return () => {
-      isMounted = false
-      controller.abort()
-    }
+    cargarExtraChart()
+    return () => { isMounted = false; controller.abort() }
   }, [analisisId, data?.tipo])
 
   // Gráfico de momento de muerte/ocurrencia
@@ -1187,7 +1000,19 @@ function ChartsTab({ data, analisisId }) {
           {getObstetricoEdadChart()}
           <div className="chart-container">
             <h3 className="chart-title">Heatmap de correlacion</h3>
-          {heatmapLoading && (
+
+          {!heatmapRequested && !heatmapLoading && !heatmapData && (
+            <div style={{ padding: '24px', textAlign: 'center' }}>
+              <button
+                className="btn-generate"
+                onClick={() => setHeatmapRequested(true)}
+              >
+                Generar heatmap de correlación
+              </button>
+            </div>
+          )}
+
+          {heatmapRequested && heatmapLoading && (
             <div className="loading" style={{ padding: '40px 20px' }}>
               <div className="spinner"></div>
               <p>Generando heatmap de correlación...</p>
@@ -1319,12 +1144,18 @@ function ClusteringTab({ data, loading, onGenerate, clusterCount, setClusterCoun
   }
 
   const clusterMarkerColors = data?.clusters?.map(clusterId => getClusterColor(clusterId)) || []
-  const clusterLegend = data?.cluster_profiles?.map(profile => ({
+
+  // Precalcular descriptores una sola vez — reutilizados en leyenda y tarjetas
+  const clusterDescriptors = (data?.cluster_profiles || []).map(profile =>
+    buildClusterDescriptor(profile, data?.cluster_profiles || [])
+  )
+
+  const clusterLegend = (data?.cluster_profiles || []).map((profile, idx) => ({
     id: profile.cluster_id,
     size: profile.size,
     color: getClusterColor(profile.cluster_id),
-    descriptor: buildClusterDescriptor(profile, data?.cluster_profiles || []),
-  })) || []
+    descriptor: clusterDescriptors[idx],
+  }))
 
   // Gráfico 2D
   const scatter2D = data.pca_2d && (
@@ -1427,16 +1258,16 @@ function ClusteringTab({ data, loading, onGenerate, clusterCount, setClusterCoun
         <div className="cluster-profiles">
           <h3>Perfiles de Clusters</h3>
           <div className="profiles-grid">
-            {data.cluster_profiles.map((profile) => (
+            {data.cluster_profiles.map((profile, idx) => (
               <div key={profile.cluster_id} className="profile-card">
                 <div className="profile-header">
                   <div>
-                    <span className="profile-label">{buildClusterDescriptor(profile, data.cluster_profiles).title}</span>
+                    <span className="profile-label">{clusterDescriptors[idx].title}</span>
                     <div className="profile-subtitle">Cluster {profile.cluster_id}</div>
                   </div>
                   <span className="profile-size">{profile.size} casos</span>
                 </div>
-                <p className="profile-description">{buildClusterDescriptor(profile, data.cluster_profiles).subtitle}</p>
+                <p className="profile-description">{clusterDescriptors[idx].subtitle}</p>
                 <div className="profile-features">
                   {Object.entries(profile.features).map(([key, value]) => (
                     <div key={key} className="feature-item">

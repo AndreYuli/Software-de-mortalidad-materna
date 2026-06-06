@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import './Login.css'
-
-const API_URL = 'http://localhost:8000/api'
+import { API_URL } from '../api.js'
 
 export default function Register({ onRegistered, onBack }) {
   const [nombre, setNombre] = useState('')
