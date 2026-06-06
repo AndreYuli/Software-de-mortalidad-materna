@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import PlotlyReact from 'react-plotly.js'
 import './AnalisisView.css'
+import { API_URL } from '../api.js'
 
 const Plot = PlotlyReact?.default ?? PlotlyReact
 
@@ -10,8 +11,6 @@ const BARRERAS_LABELS = {
   demora_3: 'Llegada al servicio de salud',
   demora_4: 'Atención oportuna y de calidad',
 }
-
-import { API_URL } from '../api.js'
 
 const CHART_COLORS = {
   blue: '#4d7fd4',

@@ -4,10 +4,9 @@ import PlotlyReact from 'react-plotly.js'
 import './DashboardOKD.css'
 import AnalisisView from './AnalisisView'
 import * as XLSX from 'xlsx'
+import { API_URL } from '../api.js'
 
 const Plot = PlotlyReact?.default ?? PlotlyReact
-
-import { API_URL } from '../api.js'
 
 // Columnas requeridas (alineadas con BACKEND/api/views.py)
 const COLUMNAS_MORTALIDAD = [
