@@ -29,7 +29,6 @@ TABLES_TO_CLEAR = [
     "paciente",
     "api_analisis",
     "api_sivigilaimportacion",
-    "api_usuario"
 ]
 
 def clear_data():

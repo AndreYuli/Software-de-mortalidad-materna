@@ -803,17 +803,20 @@ function AnalysisHomeSection({
   const getAIInsight = () => {
     const yearText = filterYear ? `en el año ${filterYear}` : 'en el acumulado histórico';
     const monthText = filterMonth ? `, mes ${filterMonth}` : '';
-    
-    if (segmento === 'mortalidad' && mortalidadData) {
+
+    if (segmento === 'mortalidad') {
+      if (!mortalidadData || totalMortalidad === 0) {
+        return <p className="ai-no-data">No hay casos de mortalidad registrados para el período seleccionado.</p>;
+      }
       const cpn = mortalidadData.estadisticas_basicas?.controles_prenatales_promedio || 0;
       const topC = mortalidadData.causas_cie10?.top_causas?.[0]?.codigo || 'N/A';
       return (
         <div className="ai-content">
           <p>
-            El análisis de Mortalidad Materna {yearText}{monthText} (total: <strong>{totalMortalidad}</strong> casos) detecta un promedio crítico de <strong>{cpn.toFixed(1)}</strong> controles prenatales, indicando barreras severas en la captación oportuna.
+            El análisis de Mortalidad Materna {yearText}{monthText} (total: <strong>{totalMortalidad}</strong> casos) detecta un promedio de <strong>{cpn.toFixed(1)}</strong> controles prenatales por caso.
           </p>
           <p>
-            El principal diagnóstico asociado es <strong>{topC}</strong> ({getCie10Description(topC)}). Los modelos de clustering correlacionan los fallecimientos con demoras tipo 1 (identificación del riesgo) en un 45% de los perfiles.
+            El principal diagnóstico asociado es <strong>{topC}</strong> ({getCie10Description(topC)}).
           </p>
           <div className="ai-recommendation-box">
             Recomendación: Ampliar cobertura prenatal en primer trimestre.
@@ -822,16 +825,19 @@ function AnalysisHomeSection({
       );
     }
 
-    if (segmento === 'morbilidad' && morbilidadData) {
+    if (segmento === 'morbilidad') {
+      if (!morbilidadData || totalMorbilidad === 0) {
+        return <p className="ai-no-data">No hay casos de morbilidad registrados para el período seleccionado.</p>;
+      }
       const estancia = morbilidadData.estadisticas_basicas?.estancia_hospitalaria_promedio || 0;
       const crit = Object.values(morbilidadData.criterios_inclusion || {}).sort((a,b) => b.casos - a.casos)[0]?.nombre || 'Preeclampsia';
       return (
         <div className="ai-content">
           <p>
-            En Morbilidad Materna Extrema (total: <strong>{totalMorbilidad}</strong> casos), el detonante predominante es la <strong>{crit}</strong>.
+            En Morbilidad Materna Extrema {yearText}{monthText} (total: <strong>{totalMorbilidad}</strong> casos), el detonante predominante es la <strong>{crit}</strong>.
           </p>
           <p>
-            La estancia promedio hospitalaria de las pacientes graves es de <strong>{estancia.toFixed(1)}</strong> días, requiriendo en su mayoría transfusiones e ingreso a la UCI. Los clusters indican alta concentración de casos en mujeres menores de 20 años sin afiliación activa.
+            La estancia promedio hospitalaria es de <strong>{estancia.toFixed(1)}</strong> días.
           </p>
           <div className="ai-recommendation-box">
             Recomendación: Reforzar guías de manejo de trastorno hipertensivo.
@@ -841,6 +847,9 @@ function AnalysisHomeSection({
     }
 
     // segmento === 'ambos'
+    if (totalCasos === 0) {
+      return <p className="ai-no-data">No hay casos registrados. Sube un archivo Excel desde el panel de carga para comenzar el análisis.</p>;
+    }
     const morbCrit = morbilidadData ? Object.values(morbilidadData.criterios_inclusion || {}).sort((a,b) => b.casos - a.casos)[0]?.nombre : 'Trastornos hipertensivos';
     return (
       <div className="ai-content">
@@ -848,7 +857,7 @@ function AnalysisHomeSection({
           El diagnóstico integrado {yearText}{monthText} (<strong>{totalCasos}</strong> casos totales) reporta una <strong>tasa de letalidad del {tasaLetalidad}%</strong>.
         </p>
         <p>
-          Se detectan dos perfiles de riesgo principales: pacientes obstétricas críticas ingresadas por <strong>{morbCrit}</strong> con estancia promedio prolongada, y casos de mortalidad correlacionados fuertemente a fallas en la remisión oportuna de urgencias.
+          Se detectan dos perfiles de riesgo principales: pacientes obstétricas críticas ingresadas por <strong>{morbCrit}</strong> con estancia promedio prolongada, y casos de mortalidad correlacionados con fallas en la remisión oportuna.
         </p>
         <div className="ai-recommendation-box">
           Recomendación: Fortalecer red de transporte obstétrico de emergencia.
