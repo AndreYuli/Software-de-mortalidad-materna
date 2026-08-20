@@ -1,14 +1,19 @@
-import { useState } from 'react'
+import { useState, FormEvent } from 'react'
 import './Login.css'
-import { API_URL } from '../api.js'
+import { API_URL } from '../api'
 
-export default function Login({ onLogin, onRegister }) {
+interface LoginProps {
+  onLogin: () => void
+  onRegister: () => void
+}
+
+export default function Login({ onLogin, onRegister }: LoginProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError('')
     setIsLoading(true)
