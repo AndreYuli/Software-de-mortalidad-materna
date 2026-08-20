@@ -15,9 +15,9 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
-    plugins: { '@typescript-eslint': tseslint },
     extends: [
       js.configs.recommended,
+      tseslint.configs['flat/recommended'],
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
