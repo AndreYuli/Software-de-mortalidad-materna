@@ -11,9 +11,6 @@ importers:
       plotly.js:
         specifier: ^3.5.1
         version: 3.5.1(mapbox-gl@1.13.3)
-      prop-types:
-        specifier: ^15.8.1
-        version: 15.8.1
       react:
         specifier: ^18.3.1
         version: 18.3.1
