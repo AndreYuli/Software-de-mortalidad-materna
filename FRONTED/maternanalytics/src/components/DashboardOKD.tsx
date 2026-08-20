@@ -1,6 +1,11 @@
 import { useState, useEffect, useRef, type DragEvent, type ChangeEvent, type MouseEvent, type Dispatch, type SetStateAction } from 'react'
 import PlotlyReact from 'react-plotly.js'
 import './DashboardOKD.css'
+// Import de solo efecto: AnalisisView ya no se importa como componente (no se
+// renderiza en este archivo), pero su hoja de estilos define `.spinner`, que
+// AnalysisHomeSection usa directamente en su estado de carga. Sin este import
+// el bundler deja de incluir esa regla y el spinner queda sin estilo.
+import './AnalisisView.css'
 import * as XLSX from 'xlsx'
 import { API_URL } from '../api.js'
 
