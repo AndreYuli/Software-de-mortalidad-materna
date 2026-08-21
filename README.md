@@ -1,195 +1,153 @@
 # Software de Mortalidad Materna
 
-Sistema de análisis y visualización de datos de mortalidad materna, desarrollado con Django REST Framework (Backend) y React + Vite (Frontend).
+Sistema de análisis, visualización e interpretación con IA de datos de mortalidad y morbilidad materna extrema (SIVIGILA 549/550). Arquitectura de 3 servicios: **BACKEND** (FastAPI + PostgreSQL), **IA-SERVICE** (microservicio FastAPI aislado que genera narrativas con un LLM local vía Ollama) y **FRONTED** (React + TypeScript + Vite).
 
 ## 📋 Requisitos Previos
 
-Antes de comenzar, asegúrate de tener instalado:
+- **Python 3.10+**
+- **Node.js 18+** y **pnpm**
+- **PostgreSQL** (corriendo localmente, con la base `sivigila_maternidad` ya creada — ver `BACKEND/sivigila_maternidad_postgres.sql`)
+- **[Ollama](https://ollama.com)** instalado, con el modelo `qwen2.5` descargado:
+  ```bash
+  ollama pull qwen2.5
+  ```
 
-- **Python 3.8+** (recomendado: Python 3.10 o superior)
-- **Node.js 16+** y **pnpm** (recomendado: Node.js 18 o superior)
-- **Git**
+## 🚀 Instalación
 
-## 🚀 Instalación y Configuración
+### 1. BACKEND (FastAPI + PostgreSQL)
 
-### Backend (Django)
+```bash
+cd BACKEND
+python -m venv venv
+venv\Scripts\activate          # Windows
+# source venv/bin/activate     # Linux/Mac
+pip install -r requirements.txt
+```
 
-1. **Navega al directorio del backend:**
+Copia `.env.example` a `.env` y ajusta las credenciales de tu PostgreSQL local:
 
-   ```bash
-   cd BACKEND
-   ```
-2. **Crea un entorno virtual de Python:**
+```bash
+copy .env.example .env         # Windows
+# cp .env.example .env         # Linux/Mac
+```
 
-   ```bash
-   python -m venv venv
-   ```
-3. **Activa el entorno virtual:**
+Las tablas propias de la API (`api_analisis`, `api_usuario`, `api_sivigilaimportacion`, `narrativa_ia`) se crean automáticamente al arrancar el servidor. Las tablas del dominio SIVIGILA (`paciente`, `caso_morbilidad`, `caso_mortalidad`, catálogos, vistas) deben crearse una vez ejecutando `sivigila_maternidad_postgres.sql` contra tu base.
 
-   - En Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-   - En Linux/Mac:
-     ```bash
-     source venv/bin/activate
-     ```
-4. **Instala las dependencias:**
+### 2. IA-SERVICE (microservicio de IA generativa)
 
-   ```bash
-   pip install -r requirements.txt
-   ```
-5. **Ejecuta las migraciones de la base de datos:**
+```bash
+cd IA-SERVICE
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-   ```bash
-   python manage.py migrate
-   ```
-6. **(Opcional) Crea un superusuario para acceder al admin:**
+No requiere `.env` — por defecto apunta a Ollama en `http://localhost:11434` con el modelo `qwen2.5` (configurable en `IA-SERVICE/core/config.py` o variables de entorno `OLLAMA_HOST`/`OLLAMA_MODEL`/`OLLAMA_TIMEOUT_S`).
 
-   ```bash
-   python manage.py createsuperuser
-   ```
-7. **Inicia el servidor de desarrollo:**
+### 3. FRONTED (React + TypeScript + Vite)
 
-   ```bash
-   python manage.py runserver
-   ```
+```bash
+cd FRONTED/maternanalytics
+pnpm install
+```
 
-   El backend estará disponible en: `http://localhost:8000`
+## ▶️ Ejecución (desarrollo)
 
-### Frontend (React + Vite)
+Se necesitan **4 procesos corriendo en paralelo**, cada uno en su propia terminal:
 
-1. **Navega al directorio del frontend:**
+```bash
+# Terminal 1 — Ollama
+ollama serve
 
-   ```bash
-   cd FRONTED/maternanalytics
-   ```
-2. **Instala las dependencias:**
+# Terminal 2 — IA-SERVICE (puerto 8001)
+cd IA-SERVICE
+venv\Scripts\activate
+uvicorn main:app --reload --port 8001
 
-   ```bash
-   pnpm install
-   ```
-3. **Inicia el servidor de desarrollo:**
+# Terminal 3 — BACKEND (puerto 8000)
+cd BACKEND
+venv\Scripts\activate
+uvicorn main:app --reload --port 8000
 
-   ```bash
-   pnpm dev
-   ```
+# Terminal 4 — FRONTED (puerto 5173)
+cd FRONTED/maternanalytics
+pnpm dev
+```
 
-   El frontend estará disponible en: `http://localhost:5173` (o el puerto que Vite asigne)
+Abre **http://localhost:5173** en el navegador.
+
+Si Ollama o IA-SERVICE no están corriendo, el resto de la aplicación sigue funcionando con normalidad — las tarjetas de narrativa de IA simplemente se ocultan (degradación silenciosa, por diseño).
+
+## 🔑 Credenciales de prueba
+
+No hay usuarios por defecto en la base de datos: hay que registrarlos. Puedes crear uno desde la pantalla de registro del frontend, o por API:
+
+```bash
+curl -X POST http://localhost:8000/api/auth/register/ \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Usuario Prueba","email":"prueba@vidamaterna.co","password":"prueba123"}'
+```
+
+Ya existe un usuario de prueba creado en la base de datos local durante la verificación de este proyecto:
+
+- **Correo:** `prueba@vidamaterna.co`
+- **Contraseña:** `prueba123`
+
+(Válido solo si usas la misma base PostgreSQL local en la que se creó — en una base nueva, regístrate primero.)
 
 ## 📁 Estructura del Proyecto
 
 ```
 Software-de-mortalidad-materna/
-├── BACKEND/              # API REST con Django
-│   ├── api/             # Aplicación principal de la API
-│   ├── config/          # Configuración de Django
-│   ├── media/           # Archivos subidos por usuarios
-│   ├── db.sqlite3       # Base de datos SQLite
-│   ├── manage.py        # Script de gestión de Django
-│   └── requirements.txt # Dependencias de Python
-├── FRONTED/             # Aplicación React
-│   └── maternanalytics/
-│       ├── src/         # Código fuente
-│       │   ├── components/  # Componentes React
-│       │   ├── assets/      # Recursos estáticos
-│       │   └── App.jsx      # Componente principal
-│       ├── public/      # Archivos públicos
-│       └── package.json # Dependencias de Node.js
-└── ETL/                 # Procesos de ETL (en desarrollo)
+├── BACKEND/                    # API FastAPI + PostgreSQL
+│   ├── api/routers/            # Endpoints HTTP (auth, sivigila, analisis)
+│   ├── core/                   # Configuración y seguridad (JWT)
+│   ├── db/                     # Modelos SQLAlchemy y conexión
+│   ├── schemas/                # Schemas Pydantic
+│   ├── services/                # Lógica de negocio (procesamiento, clustering, IA)
+│   ├── tests/                  # pytest
+│   ├── media/uploads/          # Archivos Excel subidos
+│   ├── main.py                 # Punto de entrada FastAPI
+│   ├── requirements.txt
+│   └── sivigila_maternidad_postgres.sql
+├── IA-SERVICE/                 # Microservicio de IA generativa (FastAPI, aislado)
+│   ├── prompts/                # Plantillas de prompt por tipo de narrativa
+│   ├── core/                   # Configuración (Ollama host/modelo)
+│   ├── tests/                  # pytest
+│   ├── main.py                 # Endpoint POST /generar-narrativa
+│   ├── ollama_client.py
+│   └── requirements.txt
+└── FRONTED/maternanalytics/    # React + TypeScript + Vite
+    ├── src/
+    │   ├── components/         # Login, Register, DashboardOKD, AnalisisView, NarrativaIA
+    │   ├── api.ts               # Cliente HTTP tipado
+    │   └── types.ts             # Tipos de dominio compartidos
+    └── package.json
 ```
 
-## 🛠️ Tecnologías Utilizadas
-
-### Backend
-
-- **Django 6.0.4** - Framework web
-- **Django REST Framework 3.17.1** - API REST
-- **django-cors-headers** - Manejo de CORS
-- **pandas 3.0.2** - Análisis de datos
-- **openpyxl 3.1.5** - Procesamiento de archivos Excel
-- **numpy 2.4.4** - Cálculos numéricos
-
-### Frontend
-
-- **React 19.2.5** - Biblioteca de UI
-- **Vite 8.0.10** - Build tool y servidor de desarrollo
-- **xlsx 0.18.5** - Manejo de archivos Excel
-- **ESLint** - Linter de código
-
-## 🔧 Comandos Útiles
-
-### Backend
+## 🧪 Tests
 
 ```bash
-# Crear nuevas migraciones
-python manage.py makemigrations
+# BACKEND
+cd BACKEND && venv\Scripts\activate && pytest tests/ -v
 
-# Aplicar migraciones
-python manage.py migrate
+# IA-SERVICE
+cd IA-SERVICE && venv\Scripts\activate && pytest tests/ -v
 
-# Crear superusuario
-python manage.py createsuperuser
-
-# Acceder al shell de Django
-python manage.py shell
-
-# Ejecutar tests
-python manage.py test
+# FRONTED
+cd FRONTED/maternanalytics && npx tsc --noEmit && pnpm test && pnpm run build
 ```
 
-### Frontend
+## 🛠️ Tecnologías
 
-```bash
-# Iniciar en modo desarrollo
-pnpm dev
+| Capa | Stack |
+|---|---|
+| BACKEND | FastAPI, SQLAlchemy, PostgreSQL, pandas, scikit-learn, JWT |
+| IA-SERVICE | FastAPI, httpx, Ollama (`qwen2.5`) |
+| FRONTED | React 18, TypeScript, Vite, Plotly.js, vitest |
 
-# Construir para producción
-pnpm build
+## 📝 Notas
 
-# Vista previa de la build de producción
-pnpm preview
-
-# Ejecutar linter
-pnpm lint
-```
-
-## 🌐 URLs Importantes
-
-- **Backend API:** http://localhost:8000/api/
-- **Admin de Django:** http://localhost:8000/admin/
-- **Frontend:** http://localhost:5173/
-
-## � Credenciales de Acceso
-
-### Frontend (Login)
-
-Para acceder a la plataforma web, utiliza las siguientes credenciales por defecto:
-
-- **Correo:** `analista@vidamaterna.gov.co`
-- **Contraseña:** `VidaMaterna2025`
-
-### Panel de Administración Django
-
-Para acceder al panel de administración de Django (`http://localhost:8000/admin/`), primero debes crear un superusuario ejecutando:
-
-```bash
-python manage.py createsuperuser
-```
-
-Luego ingresa el nombre de usuario, correo y contraseña que prefieras.
-
-## �📝 Notas Adicionales
-
-- La base de datos SQLite (`db.sqlite3`) se crea automáticamente al ejecutar las migraciones
-- Los archivos subidos se almacenan en el directorio `BACKEND/media/`
-- Para desarrollo, ambos servidores (backend y frontend) deben estar ejecutándose simultáneamente
-- El backend maneja CORS para permitir peticiones desde el frontend
-
-## 🤝 Contribución
-
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+- El backend nunca envía datos crudos de pacientes a IA-SERVICE — solo indicadores ya agregados (totales, promedios, distribuciones). Ver `BACKEND/services/narrativa_service.py::extraer_indicadores_para_narrativa`.
+- Las narrativas generadas se cachean en la tabla `narrativa_ia` (por análisis + tipo + filtros); el botón "Regenerar" fuerza una nueva llamada al LLM.
+- CORS ya está configurado en el backend para `http://localhost:5173`.
