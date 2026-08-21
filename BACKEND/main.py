@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from api.routers import analisis, auth, sivigila
 from core.config import Config
 from db.database import Base, engine
-from db.models_sqlalchemy import Analisis, SivigilaImportacion, Usuario  # noqa: F401
+from db.models_sqlalchemy import Analisis, NarrativaIA, SivigilaImportacion, Usuario  # noqa: F401
 
 # ---------------------------------------------------------------------------
 # Aplicación
