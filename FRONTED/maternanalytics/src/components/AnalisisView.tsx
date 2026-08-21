@@ -1230,6 +1230,16 @@ interface ClusteringResult {
 
 function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setClusterCount, analisisId }: ClusteringTabProps) {
   const data = rawData as ClusteringResult | null
+  // Rastrea qué algoritmo produjo `data` para que la narrativa de clustering
+  // (más abajo) le pida al backend el mismo tipo que se ve en pantalla, en
+  // vez de dejar que el backend re-ejecute clustering con su default
+  // ('kmeans') y genere/cachee una narrativa que describe un resultado
+  // distinto al mostrado.
+  const [tipoClustering, setTipoClustering] = useState('kmeans')
+  const generarClustering = (tipo: string) => {
+    setTipoClustering(tipo)
+    onGenerate(tipo)
+  }
   if (loading) {
     return (
       <div className="clustering-loading">
@@ -1257,11 +1267,11 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
             />
           </label>
           
-          <button onClick={() => onGenerate('kmeans')} className="btn-generate">
+          <button onClick={() => generarClustering('kmeans')} className="btn-generate">
             Generar Clustering K-means
           </button>
-          
-          <button onClick={() => onGenerate('jerarquico')} className="btn-generate">
+
+          <button onClick={() => generarClustering('jerarquico')} className="btn-generate">
             Clustering Jerárquico
           </button>
         </div>
@@ -1273,7 +1283,7 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
     return (
       <div className="clustering-error">
         <p>⚠️ {data.error}</p>
-        <button onClick={() => onGenerate('kmeans')} className="btn-generate">
+        <button onClick={() => generarClustering('kmeans')} className="btn-generate">
           Reintentar
         </button>
       </div>
@@ -1420,7 +1430,7 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
       )}
 
       <div className="clustering-controls">
-        <button onClick={() => onGenerate('kmeans')} className="btn-generate">
+        <button onClick={() => generarClustering('kmeans')} className="btn-generate">
           Regenerar con {clusterCount} clusters
         </button>
       </div>
@@ -1430,7 +1440,7 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
           analisisId={analisisId}
           tipo="clustering"
           titulo="Perfiles de clustering"
-          filtros={{ nClusters: clusterCount }}
+          filtros={{ nClusters: clusterCount, tipoClustering }}
         />
       )}
     </div>
