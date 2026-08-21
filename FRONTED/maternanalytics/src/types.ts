@@ -53,3 +53,19 @@ export interface AnalisisResponse {
   fecha_carga: string
   total_registros: number
 }
+
+export type TipoNarrativa = 'resumen_ejecutivo' | 'demoras' | 'clustering' | 'tendencias'
+
+export interface FiltrosNarrativa {
+  year?: string
+  month?: string
+  tipoClustering?: string
+  nClusters?: number
+}
+
+export interface NarrativaResponse {
+  narrativa: string
+  modelo: string
+  generado_en: string
+  desde_cache: boolean
+}
