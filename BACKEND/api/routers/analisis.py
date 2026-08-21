@@ -71,7 +71,8 @@ def subir_archivo(
         HTTPException: 422 si faltan columnas requeridas.
         HTTPException: 500 si falla la persistencia.
     """
-    resultado_persistencia = analisis_service.procesar_subida(tipo=tipo, archivo=archivo, db=db)
+    with _errores_servicio():
+        resultado_persistencia = analisis_service.procesar_subida(tipo=tipo, archivo=archivo, db=db)
     return resultado_persistencia
 
 
