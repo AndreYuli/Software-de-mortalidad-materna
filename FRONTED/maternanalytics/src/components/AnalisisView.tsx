@@ -230,6 +230,12 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('overview')
   const [clusterCount, setClusterCount] = useState(3)
+  // Vive junto a `clusteringData` (mismo ciclo de vida) en vez de como estado
+  // local de `ClusteringTab`: ese componente se desmonta/remonta cada vez que
+  // el usuario cambia de pestaña y vuelve a "Clustering", lo que reiniciaría
+  // un `useState` local a su default aunque `clusteringData` siga mostrando
+  // el resultado de un algoritmo distinto (ver bug reportado en revisión).
+  const [tipoClustering, setTipoClustering] = useState('kmeans')
 
   useEffect(() => {
     let isMounted = true
@@ -274,6 +280,7 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
   const cargarClustering = async (tipo = 'kmeans') => {
     try {
       setLoading(true)
+      setTipoClustering(tipo)
       const response = await fetch(`${API_URL}/analisis/${analisisId}/clustering/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -370,6 +377,7 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
             clusterCount={clusterCount}
             setClusterCount={setClusterCount}
             analisisId={analisisId}
+            tipoClustering={tipoClustering}
           />
         )}
       </div>
@@ -1212,6 +1220,7 @@ interface ClusteringTabProps {
   clusterCount: number
   setClusterCount: (n: number) => void
   analisisId: number
+  tipoClustering: string
 }
 
 // Forma real de la respuesta de `/analisis/{id}/clustering/`. La prop
@@ -1228,18 +1237,8 @@ interface ClusteringResult {
   pca_3d?: { x: number[]; y: number[]; z: number[]; variance_explained: number }
 }
 
-function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setClusterCount, analisisId }: ClusteringTabProps) {
+function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setClusterCount, analisisId, tipoClustering }: ClusteringTabProps) {
   const data = rawData as ClusteringResult | null
-  // Rastrea qué algoritmo produjo `data` para que la narrativa de clustering
-  // (más abajo) le pida al backend el mismo tipo que se ve en pantalla, en
-  // vez de dejar que el backend re-ejecute clustering con su default
-  // ('kmeans') y genere/cachee una narrativa que describe un resultado
-  // distinto al mostrado.
-  const [tipoClustering, setTipoClustering] = useState('kmeans')
-  const generarClustering = (tipo: string) => {
-    setTipoClustering(tipo)
-    onGenerate(tipo)
-  }
   if (loading) {
     return (
       <div className="clustering-loading">
@@ -1267,11 +1266,11 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
             />
           </label>
           
-          <button onClick={() => generarClustering('kmeans')} className="btn-generate">
+          <button onClick={() => onGenerate('kmeans')} className="btn-generate">
             Generar Clustering K-means
           </button>
 
-          <button onClick={() => generarClustering('jerarquico')} className="btn-generate">
+          <button onClick={() => onGenerate('jerarquico')} className="btn-generate">
             Clustering Jerárquico
           </button>
         </div>
@@ -1283,7 +1282,7 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
     return (
       <div className="clustering-error">
         <p>⚠️ {data.error}</p>
-        <button onClick={() => generarClustering('kmeans')} className="btn-generate">
+        <button onClick={() => onGenerate('kmeans')} className="btn-generate">
           Reintentar
         </button>
       </div>
@@ -1430,7 +1429,7 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
       )}
 
       <div className="clustering-controls">
-        <button onClick={() => generarClustering('kmeans')} className="btn-generate">
+        <button onClick={() => onGenerate('kmeans')} className="btn-generate">
           Regenerar con {clusterCount} clusters
         </button>
       </div>
