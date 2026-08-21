@@ -6,6 +6,7 @@ import './DashboardOKD.css'
 // AnalysisHomeSection usa directamente en su estado de carga. Sin este import
 // el bundler deja de incluir esa regla y el spinner queda sin estilo.
 import './AnalisisView.css'
+import NarrativaIA from './NarrativaIA'
 import * as XLSX from 'xlsx'
 import { API_URL } from '../api.js'
 
@@ -853,73 +854,6 @@ function AnalysisHomeSection({
     return [];
   };
 
-  // Generate AI Natural Language summary
-  const getAIInsight = () => {
-    const yearText = filterYear ? `en el año ${filterYear}` : 'en el acumulado histórico';
-    const monthText = filterMonth ? `, mes ${filterMonth}` : '';
-
-    if (segmento === 'mortalidad') {
-      if (!mortalidadData || totalMortalidad === 0) {
-        return <p className="ai-no-data">No hay casos de mortalidad registrados para el período seleccionado.</p>;
-      }
-      const cpn = mortalidadData.estadisticas_basicas?.controles_prenatales_promedio || 0;
-      const topC = mortalidadData.causas_cie10?.top_causas?.[0]?.codigo || 'N/A';
-      return (
-        <div className="ai-content">
-          <p>
-            El análisis de Mortalidad Materna {yearText}{monthText} (total: <strong>{totalMortalidad}</strong> casos) detecta un promedio de <strong>{cpn.toFixed(1)}</strong> controles prenatales por caso.
-          </p>
-          <p>
-            El principal diagnóstico asociado es <strong>{topC}</strong> ({getCie10Description(topC)}).
-          </p>
-          <div className="ai-recommendation-box">
-            Recomendación: Ampliar cobertura prenatal en primer trimestre.
-          </div>
-        </div>
-      );
-    }
-
-    if (segmento === 'morbilidad') {
-      if (!morbilidadData || totalMorbilidad === 0) {
-        return <p className="ai-no-data">No hay casos de morbilidad registrados para el período seleccionado.</p>;
-      }
-      const estancia = morbilidadData.estadisticas_basicas?.estancia_hospitalaria_promedio || 0;
-      const crit = Object.values(morbilidadData.criterios_inclusion || {}).sort((a,b) => b.casos - a.casos)[0]?.nombre || 'Preeclampsia';
-      return (
-        <div className="ai-content">
-          <p>
-            En Morbilidad Materna Extrema {yearText}{monthText} (total: <strong>{totalMorbilidad}</strong> casos), el detonante predominante es la <strong>{crit}</strong>.
-          </p>
-          <p>
-            La estancia promedio hospitalaria es de <strong>{estancia.toFixed(1)}</strong> días.
-          </p>
-          <div className="ai-recommendation-box">
-            Recomendación: Reforzar guías de manejo de trastorno hipertensivo.
-          </div>
-        </div>
-      );
-    }
-
-    // segmento === 'ambos'
-    if (totalCasos === 0) {
-      return <p className="ai-no-data">No hay casos registrados. Sube un archivo Excel desde el panel de carga para comenzar el análisis.</p>;
-    }
-    const morbCrit = morbilidadData ? Object.values(morbilidadData.criterios_inclusion || {}).sort((a,b) => b.casos - a.casos)[0]?.nombre : 'Trastornos hipertensivos';
-    return (
-      <div className="ai-content">
-        <p>
-          El diagnóstico integrado {yearText}{monthText} (<strong>{totalCasos}</strong> casos totales) reporta una <strong>tasa de letalidad del {tasaLetalidad}%</strong>.
-        </p>
-        <p>
-          Se detectan dos perfiles de riesgo principales: pacientes obstétricas críticas ingresadas por <strong>{morbCrit}</strong> con estancia promedio prolongada, y casos de mortalidad correlacionados con fallas en la remisión oportuna.
-        </p>
-        <div className="ai-recommendation-box">
-          Recomendación: Fortalecer red de transporte obstétrico de emergencia.
-        </div>
-      </div>
-    );
-  };
-
   const handleExportReport = () => {
     alert('Generando reporte epidemiológico para impresión...');
     window.print();
@@ -1175,9 +1109,33 @@ function AnalysisHomeSection({
         </div>
 
         <div className="ai-insight-card-span-4">
-          <span className="ai-badge-pulsing">Inteligencia IA</span>
-          <h3 className="ai-title">Resumen de Hallazgos</h3>
-          {getAIInsight()}
+          {segmento === 'ambos' ? (
+            <>
+              {latestMortalidad && (
+                <NarrativaIA
+                  analisisId={latestMortalidad.id}
+                  tipo="resumen_ejecutivo"
+                  titulo="Resumen de Hallazgos — Mortalidad"
+                  filtros={{ year: filterYear || undefined, month: filterMonth || undefined }}
+                />
+              )}
+              {latestMorbilidad && (
+                <NarrativaIA
+                  analisisId={latestMorbilidad.id}
+                  tipo="resumen_ejecutivo"
+                  titulo="Resumen de Hallazgos — Morbilidad"
+                  filtros={{ year: filterYear || undefined, month: filterMonth || undefined }}
+                />
+              )}
+            </>
+          ) : (
+            <NarrativaIA
+              analisisId={segmento === 'mortalidad' ? latestMortalidad!.id : latestMorbilidad!.id}
+              tipo="resumen_ejecutivo"
+              titulo="Resumen de Hallazgos"
+              filtros={{ year: filterYear || undefined, month: filterMonth || undefined }}
+            />
+          )}
         </div>
       </div>
     </div>
