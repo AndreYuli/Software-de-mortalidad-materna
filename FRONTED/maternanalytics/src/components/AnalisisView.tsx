@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import PlotlyReact from 'react-plotly.js'
 import './AnalisisView.css'
+import NarrativaIA from './NarrativaIA'
 import { API_URL } from '../api.js'
 import type {
   AnalisisCompleto,
@@ -357,15 +358,18 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
       </div>
 
       <div className="analisis-content">
-        {activeTab === 'overview' && <OverviewTab data={data} />}
+        {activeTab === 'overview' && (
+          <OverviewTab data={data} analisisId={analisisId} filterYear={filterYear} filterMonth={filterMonth} />
+        )}
         {activeTab === 'charts' && <ChartsTab data={data} analisisId={analisisId} />}
         {activeTab === 'clustering' && (
-          <ClusteringTab 
-            data={clusteringData} 
+          <ClusteringTab
+            data={clusteringData}
             loading={loading}
             onGenerate={cargarClustering}
             clusterCount={clusterCount}
             setClusterCount={setClusterCount}
+            analisisId={analisisId}
           />
         )}
       </div>
@@ -375,10 +379,14 @@ function AnalisisView({ analisisId, onBack, showBackButton = true, embedded = fa
 
 interface OverviewTabProps {
   data: AnalisisData
+  analisisId: number
+  filterYear?: string
+  filterMonth?: string
 }
 
-function OverviewTab({ data }: OverviewTabProps) {
+function OverviewTab({ data, analisisId, filterYear, filterMonth }: OverviewTabProps) {
   const stats = data.estadisticas_basicas as unknown as EstadisticasBasicas
+  const filtros = { year: filterYear || undefined, month: filterMonth || undefined }
 
   return (
     <div className="overview-tab">
@@ -448,6 +456,19 @@ function OverviewTab({ data }: OverviewTabProps) {
           </div>
         </div>
       )}
+
+      <NarrativaIA
+        analisisId={analisisId}
+        tipo="demoras"
+        titulo={data.tipo === 'mortalidad' ? 'Interpretación de demoras' : 'Interpretación de tiempo de remisión'}
+        filtros={filtros}
+      />
+      <NarrativaIA
+        analisisId={analisisId}
+        tipo="tendencias"
+        titulo="Alertas de tendencias"
+        filtros={filtros}
+      />
     </div>
   )
 }
@@ -1190,6 +1211,7 @@ interface ClusteringTabProps {
   onGenerate: (tipoClustering: string, nClusters?: number) => void
   clusterCount: number
   setClusterCount: (n: number) => void
+  analisisId: number
 }
 
 // Forma real de la respuesta de `/analisis/{id}/clustering/`. La prop
@@ -1206,7 +1228,7 @@ interface ClusteringResult {
   pca_3d?: { x: number[]; y: number[]; z: number[]; variance_explained: number }
 }
 
-function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setClusterCount }: ClusteringTabProps) {
+function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setClusterCount, analisisId }: ClusteringTabProps) {
   const data = rawData as ClusteringResult | null
   if (loading) {
     return (
@@ -1402,6 +1424,15 @@ function ClusteringTab({ data: rawData, loading, onGenerate, clusterCount, setCl
           Regenerar con {clusterCount} clusters
         </button>
       </div>
+
+      {data && (
+        <NarrativaIA
+          analisisId={analisisId}
+          tipo="clustering"
+          titulo="Perfiles de clustering"
+          filtros={{ nClusters: clusterCount }}
+        />
+      )}
     </div>
   )
 }
