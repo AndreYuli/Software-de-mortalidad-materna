@@ -12,8 +12,13 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "chart.js": "^4.5.1",
+    "echarts": "^6.1.0",
+    "echarts-for-react": "^3.0.6",
+    "echarts-gl": "^2.1.0",
     "plotly.js": "^3.5.1",
     "react": "^18.3.1",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.86.0",
     "react-plotly.js": "^2.6.0",
@@ -37,6 +42,7 @@
     "jsdom": "^30.0.1",
     "typescript": "^5.9.3",
     "vite": "^8.0.10",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "vitest-canvas-mock": "^1.1.5"
   }
 }
