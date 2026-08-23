@@ -53,7 +53,7 @@ Punto:    cx=41 cy=20 r=3
 
 | Elemento | Contexto claro (favicon) | Contexto oscuro (sidebar, panel login) |
 |---|---|---|
-| Círculo + barras | `--blue-700` (#2a5298) | `--blue-300` (#a8cdf0) |
+| Círculo + barras | `--blue-700` (#2a5298) | `--blue-400` (#7aaee8) |
 | Línea + punto | `--pink-500` (nuevo, #E8829F) | `--pink-500` (igual en ambos) |
 
 **Nueva variable de color**: `--pink-500: #E8829F;` se agrega a `:root` en `src/index.css`, junto a los `--blue-*` existentes. Reemplaza el `#F4C0D1` hardcodeado del ícono anterior (que era demasiado pálido para leerse a tamaño de favicon — decisión tomada con el usuario tras comparar ambos tonos en el companion visual).
@@ -70,8 +70,8 @@ Punto:    cx=41 cy=20 r=3
 
 1. **`src/index.css`** — agregar `--pink-500: #E8829F;` al bloque `:root`.
 2. **`src/components/icons/LogoIcon.tsx`** — reemplazar el contenido de `<svg>` por la geometría de arriba (círculo + 3 barras `currentColor`, línea + punto `var(--pink-500)`). Mantiene la firma `SVGProps<SVGSVGElement>` actual.
-3. **`src/components/LoginDecorations.css`** — en la regla `.logo-icon`, agregar `color: var(--blue-300);` (fondo oscuro del panel izquierdo de login/registro).
-4. **`src/components/dashboard/Sidebar.css`** — en la regla `.logo-icon-okd`, agregar `color: var(--blue-300);` (fondo `#151515` del sidebar).
+3. **`src/components/LoginDecorations.css`** — en la regla `.logo-icon`, agregar `color: var(--blue-400);` (fondo oscuro del panel izquierdo de login/registro).
+4. **`src/components/dashboard/Sidebar.css`** — en la regla `.logo-icon-okd`, agregar `color: var(--blue-400);` (fondo `#151515` del sidebar).
 5. **`public/favicon.svg`** — reescribir con la misma geometría, colores hardcodeados en claro (`#2a5298` / `#E8829F`) porque es un archivo estático sin acceso al CSS de la app.
 
 No se toca `Login.tsx`, `Register.tsx`, `Sidebar.tsx`, `src/components/LogoIcon.tsx` (el shim) ni `index.html`.

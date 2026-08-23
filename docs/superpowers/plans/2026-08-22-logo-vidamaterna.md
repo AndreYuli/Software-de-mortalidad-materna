@@ -198,7 +198,7 @@ Reemplazar por:
 
 ```css
 .logo-icon {
-  color: var(--blue-300);
+  color: var(--blue-400);
   margin-bottom: 2rem;        /* ~32px */
   filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.15));
   animation: fadeUp 1s ease-out 0.2s both;
@@ -208,13 +208,13 @@ Reemplazar por:
 - [ ] **Step 2: Verificar**
 
 Run: `grep -A1 "^\.logo-icon {" src/components/LoginDecorations.css`
-Expected: la primera línea dentro de la regla es `color: var(--blue-300);`
+Expected: la primera línea dentro de la regla es `color: var(--blue-400);`
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add src/components/LoginDecorations.css
-git commit -m "feat: aplicar --blue-300 al ícono del panel de login/registro"
+git commit -m "feat: aplicar --blue-400 al ícono del panel de login/registro"
 ```
 
 ---
@@ -243,20 +243,20 @@ Reemplazar por:
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  color: var(--blue-300);
+  color: var(--blue-400);
 }
 ```
 
 - [ ] **Step 2: Verificar**
 
 Run: `grep -A4 "^\.logo-icon-okd {" src/components/dashboard/Sidebar.css`
-Expected: incluye la línea `color: var(--blue-300);`
+Expected: incluye la línea `color: var(--blue-400);`
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add src/components/dashboard/Sidebar.css
-git commit -m "feat: aplicar --blue-300 al ícono del sidebar del dashboard"
+git commit -m "feat: aplicar --blue-400 al ícono del sidebar del dashboard"
 ```
 
 ---
