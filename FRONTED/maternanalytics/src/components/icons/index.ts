@@ -1,0 +1,8 @@
+export { LogoIcon } from './LogoIcon'
+export { DashboardIcon } from './DashboardIcon'
+export { UploadIcon } from './UploadIcon'
+export { CheckIcon } from './CheckIcon'
+export { ErrorIcon } from './ErrorIcon'
+export { SpinnerIcon } from './SpinnerIcon'
+export { LogoutIcon } from './LogoutIcon'
+export { SendIcon } from './SendIcon'

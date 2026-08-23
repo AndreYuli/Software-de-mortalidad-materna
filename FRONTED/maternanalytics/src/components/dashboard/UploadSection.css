@@ -1,0 +1,424 @@
+/* =====================================================
+   UploadSection.css — Diseño UploadMortalidadMaterna
+   Extraído de DashboardOKD.css; lo importa UploadSection.tsx (cubre
+   también las clases usadas por su hijo UploadCard.tsx).
+   ===================================================== */
+
+.upload-section-premium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 100%;
+  padding: 40px 24px 60px;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  gap: 0;
+}
+
+/* ---- Header ---- */
+.upload-section-header {
+  text-align: center;
+  margin-bottom: 32px;
+  width: 100%;
+}
+
+.upload-section-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  font-family: inherit;
+}
+
+.upload-section-desc {
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ---- Zone Wrapper ---- */
+.upload-zone-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ---- Drop Zone ---- */
+.upload-drop-zone {
+  width: 100%;
+  border: 2px dashed #93c5fd;
+  background: rgba(239, 246, 255, 0.5);
+  border-radius: 16px;
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: background 0.22s, border-color 0.22s, box-shadow 0.22s, transform 0.18s;
+  user-select: none;
+  outline: none;
+  gap: 4px;
+}
+
+.upload-drop-zone:hover,
+.upload-drop-zone:focus-visible {
+  background: rgba(219, 234, 254, 0.6);
+  border-color: #60a5fa;
+  box-shadow: 0 8px 32px rgba(59, 130, 246, 0.12);
+}
+
+.upload-drop-zone.dragging {
+  background: rgba(219, 234, 254, 0.85);
+  border-color: #3b82f6;
+  box-shadow: 0 12px 40px rgba(59, 130, 246, 0.2);
+  transform: scale(1.015);
+}
+
+.upload-drop-zone.zone-error {
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(254, 242, 242, 0.5);
+}
+
+.upload-drop-zone.zone-success {
+  border-color: rgba(34, 197, 94, 0.4);
+  background: rgba(240, 253, 244, 0.5);
+}
+
+/* ---- Drop Zone Icon ---- */
+.upload-zone-icon {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(59, 130, 246, 0.15);
+  transition: transform 0.2s;
+}
+
+.upload-drop-zone:hover .upload-zone-icon,
+.upload-drop-zone.dragging .upload-zone-icon {
+  transform: translateY(-3px);
+}
+
+.upload-zone-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: #2563eb;
+}
+
+/* ---- Drop Zone Text ---- */
+.upload-zone-primary {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #334155;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.upload-zone-link {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.upload-zone-secondary {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+.upload-zone-secondary-success {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #16a34a;
+  margin-top: 2px;
+}
+
+/* ---- File Preview Card ---- */
+.upload-file-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04);
+  animation: slideInCard 0.25s ease;
+}
+
+@keyframes slideInCard {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.upload-file-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.upload-file-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.upload-file-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: #059669;
+}
+
+.upload-file-details {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 2px;
+}
+
+.upload-file-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 320px;
+}
+
+.upload-file-status {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ---- Remove Button ---- */
+.upload-remove-btn {
+  flex-shrink: 0;
+  padding: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.upload-remove-btn:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.upload-remove-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ---- Error Panel ---- */
+.upload-error-panel {
+  width: 100%;
+  background: rgba(255, 241, 242, 0.9);
+  border: 1.5px solid rgba(239, 68, 68, 0.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  animation: slideInCard 0.25s ease;
+}
+
+.upload-error-summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+  margin-bottom: 10px;
+}
+
+.upload-error-summary svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: #dc2626;
+}
+
+.upload-error-cols {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-height: 140px;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.upload-error-cols li {
+  font-size: 11.5px;
+  color: #991b1b;
+  padding: 3px 8px;
+  background: rgba(239, 68, 68, 0.07);
+  border-radius: 5px;
+}
+
+.upload-error-cols li.more {
+  color: #9ca3af;
+  background: transparent;
+  font-style: italic;
+}
+
+.upload-retry-btn {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+  background: transparent;
+  border: 1.5px solid rgba(239, 68, 68, 0.35);
+  border-radius: 7px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  font-family: inherit;
+}
+
+.upload-retry-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.6);
+}
+
+/* ---- Success / Error messages ---- */
+.upload-success-msg {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #15803d;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  animation: slideInCard 0.25s ease;
+}
+
+.upload-success-msg svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  stroke: #16a34a;
+}
+
+.upload-analyze-error {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  animation: slideInCard 0.25s ease;
+}
+
+.upload-analyze-error svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  stroke: #dc2626;
+}
+
+/* ---- Submit Button ---- */
+.upload-send-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.upload-submit-btn {
+  width: 100%;
+  margin-top: 20px;
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  color: #ffffff;
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: inherit;
+  letter-spacing: 0.2px;
+  border: none;
+  border-radius: 11px;
+  padding: 14px 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+  transition: transform 0.2s, box-shadow 0.25s, opacity 0.2s;
+}
+
+.upload-submit-btn:hover:not(.disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(37, 99, 235, 0.38);
+}
+
+.upload-submit-btn:active:not(.disabled) {
+  transform: translateY(0);
+}
+
+.upload-submit-btn.disabled {
+  background: linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.upload-submit-btn.processing {
+  background: linear-gradient(135deg, #1e40af 0%, #1d4ed8 100%);
+  cursor: default;
+  pointer-events: none;
+}
+
+/* ---- Spinner Animation ---- */
+.upload-spinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  animation: spinnerRotate 0.9s linear infinite;
+}
+
+@keyframes spinnerRotate {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}

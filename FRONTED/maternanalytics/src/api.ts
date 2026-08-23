@@ -1,6 +1,15 @@
+import { z } from 'zod'
 import type { FiltrosNarrativa, NarrativaResponse, TipoNarrativa } from './types'
 
-export const API_URL = 'http://localhost:8000/api'
+const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+export const API_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl
+
+const NarrativaResponseSchema = z.object({
+  narrativa: z.string(),
+  modelo: z.string(),
+  generado_en: z.string(),
+  desde_cache: z.boolean(),
+})
 
 export async function obtenerNarrativa(
   analisisId: number,
@@ -20,5 +29,6 @@ export async function obtenerNarrativa(
   if (response.status === 503) return null
   if (!response.ok) throw new Error(`Error al obtener narrativa: ${response.status}`)
 
-  return response.json() as Promise<NarrativaResponse>
+  const data = await response.json()
+  return NarrativaResponseSchema.parse(data)
 }

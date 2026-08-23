@@ -3,9 +3,19 @@ export interface AnalisisMeta {
   nombre_archivo: string
   fecha_carga: string
   limpieza_datos: Record<string, unknown>
+  total_registros?: number
   anos_disponibles: number[]
   filtros_activos: { year: string | null; month: string | null }
-  distribucion_mensual: Record<string, unknown>
+  distribucion_mensual?: Record<string, Record<string, number>>
+  causas_cie10?: { top_causas: CausaCie10[]; total_causas_unicas: number }
+  criterios_inclusion?: Record<string, CriterioInclusion>
+  demoras?: Record<string, DemoraDetalle>
+}
+
+export interface EstadisticasBasicas {
+  total_casos?: number
+  controles_prenatales_promedio?: number
+  estancia_hospitalaria_promedio?: number
 }
 
 export interface CausaCie10 {
@@ -27,17 +37,14 @@ export interface CriterioInclusion {
 
 export interface IndicadoresMortalidad extends AnalisisMeta {
   tipo: 'mortalidad'
-  estadisticas_basicas: Record<string, unknown>
+  estadisticas_basicas?: EstadisticasBasicas
   momento_muerte: Record<string, unknown>
-  demoras: Record<string, DemoraDetalle>
-  causas_cie10: { top_causas: CausaCie10[]; total_causas_unicas: number }
   obstetrico_edad: Record<string, unknown>
 }
 
 export interface IndicadoresMorbilidad extends AnalisisMeta {
   tipo: 'morbilidad'
-  estadisticas_basicas: Record<string, unknown>
-  criterios_inclusion: Record<string, CriterioInclusion>
+  estadisticas_basicas?: EstadisticasBasicas
   momento_ocurrencia: Record<string, unknown>
   institucion_referencia: Record<string, unknown>
   tiempo_remision: Record<string, unknown>
