@@ -1,4 +1,5 @@
 import 'echarts-gl'
+import { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { echartsBaseTextStyle } from '../../constants/chartTheme'
 import NarrativaIA from '../NarrativaIA'
@@ -78,6 +79,11 @@ export function ClusteringSection({
 }: ClusteringSectionProps) {
   const filtros = { year: filterYear || undefined, month: filterMonth || undefined }
 
+  const option = useMemo(() => {
+    if (!clusteringChartData) return null
+    return clusteringChartData.dim === '3d' ? build3DOption(clusteringChartData) : build2DOption(clusteringChartData)
+  }, [clusteringChartData])
+
   return (
     <div className="advanced-grid-row">
       <div className="clustering-card-span-8">
@@ -114,12 +120,8 @@ export function ClusteringSection({
         </div>
 
         <div style={{ height: '340px' }}>
-          {activeClusterData && clusteringChartData ? (
-            <ReactECharts
-              option={clusteringChartData.dim === '3d' ? build3DOption(clusteringChartData) : build2DOption(clusteringChartData)}
-              style={{ height: '100%', width: '100%' }}
-              notMerge={true}
-            />
+          {activeClusterData && option ? (
+            <ReactECharts option={option} style={{ height: '100%', width: '100%' }} notMerge={true} />
           ) : (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888', textAlign: 'center', padding: '0 20px' }}>
               Modelo de clustering no disponible.<br/>Se requiere mayor cantidad y variabilidad de datos numéricos.

@@ -64,6 +64,7 @@ const SEVERITY_ICONS: Record<string, { icon: string; gradient: string }> = {
 }
 
 const MOMENTO_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']
+const PIE_CENTER: [string, string] = ['50%', '45%']
 
 const CRITERIO_COLORS: Record<string, string> = {
   'Hemorragia': '#dc2626',
@@ -236,7 +237,6 @@ const CriteriosInclusionSection: React.FC<{ criterios: CriterioItem[] }> = ({ cr
 
 const MomentoOcurrenciaSection: React.FC<{ data: MomentoItem[] }> = ({ data }) => {
   const total = data.reduce((sum, d) => sum + d.count, 0)
-  const PIE_CENTER: [string, string] = ['50%', '45%']
 
   const option = useMemo(
     () => ({
