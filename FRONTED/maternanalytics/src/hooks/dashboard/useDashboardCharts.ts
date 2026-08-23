@@ -46,9 +46,9 @@ function getMonthlyData(dist: Record<string, Record<string, number>> | undefined
 }
 
 /**
- * Arma los datasets que consume Plotly (evolución temporal, top causas y
- * clustering). Única responsabilidad: transformar los datos del análisis en
- * estructuras de gráfica, sin fetch ni cálculo de KPIs.
+ * Arma los datasets que consumen Chart.js/ECharts (evolución temporal, top
+ * causas y clustering). Única responsabilidad: transformar los datos del
+ * análisis en estructuras de gráfica, sin fetch ni cálculo de KPIs.
  */
 export function useDashboardCharts({
   segmento,
