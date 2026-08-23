@@ -236,6 +236,7 @@ const CriteriosInclusionSection: React.FC<{ criterios: CriterioItem[] }> = ({ cr
 
 const MomentoOcurrenciaSection: React.FC<{ data: MomentoItem[] }> = ({ data }) => {
   const total = data.reduce((sum, d) => sum + d.count, 0)
+  const PIE_CENTER: [string, string] = ['50%', '45%']
 
   const option = useMemo(
     () => ({
@@ -246,8 +247,8 @@ const MomentoOcurrenciaSection: React.FC<{ data: MomentoItem[] }> = ({ data }) =
       graphic: [
         {
           type: 'text' as const,
-          left: 'center' as const,
-          top: 'center' as const,
+          left: PIE_CENTER[0],
+          top: PIE_CENTER[1],
           style: { text: `${total}\ncasos`, textAlign: 'center' as const, fontSize: 22, fontWeight: 700, fill: '#0f172a' },
         },
       ],
@@ -255,7 +256,7 @@ const MomentoOcurrenciaSection: React.FC<{ data: MomentoItem[] }> = ({ data }) =
         {
           type: 'pie' as const,
           radius: ['55%', '80%'],
-          center: ['50%', '45%'],
+          center: PIE_CENTER,
           data: data.map((d) => ({ name: d.label, value: d.count })),
           label: { show: true, position: 'inside' as const, formatter: '{d}%', fontSize: 12, fontWeight: 700, color: '#fff' },
           itemStyle: { borderColor: '#fff', borderWidth: 2 },
