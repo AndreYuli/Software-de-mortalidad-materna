@@ -4,6 +4,12 @@ import { getCie10Description, getClusterColor } from '../../constants/dashboardC
 import type { ClusteringResult } from './useAnalysisHomeData'
 import type { Segmento } from './useDashboardMetrics'
 
+export type ClusteringPoint2D = { x: number; y: number; color: string; label: string }
+export type ClusteringPoint3D = { x: number; y: number; z: number; color: string; label: string }
+export type ClusteringChartData =
+  | { dim: '2d'; points: ClusteringPoint2D[] }
+  | { dim: '3d'; points: ClusteringPoint3D[] }
+
 export interface UseDashboardChartsParams {
   segmento: Segmento
   mortalidadData: AnalisisCompleto | null
@@ -112,37 +118,37 @@ export function useDashboardCharts({
     [activeClusterData?.clusters],
   )
 
-  const clusteringTrace = useMemo(() => {
-    if (!activeClusterData) return []
+  const clusteringChartData = useMemo((): ClusteringChartData | null => {
+    if (!activeClusterData) return null
+
     if (pcaDim === '3d' && activeClusterData.pca_3d) {
-      return [
-        {
-          type: 'scatter3d',
-          mode: 'markers',
-          x: activeClusterData.pca_3d.x,
-          y: activeClusterData.pca_3d.y,
-          z: activeClusterData.pca_3d.z,
-          marker: { size: 6, color: clusterMarkerColors, showscale: false, line: { color: 'white', width: 0.5 } },
-          text: activeClusterData.clusters!.map((c, i) => `Caso ${i + 1}<br>Cluster ${c}`),
-          hovertemplate: '%{text}<extra></extra>',
-        },
-      ]
+      const { x, y, z } = activeClusterData.pca_3d
+      return {
+        dim: '3d',
+        points: x.map((xi, i) => ({
+          x: xi,
+          y: y[i],
+          z: z[i],
+          color: clusterMarkerColors[i] ?? '#95a5a6',
+          label: `Caso ${i + 1} · Cluster ${activeClusterData.clusters![i]}`,
+        })),
+      }
     }
 
     if (activeClusterData.pca_2d) {
-      return [
-        {
-          type: 'scatter',
-          mode: 'markers',
-          x: activeClusterData.pca_2d.x,
-          y: activeClusterData.pca_2d.y,
-          marker: { size: 9, color: clusterMarkerColors, showscale: false, line: { color: 'white', width: 1 } },
-          text: activeClusterData.clusters!.map((c, i) => `Caso ${i + 1}<br>Cluster ${c}`),
-          hovertemplate: '%{text}<extra></extra>',
-        },
-      ]
+      const { x, y } = activeClusterData.pca_2d
+      return {
+        dim: '2d',
+        points: x.map((xi, i) => ({
+          x: xi,
+          y: y[i],
+          color: clusterMarkerColors[i] ?? '#95a5a6',
+          label: `Caso ${i + 1} · Cluster ${activeClusterData.clusters![i]}`,
+        })),
+      }
     }
-    return []
+
+    return null
   }, [activeClusterData, pcaDim, clusterMarkerColors])
 
   const demorasChartData = useMemo(() => {
@@ -339,6 +345,6 @@ export function useDashboardCharts({
     return available.length > 0 ? available : null
   }, [mortalidadData, morbilidadData])
 
-  return { lineChartData, barChartData, activeClusterData, clusteringTrace, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData }
+  return { lineChartData, barChartData, activeClusterData, clusteringChartData, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData }
 }
 
