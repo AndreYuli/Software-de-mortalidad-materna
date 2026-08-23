@@ -164,3 +164,6 @@ db.sqlite3
 
 # Archivos Excel
 *.xlsx
+
+# Superpowers brainstorming companion
+.superpowers/
