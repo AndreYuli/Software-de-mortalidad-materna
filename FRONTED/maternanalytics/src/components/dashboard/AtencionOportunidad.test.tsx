@@ -23,7 +23,7 @@ const institucionReferencia = {
 const obstetricoEdad = [
   {
     label: 'Gestaciones',
-    mort: { nombre: '6.5 Gestaciones', valoresEje: [0, 1, 2], conteos: [1, 2, 3], porEdad: {}, promedio: 1.5, total: 6 },
+    mort: { nombre: 'Gestaciones', valoresEje: [0, 1, 2], conteos: [1, 2, 3], porEdad: {}, promedio: 2, total: 6 },
     morb: null,
   },
 ]
@@ -35,7 +35,7 @@ describe('AtencionOportunidad', () => {
     )
     expect(screen.getByText('Instituciones de Referencia (Morbilidad)')).toBeInTheDocument()
     expect(screen.getByText('Variables Obstétricas por Edad')).toBeInTheDocument()
-    expect(screen.getByText('4.2', { exact: false })).toBeInTheDocument()
+    expect(screen.getByText('4 días')).toBeInTheDocument()
   })
 
   it('muestra el mensaje de datos insuficientes cuando no hay nada', () => {

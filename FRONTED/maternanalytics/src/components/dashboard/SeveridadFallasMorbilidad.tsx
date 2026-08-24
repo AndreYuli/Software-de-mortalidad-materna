@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { echartsBaseTextStyle } from '../../constants/chartTheme'
+import { HospitalIcon, BedIcon, HeartMonitorIcon, ActivityHeartbeatIcon, KidneyIcon, HepaticIcon, WomanIcon, SyringeIcon, BandageIcon, SurgeryIcon } from '../icons'
 
 /* ───── Types ───── */
 export interface SeveridadFallasData {
@@ -49,18 +50,14 @@ export interface SeveridadFallasMorbilidadProps {
 
 /* ───── Helpers ───── */
 const FALLA_ICONS: Record<string, string> = {
-  cardiaca: '❤️', cardíaca: '❤️',
-  vascular: '🩸', renal: '🫘',
-  hepática: '🟤', hepatica: '🟤',
   metabólica: '⚗️', metabolica: '⚗️',
   cerebral: '🧠', respiratoria: '🫁',
-  coagulación: '🩹', coagulacion: '🩹',
 }
 
-const SEVERITY_ICONS: Record<string, { icon: string; gradient: string }> = {
-  'Ingreso UCI': { icon: '🏥', gradient: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)' },
-  'Cirugía Adicional': { icon: '🔪', gradient: 'linear-gradient(135deg, #ea580c 0%, #9a3412 100%)' },
-  'Transfusión': { icon: '💉', gradient: 'linear-gradient(135deg, #d97706 0%, #92400e 100%)' },
+const SEVERITY_ICONS: Record<string, { icon: React.ReactNode; gradient: string }> = {
+  'Ingreso UCI': { icon: <HospitalIcon style={{ width: '20px', height: '20px' }} />, gradient: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)' },
+  'Cirugía Adicional': { icon: <SurgeryIcon style={{ width: '20px', height: '20px' }} />, gradient: 'linear-gradient(135deg, #ea580c 0%, #9a3412 100%)' },
+  'Transfusión': { icon: <SyringeIcon style={{ width: '20px', height: '20px' }} />, gradient: 'linear-gradient(135deg, #d97706 0%, #92400e 100%)' },
 }
 
 const MOMENTO_COLORS = ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']
@@ -74,8 +71,23 @@ const CRITERIO_COLORS: Record<string, string> = {
   'Ruptura uterina': '#7c3aed',
 }
 
-function getFallaIcon(nombre: string): string {
+function getFallaIcon(nombre: string): React.ReactNode {
   const lower = nombre.toLowerCase()
+  if (lower.includes('vascular')) {
+    return <ActivityHeartbeatIcon style={{ width: '16px', height: '16px', display: 'inline-block', verticalAlign: 'middle' }} />
+  }
+  if (lower.includes('cardiaca') || lower.includes('cardíaca')) {
+    return <HeartMonitorIcon style={{ width: '16px', height: '16px', display: 'inline-block', verticalAlign: 'middle' }} />
+  }
+  if (lower.includes('renal')) {
+    return <KidneyIcon style={{ width: '16px', height: '16px', display: 'inline-block', verticalAlign: 'middle' }} />
+  }
+  if (lower.includes('hepática') || lower.includes('hepatica')) {
+    return <HepaticIcon style={{ width: '16px', height: '16px', display: 'inline-block', verticalAlign: 'middle' }} />
+  }
+  if (lower.includes('coagulación') || lower.includes('coagulacion')) {
+    return <BandageIcon style={{ width: '16px', height: '16px', display: 'inline-block', verticalAlign: 'middle' }} />
+  }
   for (const [key, icon] of Object.entries(FALLA_ICONS)) {
     if (lower.includes(key)) return icon
   }
@@ -86,10 +98,10 @@ function getFallaIcon(nombre: string): string {
 
 const MorbKpiRow: React.FC<{ kpis: MorbKpis }> = ({ kpis }) => {
   const cards = [
-    { title: 'Total Casos MME', value: kpis.totalCasos, suffix: '', icon: '🏥', accent: '#0066cc' },
-    { title: 'Edad Promedio', value: kpis.edadPromedio, suffix: ' años', icon: '👩', accent: '#7c3aed' },
-    { title: 'Estancia Hospitalaria', value: kpis.estanciaHospitalaria, suffix: ' días', icon: '🛏️', accent: '#059669' },
-    { title: 'Estancia UCI', value: kpis.estanciaUci, suffix: ' días', icon: '💊', accent: '#dc2626' },
+    { title: 'Total Casos MME', value: kpis.totalCasos, suffix: '', icon: <HospitalIcon style={{ width: '18px', height: '18px' }} />, accent: '#0066cc' },
+    { title: 'Edad Promedio', value: kpis.edadPromedio, suffix: ' años', icon: <WomanIcon style={{ width: '18px', height: '18px' }} />, accent: '#7c3aed' },
+    { title: 'Estancia Hospitalaria', value: kpis.estanciaHospitalaria, suffix: ' días', icon: <BedIcon style={{ width: '18px', height: '18px' }} />, accent: '#059669' },
+    { title: 'Estancia UCI', value: kpis.estanciaUci, suffix: ' días', icon: <HospitalIcon style={{ width: '18px', height: '18px' }} />, accent: '#dc2626' },
   ]
 
   return (
@@ -101,7 +113,7 @@ const MorbKpiRow: React.FC<{ kpis: MorbKpis }> = ({ kpis }) => {
             <span className="morb-kpi-icon">{c.icon}</span>
           </div>
           <div className="morb-kpi-value">
-            {c.value != null ? `${c.value}${c.suffix}` : '—'}
+            {c.value != null ? `${Math.round(c.value)}${c.suffix}` : '—'}
           </div>
         </div>
       ))}
@@ -109,9 +121,19 @@ const MorbKpiRow: React.FC<{ kpis: MorbKpis }> = ({ kpis }) => {
   )
 }
 
+import { ChartAiInsight } from './ChartAiInsight'
+import {
+  getSeveridadFallasAiInsight,
+  getIndicadoresSeveridadAiInsight,
+  getCriteriosInclusionAiInsight,
+  getMomentoAiInsight,
+  getTiempoRemisionAiInsight,
+} from '../../utils/aiChartInsights'
+
 const FallasOrganicasSection: React.FC<{ fallas: SeveridadFallasData['fallas']; totalCasos: number }> = ({ fallas, totalCasos }) => {
   const sorted = useMemo(() => [...fallas].sort((a, b) => b.casos - a.casos), [fallas])
   const maxCasos = sorted.length > 0 ? sorted[0].casos : 1
+  const insight = useMemo(() => getSeveridadFallasAiInsight({ fallas: sorted, total_casos: totalCasos }), [sorted, totalCasos])
 
   return (
     <div className="morb-fallas-section">
@@ -122,7 +144,7 @@ const FallasOrganicasSection: React.FC<{ fallas: SeveridadFallasData['fallas']; 
         </h3>
         <div className="morb-fallas-list">
           {sorted.map((f, i) => {
-            const pct = totalCasos > 0 ? ((f.casos / totalCasos) * 100).toFixed(1) : '0'
+            const pctVal = totalCasos > 0 ? Math.round((f.casos / totalCasos) * 100) : 0
             const barWidth = maxCasos > 0 ? (f.casos / maxCasos) * 100 : 0
             return (
               <div className="morb-falla-item" key={i} style={{ animationDelay: `${i * 80}ms` }}>
@@ -139,18 +161,21 @@ const FallasOrganicasSection: React.FC<{ fallas: SeveridadFallasData['fallas']; 
                 </div>
                 <div className="morb-falla-stats">
                   <span className="morb-falla-count">{f.casos}</span>
-                  <span className="morb-falla-pct">{pct}%</span>
+                  <span className="morb-falla-pct">{pctVal}%</span>
                 </div>
               </div>
             )
           })}
         </div>
+        <ChartAiInsight insight={insight} />
       </div>
     </div>
   )
 }
 
 const SeveridadIndicatorsSection: React.FC<{ severidad: SeveridadFallasData['severidad']; totalCasos: number }> = ({ severidad, totalCasos }) => {
+  const insight = useMemo(() => getIndicadoresSeveridadAiInsight(severidad, totalCasos), [severidad, totalCasos])
+
   return (
     <div className="morb-severity-cards">
       <h3 className="chart-card-title">
@@ -180,18 +205,21 @@ const SeveridadIndicatorsSection: React.FC<{ severidad: SeveridadFallasData['sev
                 </div>
                 <div className="morb-severity-numbers">
                   <span className="morb-severity-count">{s.casos} casos</span>
-                  <span className="morb-severity-pct">{pct.toFixed(1)}%</span>
+                  <span className="morb-severity-pct">{Math.round(pct)}%</span>
                 </div>
               </div>
             </div>
           )
         })}
       </div>
+      <ChartAiInsight insight={insight} />
     </div>
   )
 }
 
 const CriteriosInclusionSection: React.FC<{ criterios: CriterioItem[] }> = ({ criterios }) => {
+  const insight = useMemo(() => getCriteriosInclusionAiInsight(criterios), [criterios])
+
   const option = useMemo(() => {
     const maxCasos = criterios.length > 0 ? Math.max(...criterios.map((c) => c.casos)) : 1
     return {
@@ -216,7 +244,7 @@ const CriteriosInclusionSection: React.FC<{ criterios: CriterioItem[] }> = ({ cr
             color: '#334155',
             formatter: (params: { dataIndex: number }) => {
               const c = criterios[params.dataIndex]
-              return `${c.casos} (${c.porcentaje.toFixed(1)}%)`
+              return `${c.casos} (${Math.round(c.porcentaje)}%)`
             },
           },
         },
@@ -231,12 +259,17 @@ const CriteriosInclusionSection: React.FC<{ criterios: CriterioItem[] }> = ({ cr
         <span className="morb-badge-criterios">Diagnósticos</span>
       </h3>
       <ReactECharts option={option} style={{ height: '260px', width: '100%' }} notMerge={true} />
+      <ChartAiInsight insight={insight} />
     </div>
   )
 }
 
 const MomentoOcurrenciaSection: React.FC<{ data: MomentoItem[] }> = ({ data }) => {
   const total = data.reduce((sum, d) => sum + d.count, 0)
+  const insight = useMemo(
+    () => getMomentoAiInsight(data.map((d) => d.label), [], data.map((d) => d.count)),
+    [data],
+  )
 
   const option = useMemo(
     () => ({
@@ -273,11 +306,14 @@ const MomentoOcurrenciaSection: React.FC<{ data: MomentoItem[] }> = ({ data }) =
         <span className="morb-badge-momento">Clínico</span>
       </h3>
       <ReactECharts option={option} style={{ height: '280px', width: '100%' }} notMerge={true} />
+      <ChartAiInsight insight={insight} />
     </div>
   )
 }
 
 const TiempoRemisionSection: React.FC<{ data: TiempoRemision }> = ({ data }) => {
+  const insight = useMemo(() => getTiempoRemisionAiInsight(data), [data])
+
   const option = useMemo(
     () => ({
       textStyle: echartsBaseTextStyle(),
@@ -310,21 +346,22 @@ const TiempoRemisionSection: React.FC<{ data: TiempoRemision }> = ({ data }) => 
       <div className="morb-remision-stats">
         <div className="morb-remision-stat">
           <span className="morb-remision-stat-label">Mediana</span>
-          <span className="morb-remision-stat-value">{data.median.toFixed(1)}h</span>
+          <span className="morb-remision-stat-value">{Math.round(data.median)}h</span>
         </div>
         <div className="morb-remision-stat">
           <span className="morb-remision-stat-label">Promedio</span>
-          <span className="morb-remision-stat-value">{data.mean.toFixed(1)}h</span>
+          <span className="morb-remision-stat-value">{Math.round(data.mean)}h</span>
         </div>
         <div className="morb-remision-stat">
           <span className="morb-remision-stat-label">Q1–Q3</span>
-          <span className="morb-remision-stat-value">{data.q1.toFixed(1)}–{data.q3.toFixed(1)}h</span>
+          <span className="morb-remision-stat-value">{Math.round(data.q1)}–{Math.round(data.q3)}h</span>
         </div>
         <div className="morb-remision-stat">
           <span className="morb-remision-stat-label">n</span>
           <span className="morb-remision-stat-value">{data.total}</span>
         </div>
       </div>
+      <ChartAiInsight insight={insight} />
     </div>
   )
 }
@@ -344,7 +381,9 @@ export const SeveridadFallasMorbilidad: React.FC<SeveridadFallasMorbilidadProps>
   if (!hasAnyData) {
     return (
       <div className="chart-card-col-12" style={{ textAlign: 'center', padding: '60px 40px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.4 }}>🏥</div>
+        <div style={{ marginBottom: '16px', opacity: 0.4 }}>
+          <HospitalIcon style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+        </div>
         <h3 className="chart-card-title" style={{ justifyContent: 'center' }}>Análisis de Morbilidad Materna Extrema</h3>
         <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '400px', margin: '0 auto' }}>
           No hay datos suficientes de morbilidad para generar este análisis. Cargue un archivo de evento 549.

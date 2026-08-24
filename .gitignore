@@ -164,6 +164,15 @@ db.sqlite3
 
 # Archivos Excel
 *.xlsx
+*.xls
+*.csv
 
 # Superpowers brainstorming companion
 .superpowers/
+
+# Carpeta de ayudas, transcripciones, prompts y guias
+ayudas/
+.claude/
+.idea/
+*.iml
+.pytest_cache/

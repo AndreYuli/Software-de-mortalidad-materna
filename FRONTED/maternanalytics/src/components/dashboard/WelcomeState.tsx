@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { BloodDropIcon, HospitalIcon, DocumentIcon } from '../icons'
 
 export interface WelcomeStateProps {
   onGoToUpload: (view: 'mortalidad' | 'morbilidad') => void
@@ -10,7 +11,9 @@ export function WelcomeState({ onGoToUpload }: WelcomeStateProps) {
   return (
     <div className="welcome-dashboard-shell">
       <div className="welcome-dashboard-card">
-        <div className="welcome-icon-circle">📋</div>
+        <div className="welcome-icon-circle">
+          <DocumentIcon style={{ width: '48px', height: '48px' }} />
+        </div>
         <h2 className="welcome-title">Análisis Epidemiológico</h2>
         <p className="welcome-microcopy">
           Aún no hay datos para analizar. Carga los registros de los Eventos 549 (Morbilidad) y 550 (Mortalidad) del
@@ -24,12 +27,16 @@ export function WelcomeState({ onGoToUpload }: WelcomeStateProps) {
         ) : (
           <div className="upload-choices-panel">
             <button className="btn-choice-upload" onClick={() => onGoToUpload('mortalidad')}>
-              <span className="btn-choice-upload-icon">🩸</span>
+              <span className="btn-choice-upload-icon">
+                <BloodDropIcon style={{ width: '18px', height: '18px' }} />
+              </span>
               <span className="btn-choice-upload-label">Mortalidad</span>
               <span className="btn-choice-upload-sublabel">Evento 550</span>
             </button>
             <button className="btn-choice-upload" onClick={() => onGoToUpload('morbilidad')}>
-              <span className="btn-choice-upload-icon">🏥</span>
+              <span className="btn-choice-upload-icon">
+                <HospitalIcon style={{ width: '18px', height: '18px' }} />
+              </span>
               <span className="btn-choice-upload-label">Morbilidad Extrema</span>
               <span className="btn-choice-upload-sublabel">Evento 549</span>
             </button>

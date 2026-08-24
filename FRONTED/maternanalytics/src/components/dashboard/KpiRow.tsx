@@ -1,5 +1,6 @@
 import { TrendBadge } from './TrendBadge'
 import type { CompareResult } from '../../hooks/dashboard/useDashboardMetrics'
+import { UsersIcon, BloodDropIcon, HospitalIcon, ChartBarIcon } from '../icons'
 
 export interface KpiRowProps {
   totalCasos: number
@@ -27,7 +28,9 @@ export function KpiRow({
       <div className="kpi-dashboard-card kpi-total">
         <div className="kpi-card-header">
           <span className="kpi-card-title">Casos Totales (549 + 550)</span>
-          <span className="kpi-card-icon">👥</span>
+          <span className="kpi-card-icon">
+            <UsersIcon style={{ width: '20px', height: '20px' }} />
+          </span>
         </div>
         <div className="kpi-card-value">{totalCasos}</div>
         <div className="kpi-card-trend-container">
@@ -39,7 +42,9 @@ export function KpiRow({
       <div className="kpi-dashboard-card kpi-mortalidad">
         <div className="kpi-card-header">
           <span className="kpi-card-title">Mortalidad Materna (550)</span>
-          <span className="kpi-card-icon">🩸</span>
+          <span className="kpi-card-icon">
+            <BloodDropIcon style={{ width: '20px', height: '20px' }} />
+          </span>
         </div>
         <div className="kpi-card-value">{totalMortalidad}</div>
         <div className="kpi-card-trend-container">
@@ -51,7 +56,9 @@ export function KpiRow({
       <div className="kpi-dashboard-card kpi-morbilidad">
         <div className="kpi-card-header">
           <span className="kpi-card-title">Morbilidad Extrema (549)</span>
-          <span className="kpi-card-icon">🏥</span>
+          <span className="kpi-card-icon">
+            <HospitalIcon style={{ width: '20px', height: '20px' }} />
+          </span>
         </div>
         <div className="kpi-card-value">{totalMorbilidad}</div>
         <div className="kpi-card-trend-container">
@@ -63,7 +70,9 @@ export function KpiRow({
       <div className="kpi-dashboard-card kpi-letalidad">
         <div className="kpi-card-header">
           <span className="kpi-card-title">Tasa de Letalidad</span>
-          <span className="kpi-card-icon">📈</span>
+          <span className="kpi-card-icon">
+            <ChartBarIcon style={{ width: '20px', height: '20px' }} />
+          </span>
         </div>
         <div className="kpi-card-value">{tasaLetalidad}%</div>
         <div className="kpi-card-trend-container">

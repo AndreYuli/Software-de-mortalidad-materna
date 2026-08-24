@@ -2,6 +2,8 @@ import 'echarts-gl'
 import { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { echartsBaseTextStyle } from '../../constants/chartTheme'
+import { ChartAiInsight } from './ChartAiInsight'
+import { getClusteringAiInsight } from '../../utils/aiChartInsights'
 import NarrativaIA from '../NarrativaIA'
 import type { ClusteringResult } from '../../hooks/dashboard/useAnalysisHomeData'
 import type { ClusteringChartData } from '../../hooks/dashboard/useDashboardCharts'
@@ -84,6 +86,8 @@ export function ClusteringSection({
     return clusteringChartData.dim === '3d' ? build3DOption(clusteringChartData) : build2DOption(clusteringChartData)
   }, [clusteringChartData])
 
+  const insight = useMemo(() => getClusteringAiInsight(activeClusterData), [activeClusterData])
+
   return (
     <div className="advanced-grid-row">
       <div className="clustering-card-span-8">
@@ -128,6 +132,7 @@ export function ClusteringSection({
             </div>
           )}
         </div>
+        <ChartAiInsight insight={insight} />
       </div>
 
       <div className="ai-insight-card-span-4">

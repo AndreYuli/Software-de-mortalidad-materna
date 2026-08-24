@@ -23,13 +23,13 @@ def db_session():
         Sesión de SQLAlchemy con todas las tablas creadas.
     """
     engine = create_engine(
-        'sqlite:///:memory:',
-        connect_args={'check_same_thread': False},
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
     Base.metadata.create_all(bind=engine)
-    TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    session = TestingSessionLocal()
+    fabrica_sesiones = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = fabrica_sesiones()
     try:
         yield session
     finally:

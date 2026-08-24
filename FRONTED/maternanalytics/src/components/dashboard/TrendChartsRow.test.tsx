@@ -5,9 +5,9 @@ import { TrendChartsRow } from './TrendChartsRow'
 const sampleProps = {
   lineChartData: {
     labels: ['Ene', 'Feb', 'Mar'],
-    series: [{ name: 'Mortalidad (550)', color: '#c0392b', data: [1, 2, 3] }],
+    series: [{ name: 'Mortalidad', color: '#c0392b', data: [1, 2, 3] }],
   },
-  barChartData: { labels: ['O26.6 - Trastornos del hígado'], values: [5], colors: ['#c0392b'] },
+  barChartData: { labels: ['Trastornos del hígado en embarazo'], values: [5], colors: ['#c0392b'] },
   demorasChartData: { labels: ['Demora 1'], values: [3] },
   edadChartData: { labels: ['20-29'], mortalidadValues: [2], morbilidadValues: [4] },
   momentoChartData: { labels: ['Parto'], mortalidadValues: [1], morbilidadValues: [2] },
@@ -25,9 +25,9 @@ describe('TrendChartsRow', () => {
   it('renderiza los 4 gráficos sin lanzar excepciones cuando hay datos', () => {
     render(<TrendChartsRow {...sampleProps} />)
     expect(screen.getByText('Evolución Temporal de Casos')).toBeInTheDocument()
-    expect(screen.getByText('Top 5 Causas / Criterios Principales')).toBeInTheDocument()
-    expect(screen.getByText('Impacto: Modelo de las 4 Demoras')).toBeInTheDocument()
-    expect(screen.getByText('Distribución por Edad Obstétrica')).toBeInTheDocument()
+    expect(screen.getByText('Top 5 Causas Principales')).toBeInTheDocument()
+    expect(screen.getByText('Demoras Críticas en la Atención')).toBeInTheDocument()
+    expect(screen.getByText('Distribución por Edad Materna')).toBeInTheDocument()
     expect(screen.getByText('Momento de Ocurrencia / Muerte')).toBeInTheDocument()
   })
 

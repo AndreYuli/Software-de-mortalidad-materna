@@ -12,7 +12,7 @@ from schemas.analisis_schema import AnalisisResponse, ClusteringRequest
 from services import analisis_service, narrativa_service
 from services.ia_client import IAServiceUnavailableError
 
-router = APIRouter(prefix='/api', tags=['analisis'])
+router = APIRouter(prefix="/api", tags=["analisis"])
 
 
 @contextmanager
@@ -45,12 +45,12 @@ def _get_analisis_or_404(pk: int, db: Session) -> Analisis:
     if not analisis:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail='Análisis no encontrado.',
+            detail="Análisis no encontrado.",
         )
     return analisis
 
 
-@router.post('/analisis/', status_code=status.HTTP_201_CREATED)
+@router.post("/analisis/", status_code=status.HTTP_201_CREATED)
 def subir_archivo(
     tipo: str = Form(...),
     archivo: UploadFile = File(...),
@@ -76,7 +76,7 @@ def subir_archivo(
     return resultado_persistencia
 
 
-@router.get('/analisis/', response_model=list[AnalisisResponse])
+@router.get("/analisis/", response_model=list[AnalisisResponse])
 def listar_analisis(db: Session = Depends(get_db)) -> list[AnalisisResponse]:
     """Lista el análisis más reciente de cada tipo (mortalidad y morbilidad).
 
@@ -90,7 +90,7 @@ def listar_analisis(db: Session = Depends(get_db)) -> list[AnalisisResponse]:
     return lista_analisis
 
 
-@router.get('/analisis/{pk}/', response_model=AnalisisResponse)
+@router.get("/analisis/{pk}/", response_model=AnalisisResponse)
 def detalle_analisis(pk: int, db: Session = Depends(get_db)) -> AnalisisResponse:
     """Devuelve los metadatos de un análisis específico.
 
@@ -108,7 +108,7 @@ def detalle_analisis(pk: int, db: Session = Depends(get_db)) -> AnalisisResponse
     return analisis_recuperado
 
 
-@router.get('/analisis/{pk}/completo/')
+@router.get("/analisis/{pk}/completo/")
 def analisis_completo(
     pk: int,
     year: str | None = Query(default=None),
@@ -133,11 +133,16 @@ def analisis_completo(
     """
     analisis = _get_analisis_or_404(pk, db)
     with _errores_servicio():
-        resultado = analisis_service.calcular_completo(analisis=analisis, year=year, month=month, db=db)
+        resultado = analisis_service.calcular_completo(
+            analisis=analisis,
+            year=year,
+            month=month,
+            db=db,
+        )
     return resultado
 
 
-@router.post('/analisis/{pk}/clustering/')
+@router.post("/analisis/{pk}/clustering/")
 def clustering(
     pk: int,
     req: ClusteringRequest,
@@ -160,12 +165,12 @@ def clustering(
     analisis = _get_analisis_or_404(pk, db)
     with _errores_servicio():
         resultado = analisis_service.ejecutar_clustering(
-            analisis=analisis, tipo_clustering=req.tipo_clustering, n_clusters=req.n_clusters,
+            analisis=analisis, tipo_clustering=req.tipo_clustering, n_clusters=req.n_clusters, db=db
         )
     return resultado
 
 
-@router.get('/analisis/{pk}/heatmap/')
+@router.get("/analisis/{pk}/heatmap/")
 def heatmap(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
     """Genera el heatmap de correlación para un análisis de morbilidad.
 
@@ -182,17 +187,17 @@ def heatmap(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
         HTTPException: 500 si ocurre un error al procesar.
     """
     analisis = _get_analisis_or_404(pk, db)
-    if analisis.tipo != 'morbilidad':
+    if analisis.tipo != "morbilidad":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='El heatmap solo está disponible para análisis de morbilidad.',
+            detail="El heatmap solo está disponible para análisis de morbilidad.",
         )
     with _errores_servicio():
-        resultado = analisis_service.calcular_heatmap(analisis=analisis)
+        resultado = analisis_service.calcular_heatmap(analisis=analisis, db=db)
     return resultado
 
 
-@router.get('/analisis/{pk}/extra-columna/')
+@router.get("/analisis/{pk}/extra-columna/")
 def extra_columna(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
     """Devuelve la distribución de una columna adicional para mortalidad.
 
@@ -209,23 +214,23 @@ def extra_columna(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
         HTTPException: 500 si ocurre un error al procesar.
     """
     analisis = _get_analisis_or_404(pk, db)
-    if analisis.tipo != 'mortalidad':
+    if analisis.tipo != "mortalidad":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail='Extra columna solo está disponible para análisis de mortalidad.',
+            detail="Extra columna solo está disponible para análisis de mortalidad.",
         )
     with _errores_servicio():
-        resultado = analisis_service.calcular_extra_columna(analisis=analisis)
+        resultado = analisis_service.calcular_extra_columna(analisis=analisis, columna_idx=0, db=db)
     return resultado
 
 
-@router.get('/analisis/{pk}/narrativa/{tipo_narrativa}/')
+@router.get("/analisis/{pk}/narrativa/{tipo_narrativa}/")
 def obtener_narrativa_ia(
     pk: int,
     tipo_narrativa: str,
     year: str | None = Query(default=None),
     month: str | None = Query(default=None),
-    tipo_clustering: str = Query(default='kmeans'),
+    tipo_clustering: str = Query(default="kmeans"),
     n_clusters: int = Query(default=3, ge=2, le=20),
     regenerar: bool = Query(default=False),
     db: Session = Depends(get_db),
@@ -249,26 +254,42 @@ def obtener_narrativa_ia(
         HTTPException: 404 si el análisis no existe, 503 si IA-SERVICE no está disponible.
     """
     analisis = _get_analisis_or_404(pk, db)
-    filtros: dict[str, Any] = {'year': year, 'month': month}
+    filtros: dict[str, Any] = {"year": year, "month": month}
 
     with _errores_servicio():
-        if tipo_narrativa == 'clustering':
-            filtros.update({'tipo_clustering': tipo_clustering, 'n_clusters': n_clusters})
-            clustering_resultado = analisis_service.ejecutar_clustering(analisis, tipo_clustering, n_clusters)
+        if tipo_narrativa == "clustering":
+            filtros.update({"tipo_clustering": tipo_clustering, "n_clusters": n_clusters})
+            clustering_resultado = analisis_service.ejecutar_clustering(
+                analisis,
+                tipo_clustering,
+                n_clusters,
+            )
             indicadores = narrativa_service.extraer_indicadores_para_narrativa(
-                tipo_narrativa, None, clustering_resultado,
+                tipo_narrativa,
+                None,
+                clustering_resultado,
             )
         else:
             analisis_completo = analisis_service.calcular_completo(analisis, year, month, db)
             indicadores = narrativa_service.extraer_indicadores_para_narrativa(
-                tipo_narrativa, analisis_completo, None,
+                tipo_narrativa,
+                analisis_completo,
+                None,
             )
 
         try:
             resultado = narrativa_service.obtener_narrativa(
-                db, analisis, tipo_narrativa, indicadores, filtros, regenerar,
+                db,
+                analisis,
+                tipo_narrativa,
+                indicadores,
+                filtros,
+                regenerar,
             )
         except IAServiceUnavailableError as exc:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(exc),
+            ) from exc
 
     return resultado

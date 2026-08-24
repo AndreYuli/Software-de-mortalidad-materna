@@ -70,7 +70,7 @@ export function useDashboardCharts({
 
     if ((segmento === 'ambos' || segmento === 'mortalidad') && mortalidadData?.distribucion_mensual) {
       series.push({
-        name: 'Mortalidad (550)',
+        name: 'Mortalidad',
         color: '#c0392b',
         data: getMonthly(mortalidadData.distribucion_mensual),
       })
@@ -78,7 +78,7 @@ export function useDashboardCharts({
 
     if ((segmento === 'ambos' || segmento === 'morbilidad') && morbilidadData?.distribucion_mensual) {
       series.push({
-        name: 'Morbilidad (549)',
+        name: 'Morbilidad',
         color: '#2ca02c',
         data: getMonthly(morbilidadData.distribucion_mensual),
       })
@@ -91,7 +91,7 @@ export function useDashboardCharts({
     const list: { label: string; casos: number; color: string }[] = []
     if ((segmento === 'ambos' || segmento === 'mortalidad') && mortalidadData?.causas_cie10?.top_causas) {
       mortalidadData.causas_cie10.top_causas.forEach((c) => {
-        list.push({ label: `${c.codigo} - ${getCie10Description(c.codigo)}`, casos: c.casos, color: '#c0392b' })
+        list.push({ label: getCie10Description(c.codigo), casos: c.casos, color: '#c0392b' })
       })
     }
     if ((segmento === 'ambos' || segmento === 'morbilidad') && morbilidadData?.criterios_inclusion) {
@@ -168,7 +168,9 @@ export function useDashboardCharts({
     const labels = new Set<string>()
     
     const extractAgeGroups = (data: any) => {
-      const obj = data?.obstetrico_edad?.['6.5 Gestaciones']?.por_edad
+      if (!data?.obstetrico_edad) return {}
+      const gestKey = Object.keys(data.obstetrico_edad).find((k) => k.toLowerCase().includes('estaciones'))
+      const obj = gestKey ? data.obstetrico_edad[gestKey]?.por_edad : null
       if (!obj) return {}
       const res: Record<string, number> = {}
       for (const [ageGroup, counts] of Object.entries(obj)) {
@@ -232,10 +234,10 @@ export function useDashboardCharts({
     if (!stats) return null
     return {
       totalCasos: stats.total_casos ?? 0,
-      edadPromedio: stats.edad_promedio != null ? Number(stats.edad_promedio.toFixed(1)) : null,
-      estanciaHospitalaria: stats.estancia_hospitalaria_promedio != null ? Number(stats.estancia_hospitalaria_promedio.toFixed(1)) : null,
-      estanciaUci: stats.estancia_uci_promedio != null ? Number(stats.estancia_uci_promedio.toFixed(1)) : null,
-      criteriosPromedio: stats.criterios_promedio != null ? Number(stats.criterios_promedio.toFixed(1)) : null,
+      edadPromedio: stats.edad_promedio != null ? Math.round(stats.edad_promedio) : null,
+      estanciaHospitalaria: stats.estancia_hospitalaria_promedio != null ? Math.round(stats.estancia_hospitalaria_promedio) : null,
+      estanciaUci: stats.estancia_uci_promedio != null ? Math.round(stats.estancia_uci_promedio) : null,
+      criteriosPromedio: stats.criterios_promedio != null ? Math.round(stats.criterios_promedio) : null,
     }
   }, [morbilidadData])
 
@@ -289,10 +291,10 @@ export function useDashboardCharts({
     const estanciaUciMorb = morbStats?.estancia_uci_promedio ?? null
 
     return {
-      cpnPromedio: cpnMort != null ? Number(cpnMort.toFixed(1)) : null,
-      gestacionesPromedio: gestMort != null ? Number(gestMort.toFixed(1)) : null,
-      estanciaHospitalaria: estanciaMorb != null ? Number(estanciaMorb.toFixed(1)) : null,
-      estanciaUci: estanciaUciMorb != null ? Number(estanciaUciMorb.toFixed(1)) : null,
+      cpnPromedio: cpnMort != null ? Math.round(cpnMort) : null,
+      gestacionesPromedio: gestMort != null ? Math.round(gestMort) : null,
+      estanciaHospitalaria: estanciaMorb != null ? Math.round(estanciaMorb) : null,
+      estanciaUci: estanciaUciMorb != null ? Math.round(estanciaUciMorb) : null,
       totalMort: mortStats?.total_casos ?? 0,
       totalMorb: morbStats?.total_casos ?? 0,
     }

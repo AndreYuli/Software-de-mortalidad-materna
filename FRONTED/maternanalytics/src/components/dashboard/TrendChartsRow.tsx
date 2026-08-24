@@ -1,5 +1,14 @@
+import { useMemo } from 'react'
 import { Line, Bar, Pie } from 'react-chartjs-2'
 import { CHART_COLORS, CHART_FONT_FAMILY } from '../../constants/chartTheme'
+import { ChartAiInsight } from './ChartAiInsight'
+import {
+  getTimelineAiInsight,
+  getTopCausasAiInsight,
+  getDemorasAiInsight,
+  getEdadAiInsight,
+  getMomentoAiInsight,
+} from '../../utils/aiChartInsights'
 
 export interface TrendChartsRowProps {
   lineChartData: { labels: string[]; series: { name: string; color: string; data: number[] }[] }
@@ -7,6 +16,7 @@ export interface TrendChartsRowProps {
   demorasChartData: { labels: string[]; values: number[] }
   edadChartData: { labels: string[]; mortalidadValues: number[]; morbilidadValues: number[] }
   momentoChartData: { labels: string[]; mortalidadValues: number[]; morbilidadValues: number[] }
+  segmento?: string
 }
 
 const wrapLabel = (text: string, maxLen: number = 45): string | string[] => {
@@ -37,7 +47,35 @@ export function TrendChartsRow({
   demorasChartData,
   edadChartData,
   momentoChartData,
+  segmento,
 }: TrendChartsRowProps) {
+  const barTitle = segmento === 'morbilidad' ? 'Top 5 Criterios Principales' : 'Top 5 Causas Principales'
+
+  const timelineInsight = useMemo(
+    () => getTimelineAiInsight(lineChartData.labels, lineChartData.series),
+    [lineChartData],
+  )
+
+  const topCausasInsight = useMemo(
+    () => getTopCausasAiInsight(barChartData.labels, barChartData.values, segmento === 'morbilidad'),
+    [barChartData, segmento],
+  )
+
+  const demorasInsight = useMemo(
+    () => getDemorasAiInsight(demorasChartData.labels, demorasChartData.values),
+    [demorasChartData],
+  )
+
+  const edadInsight = useMemo(
+    () => getEdadAiInsight(edadChartData.labels, edadChartData.mortalidadValues, edadChartData.morbilidadValues),
+    [edadChartData],
+  )
+
+  const momentoInsight = useMemo(
+    () => getMomentoAiInsight(momentoChartData.labels, momentoChartData.mortalidadValues, momentoChartData.morbilidadValues),
+    [momentoChartData],
+  )
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       <div className="charts-grid-row">
@@ -77,12 +115,13 @@ export function TrendChartsRow({
               </div>
             )}
           </div>
+          <ChartAiInsight insight={timelineInsight} />
         </div>
       </div>
 
       <div className="charts-grid-row">
         <div className="chart-card-col-6">
-          <h3 className="chart-card-title">Top 5 Causas / Criterios Principales</h3>
+          <h3 className="chart-card-title">{barTitle}</h3>
           <div style={{ height: '320px' }}>
             {barChartData.values.length > 0 ? (
               <Bar
@@ -114,10 +153,11 @@ export function TrendChartsRow({
               </div>
             )}
           </div>
+          <ChartAiInsight insight={topCausasInsight} />
         </div>
 
         <div className="chart-card-col-6">
-          <h3 className="chart-card-title">Impacto: Modelo de las 4 Demoras</h3>
+          <h3 className="chart-card-title">Demoras Críticas en la Atención</h3>
           <div style={{ height: '320px' }}>
             {demorasChartData.values.length > 0 ? (
               <Bar
@@ -152,12 +192,13 @@ export function TrendChartsRow({
               </div>
             )}
           </div>
+          <ChartAiInsight insight={demorasInsight} />
         </div>
       </div>
 
       <div className="charts-grid-row">
         <div className="chart-card-col-6">
-          <h3 className="chart-card-title">Distribución por Edad Obstétrica</h3>
+          <h3 className="chart-card-title">Distribución por Edad Materna</h3>
           <div style={{ height: '320px' }}>
             {edadChartData.labels.length > 0 ? (
               <Bar
@@ -184,6 +225,7 @@ export function TrendChartsRow({
               </div>
             )}
           </div>
+          <ChartAiInsight insight={edadInsight} />
         </div>
 
         <div className="chart-card-col-6">
@@ -215,6 +257,7 @@ export function TrendChartsRow({
               </div>
             )}
           </div>
+          <ChartAiInsight insight={momentoInsight} />
         </div>
       </div>
     </div>

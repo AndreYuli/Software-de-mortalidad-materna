@@ -1,48 +1,54 @@
-import { useState, FormEvent } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Login.css'
 import { API_URL } from '../api'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import LogoIcon from './LogoIcon'
+import { registerSchema, type RegisterFormValues } from '../validation/registerSchema'
 
 interface RegisterProps {
-  onRegistered: () => void
-  onBack: () => void
+  onRegistered?: () => void
+  onBack?: () => void
 }
 
-export default function Register({ onRegistered, onBack }: RegisterProps) {
-  const [nombre, setNombre] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
+interface RegisterResponse {
+  detail?: string
+  error?: string
+}
+
+export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+  })
 
-  const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const onSubmit = async (data: RegisterFormValues) => {
     setError('')
-
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.')
-      return
-    }
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.')
-      return
-    }
-
     setIsLoading(true)
     try {
       const res = await fetch(`${API_URL}/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, email, password }),
+        body: JSON.stringify({ nombre: data.nombre, email: data.email, password: data.password }),
       })
-      const data = await res.json()
+      const responseData: RegisterResponse = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Error al crear la cuenta.')
+        setError(responseData.detail || responseData.error || 'Error al crear la cuenta.')
         return
       }
       setSuccess(true)
-      setTimeout(() => onRegistered(), 1800)
+      setTimeout(() => {
+        if (onRegistered) onRegistered()
+        else navigate('/login')
+      }, 1500)
     } catch {
       setError('No se pudo conectar al servidor. Verifica que el backend esté activo.')
     } finally {
@@ -54,38 +60,15 @@ export default function Register({ onRegistered, onBack }: RegisterProps) {
     <div className="page">
 
       {/* LEFT PANEL */}
-      <div className="left">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-        <div className="blob blob-3"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="pulse-line"></div>
-        <div className="pulse-line"></div>
-        <div className="pulse-line"></div>
+      <div className="left" aria-hidden="true">
+        <div className="background-decorations">
+          <div className="blob blob-1"></div>
+          <div className="blob blob-2"></div>
+          <div className="blob blob-3"></div>
+        </div>
 
         <div className="left-content">
-          <div className="logo-icon">
-            <svg width="90" height="90" viewBox="0 0 64 64">
-              <path d="M32 4 C52 4 58 20 58 34 C58 52 46 60 32 60 C18 60 6 52 6 34 C6 20 12 4 32 4Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2"/>
-              <path d="M26 16 C18 24 16 34 22 44 C26 48 30 52 32 54" fill="none" stroke="#F4C0D1" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M38 14 C46 22 48 34 42 44 C38 48 34 52 32 54" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="32" cy="36" r="5" fill="none" stroke="#F4C0D1" strokeWidth="1.2"/>
-              <circle cx="32" cy="36" r="1.8" fill="#F4C0D1"/>
-              <circle cx="20" cy="26" r="1.5" fill="rgba(255,255,255,0.35)"/>
-              <circle cx="17" cy="36" r="1.5" fill="rgba(255,255,255,0.35)"/>
-              <circle cx="20" cy="44" r="1.5" fill="rgba(255,255,255,0.35)"/>
-              <circle cx="44" cy="24" r="1.5" fill="rgba(255,255,255,0.25)"/>
-              <circle cx="47" cy="34" r="1.5" fill="rgba(255,255,255,0.25)"/>
-              <circle cx="44" cy="44" r="1.5" fill="rgba(255,255,255,0.25)"/>
-            </svg>
-          </div>
+          <LogoIcon className="logo-icon" />
           <h1 className="brand-title">Vida<span>Materna</span></h1>
         </div>
       </div>
@@ -107,59 +90,63 @@ export default function Register({ onRegistered, onBack }: RegisterProps) {
               <p>¡Cuenta creada exitosamente! Redirigiendo al inicio de sesión...</p>
             </div>
           ) : (
-            <form onSubmit={handleRegister}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="field">
-                <label>Nombre completo</label>
+                <label htmlFor="nombre">Nombre completo</label>
                 <input
+                  id="nombre"
                   type="text"
                   placeholder="Tu nombre y apellido"
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
+                  {...register('nombre')}
                   required
                 />
-                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                {errors.nombre && <p className="error-msg">{errors.nombre.message}</p>}
+                <svg className="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                 </svg>
               </div>
 
               <div className="field">
-                <label>Correo electrónico</label>
+                <label htmlFor="email">Correo electrónico</label>
                 <input
+                  id="email"
                   type="email"
                   placeholder="tu.correo@institucion.gov.co"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  {...register('email')}
                   required
                 />
-                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                {errors.email && <p className="error-msg">{errors.email.message}</p>}
+                <svg className="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M22 4L12 13 2 4"/>
                 </svg>
               </div>
 
               <div className="field">
-                <label>Contraseña</label>
+                <label htmlFor="password">Contraseña</label>
                 <input
+                  id="password"
                   type="password"
                   placeholder="Mínimo 6 caracteres"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  {...register('password')}
                   required
                 />
-                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                {errors.password && <p className="error-msg">{errors.password.message}</p>}
+                <svg className="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="11" width="18" height="11" rx="3"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                 </svg>
               </div>
 
               <div className="field">
-                <label>Confirmar contraseña</label>
+                <label htmlFor="confirmPassword">Confirmar contraseña</label>
                 <input
+                  id="confirmPassword"
                   type="password"
                   placeholder="Repite tu contraseña"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  {...register('confirmPassword')}
                   required
                 />
-                <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                {errors.confirmPassword && <p className="error-msg">{errors.confirmPassword.message}</p>}
+                <svg className="field-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
               </div>
@@ -174,7 +161,16 @@ export default function Register({ onRegistered, onBack }: RegisterProps) {
 
           <p className="footer-text">
             ¿Ya tienes una cuenta?{' '}
-            <a href="#" onClick={(e) => { e.preventDefault(); onBack() }}>Iniciar sesión</a>
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() => {
+                if (onBack) onBack()
+                else navigate('/login')
+              }}
+            >
+              Iniciar sesión
+            </button>
           </p>
         </div>
       </div>

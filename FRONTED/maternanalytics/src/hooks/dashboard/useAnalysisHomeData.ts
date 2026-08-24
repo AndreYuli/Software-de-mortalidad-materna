@@ -3,9 +3,14 @@ import { API_URL } from '../../api'
 import type { AnalisisCompleto } from '../../types'
 
 export interface ClusteringResult {
+  n_clusters?: number
+  n_samples?: number
+  cluster_sizes?: number[]
+  features_used?: string[]
   clusters?: number[]
   pca_2d?: { x: number[]; y: number[] }
   pca_3d?: { x: number[]; y: number[]; z: number[] }
+  cluster_profiles?: { cluster_id: number; size: number; features: Record<string, number> }[]
 }
 
 export interface UseAnalysisHomeDataParams {

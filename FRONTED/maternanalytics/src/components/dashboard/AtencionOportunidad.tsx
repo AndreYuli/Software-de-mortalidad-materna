@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import '../../constants/chartTheme'
+import { StethoscopeIcon, HospitalIcon, PregnantIcon, BedIcon, AmbulanceIcon } from '../icons'
 
 /* ───── Types ───── */
 export interface AtencionKpis {
@@ -40,10 +41,10 @@ export interface AtencionOportunidadProps {
 
 const AtencionKpiRow: React.FC<{ kpis: AtencionKpis }> = ({ kpis }) => {
   const cards = [
-    { title: 'Controles Prenatales Prom.', value: kpis.cpnPromedio, suffix: '', icon: '🩺', accent: '#0284c7' },
-    { title: 'Gestaciones Promedio', value: kpis.gestacionesPromedio, suffix: '', icon: '🤰', accent: '#c026d3' },
-    { title: 'Estancia Hospitalaria (Morbilidad)', value: kpis.estanciaHospitalaria, suffix: ' días', icon: '🛏️', accent: '#059669' },
-    { title: 'Estancia UCI (Morbilidad)', value: kpis.estanciaUci, suffix: ' días', icon: '🏥', accent: '#dc2626' },
+    { title: 'Controles Prenatales Prom.', value: kpis.cpnPromedio, suffix: '', icon: <StethoscopeIcon style={{ width: '18px', height: '18px' }} />, accent: '#0284c7' },
+    { title: 'Gestaciones Promedio', value: kpis.gestacionesPromedio, suffix: '', icon: <PregnantIcon style={{ width: '18px', height: '18px' }} />, accent: '#c026d3' },
+    { title: 'Estancia Hospitalaria (Morbilidad)', value: kpis.estanciaHospitalaria, suffix: ' días', icon: <BedIcon style={{ width: '18px', height: '18px' }} />, accent: '#059669' },
+    { title: 'Estancia UCI (Morbilidad)', value: kpis.estanciaUci, suffix: ' días', icon: <HospitalIcon style={{ width: '18px', height: '18px' }} />, accent: '#dc2626' },
   ]
 
   return (
@@ -55,7 +56,7 @@ const AtencionKpiRow: React.FC<{ kpis: AtencionKpis }> = ({ kpis }) => {
             <span className="atencion-kpi-icon">{c.icon}</span>
           </div>
           <div className="atencion-kpi-value">
-            {c.value != null ? `${c.value}${c.suffix}` : '—'}
+            {c.value != null ? `${Math.round(c.value)}${c.suffix}` : '—'}
           </div>
         </div>
       ))}
@@ -63,7 +64,16 @@ const AtencionKpiRow: React.FC<{ kpis: AtencionKpis }> = ({ kpis }) => {
   )
 }
 
+import { ChartAiInsight } from './ChartAiInsight'
+import {
+  getInstitucionesAiInsight,
+  getObstetricoEdadAiInsight,
+  cleanClinicalLabel,
+} from '../../utils/aiChartInsights'
+
 const InstitucionReferenciaSection: React.FC<{ data: InstitucionReferenciaData }> = ({ data }) => {
+  const insight = useMemo(() => getInstitucionesAiInsight(data), [data])
+
   const yLabels = useMemo(
     () => data.instituciones.map((inst) => (inst.length > 30 ? inst.substring(0, 27) + '...' : inst)),
     [data.instituciones],
@@ -86,7 +96,7 @@ const InstitucionReferenciaSection: React.FC<{ data: InstitucionReferenciaData }
         <span>Instituciones de Referencia (Morbilidad)</span>
         <span className="atencion-badge-inst">Top 15</span>
       </h3>
-      <div style={{ height: `${Math.max(300, data.instituciones.length * 40)}px` }}>
+      <div style={{ height: `${Math.max(300, data.instituciones.length * 40)}px`, position: 'relative', width: '100%', minWidth: 0 }}>
         <Bar
           data={{ labels: yLabels, datasets }}
           options={{
@@ -104,11 +114,14 @@ const InstitucionReferenciaSection: React.FC<{ data: InstitucionReferenciaData }
       <div className="atencion-instituciones-stats">
         <span className="text-sm text-slate-500">Datos disponibles en {data.totalConDato} de {data.totalCasos} casos de morbilidad.</span>
       </div>
+      <ChartAiInsight insight={insight} />
     </div>
   )
 }
 
 const ObstetricoEdadSection: React.FC<{ variables: NonNullable<AtencionOportunidadProps['obstetricoEdad']> }> = ({ variables }) => {
+  const insight = useMemo(() => getObstetricoEdadAiInsight(variables), [variables])
+
   return (
     <div className="atencion-obstetrico-section">
       <h3 className="chart-card-title">
@@ -123,28 +136,28 @@ const ObstetricoEdadSection: React.FC<{ variables: NonNullable<AtencionOportunid
 
           if (v.mort) {
             datasets.push({
-              label: `Mortalidad (${v.mort.promedio.toFixed(1)} prom)`,
+              label: `Mortalidad (${Math.round(v.mort.promedio)} prom)`,
               data: v.mort.conteos,
               backgroundColor: '#ef4444',
             })
           }
           if (v.morb) {
             datasets.push({
-              label: `Morbilidad (${v.morb.promedio.toFixed(1)} prom)`,
+              label: `Morbilidad (${Math.round(v.morb.promedio)} prom)`,
               data: v.morb.conteos,
               backgroundColor: '#3b82f6',
             })
           }
 
           return (
-            <div key={i} className="atencion-obs-chart-container" style={{ height: '250px' }}>
+            <div key={i} className="atencion-obs-chart-container" style={{ height: '250px', position: 'relative', width: '100%', minWidth: 0 }}>
               <Bar
                 data={{ labels, datasets }}
                 options={{
                   responsive: true,
                   maintainAspectRatio: false,
                   plugins: {
-                    title: { display: true, text: v.label, font: { size: 14 } },
+                    title: { display: true, text: cleanClinicalLabel(v.label), font: { size: 14 } },
                     legend: { position: 'bottom' as const },
                   },
                   scales: {
@@ -156,6 +169,7 @@ const ObstetricoEdadSection: React.FC<{ variables: NonNullable<AtencionOportunid
           )
         })}
       </div>
+      <ChartAiInsight insight={insight} />
     </div>
   )
 }
@@ -172,7 +186,9 @@ export const AtencionOportunidad: React.FC<AtencionOportunidadProps> = ({
   if (!hasAnyData) {
     return (
       <div className="chart-card-col-12" style={{ textAlign: 'center', padding: '60px 40px' }}>
-        <div style={{ fontSize: '48px', marginBottom: '16px', opacity: 0.4 }}>🚑</div>
+        <div style={{ marginBottom: '16px', opacity: 0.4 }}>
+          <AmbulanceIcon style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+        </div>
         <h3 className="chart-card-title" style={{ justifyContent: 'center' }}>Atención y Oportunidad</h3>
         <p style={{ color: '#64748b', fontSize: '14px', maxWidth: '400px', margin: '0 auto' }}>
           No hay datos suficientes para generar este análisis.

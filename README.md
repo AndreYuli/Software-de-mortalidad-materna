@@ -5,14 +5,54 @@ Sistema de análisis, visualización e interpretación con IA de datos de mortal
 ## 📋 Requisitos Previos
 
 - **Python 3.10+**
-- **Node.js 18+** y **pnpm**
-- **PostgreSQL** (corriendo localmente, con la base `sivigila_maternidad` ya creada — ver `BACKEND/sivigila_maternidad_postgres.sql`)
+- **Node.js 18+** y **pnpm** (o npm)
+- **PostgreSQL 14+** corriendo localmente
 - **[Ollama](https://ollama.com)** instalado, con el modelo `qwen2.5` descargado:
   ```bash
   ollama pull qwen2.5
   ```
 
-## 🚀 Instalación
+---
+
+## 🗄️ Configuración y Creación de la Base de Datos Local (PostgreSQL)
+
+Para que el backend funcione correctamente, debes crear la base de datos `sivigila_maternidad` y cargar su esquema inicial. Sigue estos sencillos pasos:
+
+### Paso 1: Crear la Base de Datos en PostgreSQL
+
+Abre tu terminal o PowerShell y conéctate a PostgreSQL con tu usuario (generalmente `postgres`):
+
+```bash
+# Conectar a PostgreSQL con el usuario postgres
+psql -U postgres
+```
+
+Dentro de la consola interactiva de PostgreSQL, ejecuta:
+
+```sql
+-- 1. Crear la base de datos
+CREATE DATABASE sivigila_maternidad;
+
+-- 2. Conectarse a la base de datos creada
+\c sivigila_maternidad;
+```
+
+*(Opcional: Si usas **pgAdmin**, haz clic derecho sobre "Databases" > "Create" > "Database..." y nómbrala `sivigila_maternidad`).*
+
+### Paso 2: Cargar el Esquema y Tablas SIVIGILA
+
+Ejecuta el script SQL incluido en el proyecto ([`BACKEND/sivigila_maternidad_postgres.sql`](file:///C:/Users/lopez/Documents/UNIVERSIDAD/Software-de-mortalidad-materna/BACKEND/sivigila_maternidad_postgres.sql)) que contiene la estructura del dominio (tablas `paciente`, `caso_morbilidad`, `caso_mortalidad`, catálogos CIE-10 y vistas agregadas):
+
+```bash
+# Desde la raíz del proyecto (o dentro de la carpeta BACKEND)
+psql -U postgres -d sivigila_maternidad -f BACKEND/sivigila_maternidad_postgres.sql
+```
+
+*(Si estás en pgAdmin: abre el "Query Tool" sobre la base de datos `sivigila_maternidad`, abre el archivo `sivigila_maternidad_postgres.sql` y presiona F5 o Ejecutar).*
+
+---
+
+## 🚀 Instalación y Configuración
 
 ### 1. BACKEND (FastAPI + PostgreSQL)
 
@@ -24,14 +64,23 @@ venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 ```
 
-Copia `.env.example` a `.env` y ajusta las credenciales de tu PostgreSQL local:
+Copia `.env.example` a `.env` y coloca tu contraseña de PostgreSQL local:
 
 ```bash
 copy .env.example .env         # Windows
 # cp .env.example .env         # Linux/Mac
 ```
 
-Las tablas propias de la API (`api_analisis`, `api_usuario`, `api_sivigilaimportacion`, `narrativa_ia`) se crean automáticamente al arrancar el servidor. Las tablas del dominio SIVIGILA (`paciente`, `caso_morbilidad`, `caso_mortalidad`, catálogos, vistas) deben crearse una vez ejecutando `sivigila_maternidad_postgres.sql` contra tu base.
+Asegúrate de que el archivo `.env` en `BACKEND/.env` contenga la cadena de conexión correcta:
+
+```env
+DATABASE_URL=postgresql://postgres:TU_CONTRASEÑA@localhost:5432/sivigila_maternidad
+JWT_SECRET=tu_clave_secreta_jwt_para_tokens
+IA_SERVICE_URL=http://localhost:8001
+MEDIA_ROOT=media/uploads
+```
+
+> **Nota:** Las tablas operativas de la aplicación (`api_analisis`, `api_usuario`, `api_sivigilaimportacion`, `narrativa_ia`) se crean automáticamente mediante SQLAlchemy la primera vez que arranca el servidor FastAPI.
 
 ### 2. IA-SERVICE (microservicio de IA generativa)
 

@@ -1,8 +1,17 @@
 """Modelos ORM de SQLAlchemy para todas las tablas y vistas del sistema."""
 
 from sqlalchemy import (
-    Boolean, Column, Date, DateTime, ForeignKey,
-    Integer, JSON, Numeric, String, Text, Time, UniqueConstraint,
+    JSON,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    Time,
+    UniqueConstraint,
 )
 
 from db.database import Base
@@ -21,7 +30,7 @@ class Analisis(Base):
         resumen: Metadatos de resumen del proceso de análisis.
     """
 
-    __tablename__ = 'api_analisis'
+    __tablename__ = "api_analisis"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     tipo = Column(String(20), nullable=False)
@@ -45,11 +54,11 @@ class NarrativaIA(Base):
         generado_en: Fecha y hora de generación.
     """
 
-    __tablename__ = 'narrativa_ia'
-    __table_args__ = (UniqueConstraint('analisis_id', 'tipo_narrativa', 'filtros_hash'),)
+    __tablename__ = "narrativa_ia"
+    __table_args__ = (UniqueConstraint("analisis_id", "tipo_narrativa", "filtros_hash"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    analisis_id = Column(Integer, ForeignKey('api_analisis.id'), nullable=False)
+    analisis_id = Column(Integer, ForeignKey("api_analisis.id"), nullable=False)
     tipo_narrativa = Column(String(30), nullable=False)
     filtros_hash = Column(String(64), nullable=False)
     contenido = Column(Text, nullable=False)
@@ -70,7 +79,7 @@ class SivigilaImportacion(Base):
         creado_en: Fecha y hora de creación del registro.
     """
 
-    __tablename__ = 'api_sivigilaimportacion'
+    __tablename__ = "api_sivigilaimportacion"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     tipo = Column(String(20), nullable=False)
@@ -92,7 +101,7 @@ class Usuario(Base):
         fecha_registro: Fecha y hora de registro en el sistema.
     """
 
-    __tablename__ = 'api_usuario'
+    __tablename__ = "api_usuario"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     nombre = Column(String(150), nullable=False)
@@ -103,10 +112,11 @@ class Usuario(Base):
 
 # --- Tablas de catálogo ---
 
+
 class CatConvivencia(Base):
     """Catálogo de tipos de convivencia."""
 
-    __tablename__ = 'cat_convivencia'
+    __tablename__ = "cat_convivencia"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(30), nullable=False)
@@ -115,7 +125,7 @@ class CatConvivencia(Base):
 class CatEscolaridad(Base):
     """Catálogo de niveles de escolaridad."""
 
-    __tablename__ = 'cat_escolaridad'
+    __tablename__ = "cat_escolaridad"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(30), nullable=False)
@@ -124,7 +134,7 @@ class CatEscolaridad(Base):
 class CatFuenteCausaMuerte(Base):
     """Catálogo de fuentes de causa de muerte."""
 
-    __tablename__ = 'cat_fuente_causa_muerte'
+    __tablename__ = "cat_fuente_causa_muerte"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(30), nullable=False)
@@ -133,7 +143,7 @@ class CatFuenteCausaMuerte(Base):
 class CatGrupoCausa(Base):
     """Catálogo de grupos de causa de morbilidad."""
 
-    __tablename__ = 'cat_grupo_causa'
+    __tablename__ = "cat_grupo_causa"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(60), nullable=False)
@@ -142,7 +152,7 @@ class CatGrupoCausa(Base):
 class CatMomentoMuerte(Base):
     """Catálogo de momentos de muerte materna."""
 
-    __tablename__ = 'cat_momento_muerte'
+    __tablename__ = "cat_momento_muerte"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(30), nullable=False)
@@ -151,7 +161,7 @@ class CatMomentoMuerte(Base):
 class CatNivelAtencion(Base):
     """Catálogo de niveles de atención en salud."""
 
-    __tablename__ = 'cat_nivel_atencion'
+    __tablename__ = "cat_nivel_atencion"
 
     id = Column(Integer, primary_key=True)
     nivel = Column(String(3), nullable=False)
@@ -160,7 +170,7 @@ class CatNivelAtencion(Base):
 class CatPersonalSalud(Base):
     """Catálogo de tipos de personal de salud."""
 
-    __tablename__ = 'cat_personal_salud'
+    __tablename__ = "cat_personal_salud"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(30), nullable=False)
@@ -169,7 +179,7 @@ class CatPersonalSalud(Base):
 class CatRegulacionFecundidad(Base):
     """Catálogo de métodos de regulación de fecundidad."""
 
-    __tablename__ = 'cat_regulacion_fecundidad'
+    __tablename__ = "cat_regulacion_fecundidad"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(50), nullable=False)
@@ -178,7 +188,7 @@ class CatRegulacionFecundidad(Base):
 class CatRemisiones(Base):
     """Catálogo de tipos de remisiones oportunas."""
 
-    __tablename__ = 'cat_remisiones'
+    __tablename__ = "cat_remisiones"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(15), nullable=False)
@@ -187,7 +197,7 @@ class CatRemisiones(Base):
 class CatSitioDefuncion(Base):
     """Catálogo de sitios de defunción."""
 
-    __tablename__ = 'cat_sitio_defuncion'
+    __tablename__ = "cat_sitio_defuncion"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(60), nullable=False)
@@ -196,7 +206,7 @@ class CatSitioDefuncion(Base):
 class CatTerminacionGestacion(Base):
     """Catálogo de tipos de terminación de gestación."""
 
-    __tablename__ = 'cat_terminacion_gestacion'
+    __tablename__ = "cat_terminacion_gestacion"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(30), nullable=False)
@@ -205,7 +215,7 @@ class CatTerminacionGestacion(Base):
 class CatTipoId(Base):
     """Catálogo de tipos de identificación."""
 
-    __tablename__ = 'cat_tipo_id'
+    __tablename__ = "cat_tipo_id"
 
     id = Column(Integer, primary_key=True)
     codigo = Column(String(5), nullable=False)
@@ -215,7 +225,7 @@ class CatTipoId(Base):
 class CatTipoParto(Base):
     """Catálogo de tipos de parto."""
 
-    __tablename__ = 'cat_tipo_parto'
+    __tablename__ = "cat_tipo_parto"
 
     id = Column(Integer, primary_key=True)
     descripcion = Column(String(20), nullable=False)
@@ -223,14 +233,15 @@ class CatTipoParto(Base):
 
 # --- Tablas de paciente y casos ---
 
+
 class Paciente(Base):
     """Datos de identificación del paciente."""
 
-    __tablename__ = 'paciente'
+    __tablename__ = "paciente"
 
     id_paciente = Column(Integer, primary_key=True, autoincrement=True, index=True)
     nombres_apellidos = Column(String(200), nullable=False)
-    id_tipo_id = Column(Integer, ForeignKey('cat_tipo_id.id'))
+    id_tipo_id = Column(Integer, ForeignKey("cat_tipo_id.id"))
     numero_id = Column(String(30), nullable=False)
     fecha_nacimiento = Column(Date, nullable=True)
     creado_en = Column(DateTime, nullable=True)
@@ -239,10 +250,10 @@ class Paciente(Base):
 class CasoMorbilidad(Base):
     """Caso de morbilidad materna extrema."""
 
-    __tablename__ = 'caso_morbilidad'
+    __tablename__ = "caso_morbilidad"
 
     id_caso = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_paciente = Column(Integer, ForeignKey('paciente.id_paciente'))
+    id_paciente = Column(Integer, ForeignKey("paciente.id_paciente"))
     fecha_egreso = Column(Date, nullable=True)
     creado_en = Column(DateTime, nullable=True)
 
@@ -250,10 +261,10 @@ class CasoMorbilidad(Base):
 class Referencia(Base):
     """Datos de referencia y remisión del caso de morbilidad."""
 
-    __tablename__ = 'referencia'
+    __tablename__ = "referencia"
 
     id_referencia = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
+    id_caso = Column(Integer, ForeignKey("caso_morbilidad.id_caso"))
     remitida = Column(Integer, nullable=False)
     institucion_ref_1 = Column(String(200), nullable=True)
     institucion_ref_2 = Column(String(200), nullable=True)
@@ -263,10 +274,10 @@ class Referencia(Base):
 class AntecedentesObstetricos(Base):
     """Antecedentes obstétricos del caso de morbilidad."""
 
-    __tablename__ = 'antecedentes_obstetricos'
+    __tablename__ = "antecedentes_obstetricos"
 
     id_antecedente = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
+    id_caso = Column(Integer, ForeignKey("caso_morbilidad.id_caso"))
     num_gestaciones = Column(Integer, nullable=True)
     partos_vaginales = Column(Integer, nullable=True)
     cesareas = Column(Integer, nullable=True)
@@ -276,10 +287,10 @@ class AntecedentesObstetricos(Base):
     muertos = Column(Integer, nullable=True)
     vivos = Column(Integer, nullable=True)
     fecha_ultima_gestacion = Column(Date, nullable=True)
-    id_regulacion_fecundidad = Column(Integer, ForeignKey('cat_regulacion_fecundidad.id'))
+    id_regulacion_fecundidad = Column(Integer, ForeignKey("cat_regulacion_fecundidad.id"))
     num_controles_prenatales = Column(Integer, nullable=True)
     semanas_inicio_cpn = Column(Integer, nullable=True)
-    id_terminacion_gestacion = Column(Integer, ForeignKey('cat_terminacion_gestacion.id'))
+    id_terminacion_gestacion = Column(Integer, ForeignKey("cat_terminacion_gestacion.id"))
     edad_gestacional_sem = Column(Integer, nullable=True)
     momento_ocurrencia = Column(String(7), nullable=True)
     estado_recien_nacido = Column(String(6), nullable=True)
@@ -290,10 +301,10 @@ class AntecedentesObstetricos(Base):
 class CriteriosEnfermedad(Base):
     """Criterios de enfermedad grave del caso de morbilidad."""
 
-    __tablename__ = 'criterios_enfermedad'
+    __tablename__ = "criterios_enfermedad"
 
     id_criterio_enf = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
+    id_caso = Column(Integer, ForeignKey("caso_morbilidad.id_caso"))
     eclampsia = Column(Integer, nullable=False)
     sepsis_sistemica_severa = Column(Integer, nullable=False)
     hemorragia_obstetrica = Column(Integer, nullable=False)
@@ -315,10 +326,10 @@ class CriteriosEnfermedad(Base):
 class CriteriosFallaOrganica(Base):
     """Criterios de falla orgánica del caso de morbilidad."""
 
-    __tablename__ = 'criterios_falla_organica'
+    __tablename__ = "criterios_falla_organica"
 
     id_criterio_falla = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
+    id_caso = Column(Integer, ForeignKey("caso_morbilidad.id_caso"))
     falla_cardiaca = Column(Integer, nullable=False)
     falla_vascular = Column(Integer, nullable=False)
     falla_renal = Column(Integer, nullable=False)
@@ -332,10 +343,10 @@ class CriteriosFallaOrganica(Base):
 class CriteriosManejo(Base):
     """Criterios de manejo del caso de morbilidad."""
 
-    __tablename__ = 'criterios_manejo'
+    __tablename__ = "criterios_manejo"
 
     id_criterio_manejo = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
+    id_caso = Column(Integer, ForeignKey("caso_morbilidad.id_caso"))
     ingreso_uci = Column(Integer, nullable=False)
     cirugia_adicional = Column(Integer, nullable=False)
     transfusion = Column(Integer, nullable=False)
@@ -351,10 +362,10 @@ class CriteriosManejo(Base):
 class ManejoHospitalario(Base):
     """Datos de manejo hospitalario del caso de morbilidad."""
 
-    __tablename__ = 'manejo_hospitalario'
+    __tablename__ = "manejo_hospitalario"
 
     id_manejo = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
+    id_caso = Column(Integer, ForeignKey("caso_morbilidad.id_caso"))
     dias_estancia_hosp = Column(Integer, nullable=True)
     dias_estancia_uci = Column(Integer, nullable=True)
     unidades_transfundidas = Column(Integer, nullable=True)
@@ -367,12 +378,12 @@ class ManejoHospitalario(Base):
 class CausasMorbilidad(Base):
     """Causas diagnósticas del caso de morbilidad."""
 
-    __tablename__ = 'causas_morbilidad'
+    __tablename__ = "causas_morbilidad"
 
     id_causa = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
+    id_caso = Column(Integer, ForeignKey("caso_morbilidad.id_caso"))
     causa_principal_cie10 = Column(String(10), nullable=False)
-    id_grupo_causa = Column(Integer, ForeignKey('cat_grupo_causa.id'))
+    id_grupo_causa = Column(Integer, ForeignKey("cat_grupo_causa.id"))
     causa_asociada_2 = Column(String(10), nullable=True)
     causa_asociada_3 = Column(String(10), nullable=True)
     causa_asociada_4 = Column(String(10), nullable=True)
@@ -380,14 +391,15 @@ class CausasMorbilidad(Base):
 
 # --- Mortalidad materna ---
 
+
 class CasoMortalidad(Base):
     """Caso de muerte materna."""
 
-    __tablename__ = 'caso_mortalidad'
+    __tablename__ = "caso_mortalidad"
 
     id_caso = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    id_paciente = Column(Integer, ForeignKey('paciente.id_paciente'))
-    id_sitio_defuncion = Column(Integer, ForeignKey('cat_sitio_defuncion.id'))
+    id_paciente = Column(Integer, ForeignKey("paciente.id_paciente"))
+    id_sitio_defuncion = Column(Integer, ForeignKey("cat_sitio_defuncion.id"))
     fecha_defuncion = Column(Date, nullable=True)
     creado_en = Column(DateTime, nullable=True)
 
@@ -395,13 +407,13 @@ class CasoMortalidad(Base):
 class AntecedenteMaterno(Base):
     """Antecedentes maternos del caso de mortalidad."""
 
-    __tablename__ = 'antecedente_materno'
+    __tablename__ = "antecedente_materno"
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
-    id_convivencia = Column(Integer, ForeignKey('cat_convivencia.id'))
+    id_caso = Column(Integer, ForeignKey("caso_mortalidad.id_caso"), primary_key=True)
+    id_convivencia = Column(Integer, ForeignKey("cat_convivencia.id"))
     otro_convivencia = Column(String(100), nullable=True)
-    id_escolaridad = Column(Integer, ForeignKey('cat_escolaridad.id'))
-    id_regulacion_fec = Column(Integer, ForeignKey('cat_regulacion_fecundidad.id'))
+    id_escolaridad = Column(Integer, ForeignKey("cat_escolaridad.id"))
+    id_regulacion_fec = Column(Integer, ForeignKey("cat_regulacion_fecundidad.id"))
     gestaciones = Column(Integer, nullable=True)
     partos_vaginales = Column(Integer, nullable=True)
     cesareas = Column(Integer, nullable=True)
@@ -413,9 +425,9 @@ class AntecedenteMaterno(Base):
 class AntecedenteRiesgo(Base):
     """Factores de riesgo previos al caso de mortalidad."""
 
-    __tablename__ = 'antecedente_riesgo'
+    __tablename__ = "antecedente_riesgo"
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey("caso_mortalidad.id_caso"), primary_key=True)
     sin_antecedentes = Column(Integer, nullable=False)
     hipertension_cronica = Column(Integer, nullable=False)
     cardiopatias = Column(Integer, nullable=False)
@@ -446,9 +458,9 @@ class AntecedenteRiesgo(Base):
 class ComplicacionEmbarazo(Base):
     """Complicaciones durante el embarazo del caso de mortalidad."""
 
-    __tablename__ = 'complicacion_embarazo'
+    __tablename__ = "complicacion_embarazo"
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey("caso_mortalidad.id_caso"), primary_key=True)
     preeclampsia = Column(Integer, nullable=False)
     eclampsia = Column(Integer, nullable=False)
     sindrome_hellp = Column(Integer, nullable=False)
@@ -473,41 +485,41 @@ class ComplicacionEmbarazo(Base):
 class ControlPrenatal(Base):
     """Datos de control prenatal del caso de mortalidad."""
 
-    __tablename__ = 'control_prenatal'
+    __tablename__ = "control_prenatal"
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey("caso_mortalidad.id_caso"), primary_key=True)
     num_cpn = Column(Integer, nullable=True)
     semana_inicio_cpn = Column(Integer, nullable=True)
-    id_personal_cpn = Column(Integer, ForeignKey('cat_personal_salud.id'))
-    id_nivel_atencion_cpn = Column(Integer, ForeignKey('cat_nivel_atencion.id'))
-    id_remisiones = Column(Integer, ForeignKey('cat_remisiones.id'))
+    id_personal_cpn = Column(Integer, ForeignKey("cat_personal_salud.id"))
+    id_nivel_atencion_cpn = Column(Integer, ForeignKey("cat_nivel_atencion.id"))
+    id_remisiones = Column(Integer, ForeignKey("cat_remisiones.id"))
     compl_feto_rn_cie10 = Column(String(10), nullable=True)
 
 
 class AntecedentePartoPuerperio(Base):
     """Antecedentes de parto y puerperio del caso de mortalidad."""
 
-    __tablename__ = 'antecedente_parto_puerperio'
+    __tablename__ = "antecedente_parto_puerperio"
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
-    id_momento_muerte = Column(Integer, ForeignKey('cat_momento_muerte.id'))
+    id_caso = Column(Integer, ForeignKey("caso_mortalidad.id_caso"), primary_key=True)
+    id_momento_muerte = Column(Integer, ForeignKey("cat_momento_muerte.id"))
     semana_gestacion_muerte = Column(Integer, nullable=True)
     fecha_parto = Column(Date, nullable=True)
     hora_parto = Column(Time, nullable=True)
-    id_tipo_parto = Column(Integer, ForeignKey('cat_tipo_parto.id'))
-    id_atendido_por = Column(Integer, ForeignKey('cat_personal_salud.id'))
+    id_tipo_parto = Column(Integer, ForeignKey("cat_tipo_parto.id"))
+    id_atendido_por = Column(Integer, ForeignKey("cat_personal_salud.id"))
     otro_atencion_parto = Column(String(100), nullable=True)
-    id_nivel_atencion_parto = Column(Integer, ForeignKey('cat_nivel_atencion.id'))
+    id_nivel_atencion_parto = Column(Integer, ForeignKey("cat_nivel_atencion.id"))
 
 
 class CausaMuerte(Base):
     """Causa básica y demoras asociadas a la muerte materna."""
 
-    __tablename__ = 'causa_muerte'
+    __tablename__ = "causa_muerte"
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey("caso_mortalidad.id_caso"), primary_key=True)
     causa_basica_cie10 = Column(String(10), nullable=False)
-    id_fuente_causa = Column(Integer, ForeignKey('cat_fuente_causa_muerte.id'))
+    id_fuente_causa = Column(Integer, ForeignKey("cat_fuente_causa_muerte.id"))
     demora_1 = Column(Integer, nullable=False)
     demora_2 = Column(Integer, nullable=False)
     demora_3 = Column(Integer, nullable=False)
@@ -516,10 +528,11 @@ class CausaMuerte(Base):
 
 # --- Vistas (solo lectura) ---
 
+
 class VMorbilidadCompleta(Base):
     """Vista consolidada de morbilidad materna extrema (solo lectura)."""
 
-    __tablename__ = 'v_morbilidad_completa'
+    __tablename__ = "v_morbilidad_completa"
 
     id_caso = Column(Integer, primary_key=True)
     nombres_apellidos = Column(String(200), nullable=True)
@@ -564,7 +577,7 @@ class VMorbilidadCompleta(Base):
 class VMortalidadCompleta(Base):
     """Vista consolidada de mortalidad materna (solo lectura)."""
 
-    __tablename__ = 'v_mortalidad_completa'
+    __tablename__ = "v_mortalidad_completa"
 
     id_caso = Column(Integer, primary_key=True)
     nombres_apellidos = Column(String(200), nullable=True)

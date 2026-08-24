@@ -45,13 +45,31 @@ export const MESES_ES = [
 ]
 
 export const CIE10_DESCRIPTIONS: Record<string, string> = {
-  'O26.6': 'Trastornos del hígado durante el embarazo',
-  'O99.3': 'Trastornos del sistema nervioso que complican el embarazo',
   'O14': 'Hipertensión gestacional con preeclampsia',
+  'O14.1': 'Hipertensión gestacional con preeclampsia severa',
   'O15': 'Eclampsia',
+  'O15.0': 'Eclampsia en el embarazo',
   'O72': 'Hemorragia posparto',
+  'O72.1': 'Hemorragia posparto inmediata',
   'O85': 'Sepsis puerperal',
   'O88': 'Embolia obstétrica',
+  'O94': 'Secuelas de complicaciones obstétricas',
+  'O98': 'Infecciones maternas que complican el embarazo',
+  'O98.0': 'Tuberculosis en embarazo',
+  'O41.1': 'Corioamnionitis (Infección de saco amniótico)',
+  'O08.1': 'Hemorragia por aborto o ectópico',
+  'O44.0': 'Placenta previa con hemorragia',
+  'O99.3': 'Trastornos mentales o nerviosos en embarazo',
+  'O26.6': 'Trastornos del hígado en embarazo',
+  'O10.0': 'Hipertensión crónica preexistente',
+  'O20.0': 'Amenaza de aborto',
+  'O00.1': 'Embarazo ectópico tubárico',
+  'O36.4': 'Muerte fetal intrauterina',
+  'O62.1': 'Inercia uterina / fallo contracción',
+  'O34.2': 'Cicatriz uterina por cesárea previa',
+  'O11': 'Hipertensión crónica con preeclampsia sobreagregada',
+  'O46.0': 'Hemorragia anteparto con coagulopatía',
+  'O24.4': 'Diabetes gestacional',
 }
 
 export const CLUSTER_COLORS = ['#0066cc', '#c0392b', '#2ca02c', '#f39c12', '#6f42c1', '#16a085', '#d35400', '#8e44ad']

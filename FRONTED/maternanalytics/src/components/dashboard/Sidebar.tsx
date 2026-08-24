@@ -17,6 +17,7 @@ export interface DashboardFileStatus {
 export interface SidebarProps {
   user: {
     username: string
+    email?: string
     avatarLetter: string
   }
   activeView: ActiveView
@@ -73,8 +74,10 @@ export function Sidebar({
       <div className="sidebar-footer-okd">
         <Avatar letter={user.avatarLetter} />
         <div className="user-info-okd">
-          <strong className="user-name-okd">{user.username}</strong>
-          <small className="user-email-okd">VidaMaterna Analytics</small>
+          <strong className="user-name-okd" title={user.username}>{user.username}</strong>
+          <small className="user-email-okd" title={user.email || 'VidaMaterna Analytics'}>
+            {user.email || 'VidaMaterna Analytics'}
+          </small>
         </div>
         <button
           className="btn-logout-okd"

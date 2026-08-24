@@ -1,36 +1,60 @@
-import { useState, FormEvent } from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import './Login.css'
 import { API_URL } from '../api'
+import { useForm } from 'react-hook-form'
+// Zod schema imported from external file
+import { zodResolver } from '@hookform/resolvers/zod'
+import LogoIcon from './LogoIcon'
+import { loginSchema } from '../validation/loginSchema'
 
 interface LoginProps {
-  onLogin: () => void
-  onRegister: () => void
+  onLogin?: () => void
+  onRegister?: () => void
+}
+interface LoginResponse {
+  access_token: string
+  token_type: string
+  id: number
+  nombre: string
+  email: string
+  detail?: string
+  error?: string
 }
 
-export default function Login({ onLogin, onRegister }: LoginProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+export default function Login({ onLogin, onRegister }: LoginProps = {}) {
+  const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [infoMsg, setInfoMsg] = useState('')
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<{ email: string; password: string }>({
+    resolver: zodResolver(loginSchema),
+  })
 
-  const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
+  const onSubmit = async (data: { email: string; password: string }) => {
     setError('')
+    setInfoMsg('')
     setIsLoading(true)
     try {
       const res = await fetch(`${API_URL}/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: data.email, password: data.password }),
       })
-      const data = await res.json()
+      const responseData: LoginResponse = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Correo o contraseña incorrectos.')
+        setError(responseData.detail || responseData.error || 'Correo o contraseña incorrectos.')
         return
       }
-      localStorage.setItem('username', data.nombre)
-      localStorage.setItem('user_email', data.email)
-      onLogin()
+      localStorage.setItem('token', responseData.access_token)
+      localStorage.setItem('username', responseData.nombre || 'Usuario')
+      localStorage.setItem('user_email', responseData.email || data.email)
+      if (onLogin) onLogin()
+      else navigate('/dashboard')
     } catch {
       setError('No se pudo conectar al servidor. Verifica que el backend esté activo.')
     } finally {
@@ -38,90 +62,100 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
     }
   }
 
+  const handleForgotPassword = () => {
+    setError('')
+    setInfoMsg('Estamos trabajando en la recuperación de contraseñas. Por favor, comunícate con el administrador para restablecer tu acceso.')
+  }
+
   return (
     <div className="page">
 
       {/* LEFT PANEL */}
       <div className="left">
-        <div className="blob blob-1"></div>
-        <div className="blob blob-2"></div>
-        <div className="blob blob-3"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="node"></div>
-        <div className="pulse-line"></div>
-        <div className="pulse-line"></div>
-        <div className="pulse-line"></div>
+        <div className="blob blob-1" aria-hidden="true"></div>
+        <div className="blob blob-2" aria-hidden="true"></div>
+        <div className="blob blob-3" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="node" aria-hidden="true"></div>
+        <div className="pulse-line" aria-hidden="true"></div>
+        <div className="pulse-line" aria-hidden="true"></div>
+        <div className="pulse-line" aria-hidden="true"></div>
 
         <div className="left-content">
-          <div className="logo-icon">
-            <svg width="90" height="90" viewBox="0 0 64 64">
-              <path d="M32 4 C52 4 58 20 58 34 C58 52 46 60 32 60 C18 60 6 52 6 34 C6 20 12 4 32 4Z" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.35)" strokeWidth="1.2"/>
-              <path d="M26 16 C18 24 16 34 22 44 C26 48 30 52 32 54" fill="none" stroke="#F4C0D1" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M38 14 C46 22 48 34 42 44 C38 48 34 52 32 54" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="2" strokeLinecap="round"/>
-              <circle cx="32" cy="36" r="5" fill="none" stroke="#F4C0D1" strokeWidth="1.2"/>
-              <circle cx="32" cy="36" r="1.8" fill="#F4C0D1"/>
-              <circle cx="20" cy="26" r="1.5" fill="rgba(255,255,255,0.35)"/>
-              <circle cx="17" cy="36" r="1.5" fill="rgba(255,255,255,0.35)"/>
-              <circle cx="20" cy="44" r="1.5" fill="rgba(255,255,255,0.35)"/>
-              <circle cx="44" cy="24" r="1.5" fill="rgba(255,255,255,0.25)"/>
-              <circle cx="47" cy="34" r="1.5" fill="rgba(255,255,255,0.25)"/>
-              <circle cx="44" cy="44" r="1.5" fill="rgba(255,255,255,0.25)"/>
-            </svg>
-          </div>
+          <LogoIcon className="logo-icon" aria-hidden="true" />
+
+
           <h1 className="brand-title">Vida<span>Materna</span></h1>
         </div>
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="right">
+      <main className="right">
         <div className="form-container">
           <div className="form-header">
             <h2>Inicio de sesión</h2>
             <p>Ingresa tus credenciales para acceder a la plataforma de análisis.</p>
           </div>
 
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="field">
-              <label>Correo electrónico</label>
-              <input
+              <label htmlFor="login-email">Correo electrónico</label>
+              <input id="login-email"
                 type="email"
                 placeholder="tu.correo@institucion.gov.co"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...register('email')}
                 required
               />
-              <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="3"/><path d="M22 4L12 13 2 4"/>
+              {errors.email && <p className="error-msg">{errors.email.message}</p>}
+              <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="3" /><path d="M22 4L12 13 2 4" />
               </svg>
             </div>
 
             <div className="field">
-              <label>Contraseña</label>
-              <input
+              <label htmlFor="login-password">Contraseña</label>
+              <input id="login-password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                {...register('password')}
                 required
               />
-              <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="3"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+              {errors.password && <p className="error-msg">{errors.password.message}</p>}
+              <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="3" y="11" width="18" height="11" rx="3" /><path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
             </div>
 
             {error && <p className="error-msg">{error}</p>}
+            {infoMsg && (
+              <div
+                style={{
+                  background: 'rgba(59, 130, 246, 0.1)',
+                  border: '1px solid rgba(59, 130, 246, 0.25)',
+                  color: '#1d4ed8',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  fontSize: '12.5px',
+                  lineHeight: '1.4',
+                  margin: '8px 0 12px',
+                  textAlign: 'left',
+                }}
+              >
+                ℹ️ {infoMsg}
+              </div>
+            )}
 
             <div className="field-row">
               <label className="remember">
                 <input type="checkbox" /> Recordarme
               </label>
-              <a href="#" className="forgot">¿Olvidaste tu contraseña?</a>
+              <button type="button" className="btn-link forgot" onClick={handleForgotPassword}>¿Olvidaste tu contraseña?</button>
             </div>
 
             <button type="submit" className="btn-login" disabled={isLoading}>
@@ -131,12 +165,21 @@ export default function Login({ onLogin, onRegister }: LoginProps) {
 
           <p className="footer-text">
             ¿No tienes una cuenta?{' '}
-            <a href="#" onClick={(e) => { e.preventDefault(); onRegister() }}>Crear cuenta</a>
+            <button
+              type="button"
+              className="btn-link"
+              onClick={() => {
+                if (onRegister) onRegister()
+                else navigate('/register')
+              }}
+            >
+              Crear cuenta
+            </button>
           </p>
         </div>
 
 
-      </div>
+      </main>
 
     </div>
   )

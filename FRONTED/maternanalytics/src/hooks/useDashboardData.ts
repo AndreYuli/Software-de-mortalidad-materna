@@ -8,7 +8,7 @@ import { useAnalysisList, type AnalisisSummary } from './analysis/useAnalysisLis
 export type { ActiveView, AnalisisSummary }
 
 export function useDashboardData() {
-  const { username, avatarLetter } = useAuthUser()
+  const { username, email, avatarLetter } = useAuthUser()
   const { activeView, setActiveView } = useActiveView('analisis')
   const filters = useDashboardFilters()
 
@@ -42,6 +42,7 @@ export function useDashboardData() {
 
   return {
     username,
+    email,
     avatarLetter,
     activeView,
     setActiveView,

@@ -1,23 +1,53 @@
 import './dashboard/DashboardShell.css'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { useMemo, useCallback } from 'react'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { Sidebar, type DashboardFileStatus, type FileIndicator } from './dashboard/Sidebar'
 import { ViewRouter } from './dashboard/ViewRouter'
+import type { ActiveView } from '../hooks/navigation/useActiveView'
 
 export type { DashboardFileStatus, FileIndicator }
 
 export interface DashboardOKDProps {
-  onLogout: () => void
+  onLogout?: () => void
 }
 
-export default function DashboardOKD({ onLogout }: DashboardOKDProps) {
+export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
   const data = useDashboardData()
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  // Sincronizar la vista activa con la ruta URL actual
+  const activeView: ActiveView = useMemo(() => {
+    if (location.pathname.includes('mortalidad')) return 'mortalidad'
+    if (location.pathname.includes('morbilidad')) return 'morbilidad'
+    return 'analisis'
+  }, [location.pathname])
+
+  const handleNavigate = useCallback(
+    (view: ActiveView) => {
+      data.setActiveView(view)
+      if (view === 'mortalidad') navigate('/cargar-mortalidad')
+      else if (view === 'morbilidad') navigate('/cargar-morbilidad')
+      else navigate('/dashboard')
+    },
+    [data, navigate],
+  )
+
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('username')
+    localStorage.removeItem('user_email')
+    if (onLogout) onLogout()
+    else navigate('/login')
+  }, [navigate, onLogout])
 
   return (
     <div className="dashboard-okd-container">
       <Sidebar
-        user={{ username: data.username, avatarLetter: data.avatarLetter }}
-        activeView={data.activeView}
-        onNavigate={data.setActiveView}
+        user={{ username: data.username, email: data.email, avatarLetter: data.avatarLetter }}
+        activeView={activeView}
+        onNavigate={handleNavigate}
         fileStatus={{
           mortalidad: {
             hasFile: Boolean(data.mortalidadFile),
@@ -28,18 +58,19 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps) {
             hasError: Boolean(data.morbilidadError),
           },
         }}
-        onLogout={onLogout}
+        onLogout={handleLogout}
       />
 
       <main className="main-content-okd">
         <div className="content-area-okd">
           <ViewRouter
-            activeView={data.activeView}
+            activeView={activeView}
             data={data}
-            onNavigate={data.setActiveView}
+            onNavigate={handleNavigate}
           />
         </div>
       </main>
     </div>
   )
 }
+
