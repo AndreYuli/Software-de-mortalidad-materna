@@ -1,0 +1,209 @@
+/* ========================================================================
+ * DashboardShell.css — armazón general del dashboard: contenedor raíz,
+ * área de contenido, pestañas y tarjetas genéricas. Extraído de
+ * DashboardOKD.css; lo importa DashboardOKD.tsx.
+ * ======================================================================== */
+
+.dashboard-okd-container {
+  display: flex;
+  height: 100vh;
+  background: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ========== MAIN CONTENT ========== */
+.main-content-okd {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8fafc;
+}
+
+.page-header-okd {
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 24px;
+}
+
+.page-header-okd h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* ========== TABS ========== */
+.tabs-okd {
+  background: #fff;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  padding: 0 24px;
+  gap: 8px;
+}
+
+.tab-okd {
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tab-okd:hover {
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.05);
+}
+
+.tab-okd.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+/* ========== CONTENT AREA ========== */
+.content-area-okd {
+  padding: 24px;
+}
+
+.analysis-home {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analysis-switcher {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.analysis-switch-btn {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1.5px solid rgba(37, 99, 235, 0.12);
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.analysis-switch-btn:hover {
+  border-color: rgba(37, 99, 235, 0.28);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.08);
+}
+
+.analysis-switch-btn.active {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, rgba(239, 246, 255, 0.95), rgba(248, 250, 252, 0.98));
+}
+
+.analysis-switch-btn span {
+  display: block;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.analysis-switch-btn small {
+  display: block;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.analysis-empty-state {
+  padding: 40px;
+  text-align: center;
+}
+
+.analysis-empty-state h2 {
+  margin: 0 0 12px;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.analysis-empty-state p {
+  margin: 0 0 20px;
+  color: #64748b;
+  font-size: 15px;
+}
+
+.primary-action-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.primary-action-btn:hover {
+  background: #1d4ed8;
+}
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+}
+
+/* ========== CARDS ========== */
+.okd-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.card-title-okd {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0 0 16px 0;
+}
+
+.card-header-with-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.card-header-with-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.see-all-link {
+  font-size: 13px;
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.see-all-link:hover {
+  text-decoration: underline;
+}
+
+.info-btn {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: #0066cc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.info-btn svg {
+  width: 16px;
+  height: 16px;
+}

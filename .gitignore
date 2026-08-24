@@ -157,3 +157,22 @@ BACKEND/media/
 # Entornos virtuales
 BACKEND/venv/
 venv/
+
+
+# Base de datos SQLite3
+db.sqlite3
+
+# Archivos Excel
+*.xlsx
+*.xls
+*.csv
+
+# Superpowers brainstorming companion
+.superpowers/
+
+# Carpeta de ayudas, transcripciones, prompts y guias
+ayudas/
+.claude/
+.idea/
+*.iml
+.pytest_cache/

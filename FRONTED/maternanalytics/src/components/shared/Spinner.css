@@ -1,0 +1,21 @@
+/* ========================================================================
+ * Spinner compartido — componente de carga reutilizable.
+ *
+ * Extraído de AnalisisView.css para evitar acoplamiento implícito entre
+ * componentes. Cualquier vista que necesite el spinner importa este archivo
+ * directamente, sin depender de la hoja de estilos de otro componente.
+ * ======================================================================== */
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(77, 127, 212, 0.15);
+  border-top-color: var(--blue-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
