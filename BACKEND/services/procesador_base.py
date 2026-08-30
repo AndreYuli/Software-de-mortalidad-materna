@@ -72,3 +72,37 @@ class ProcesadorBase:
                 "total": int(len(serie)),
             }
         return resultado
+
+    def analizar_distribucion_edad_riesgo(self) -> dict[str, Any]:
+        """Agrupa los casos por los cortes de edad de mayor riesgo obstétrico.
+
+        Los cortes (<19, 19-34, ≥35 años) son los definidos por la experta de
+        dominio para priorizar el seguimiento de los extremos de edad
+        materna, y son distintos de los 4 grupos usados en
+        `analizar_obstetrico_por_edad` (que sirven para cruces con otras
+        variables obstétricas, no para esta distribución simple).
+
+        Returns:
+            Dict con 'labels' (nombres de los 3 grupos), 'valores' (conteo
+            de casos por grupo) y 'total' (casos con edad registrada). Dict
+            vacío si no hay columna 'Edad' o no hay datos válidos.
+        """
+        resultado: dict[str, Any] = {}
+        if "Edad" not in self.df.columns:
+            return resultado
+        edades = pd.to_numeric(self.df["Edad"], errors="coerce").dropna()
+        if edades.empty:
+            return resultado
+
+        grupos = [
+            {"label": "<19 años", "min": 0, "max": 18},
+            {"label": "19-34 años", "min": 19, "max": 34},
+            {"label": "≥35 años", "min": 35, "max": 120},
+        ]
+        valores = [int(((edades >= g["min"]) & (edades <= g["max"])).sum()) for g in grupos]
+        resultado = {
+            "labels": [g["label"] for g in grupos],
+            "valores": valores,
+            "total": int(len(edades)),
+        }
+        return resultado

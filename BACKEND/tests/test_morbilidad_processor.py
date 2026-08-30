@@ -26,3 +26,12 @@ def test_clustering_perfiles_morbilidad_no_truena_con_datos_suficientes():
     resultado = p.clustering_perfiles_morbilidad(n_clusters=2)
     assert resultado["n_clusters"] == 2
     assert len(resultado["cluster_profiles"]) == 2
+
+
+def test_analizar_distribucion_edad_riesgo_agrupa_por_cortes_de_riesgo():
+    """Debe agrupar en <19, 19-34 y >=35 anos usando los cortes de riesgo obstetrico."""
+    p = MorbilidadProcessor(df_morbilidad_ejemplo())
+    resultado = p.analizar_distribucion_edad_riesgo()
+    assert resultado["labels"] == ["<19 años", "19-34 años", "≥35 años"]
+    assert resultado["valores"] == [0, 6, 0]
+    assert resultado["total"] == 6
