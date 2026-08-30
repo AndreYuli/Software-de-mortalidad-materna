@@ -15,7 +15,7 @@ export interface DistribucionEdadGestacionalProps {
   evento: 'Morbilidad' | 'Mortalidad'
 }
 
-const GESTACIONAL_COLORS = ['#dc2626', '#f59e0b', '#0066cc', '#dc2626']
+const GESTACIONAL_COLORS = ['#dc2626', '#dc2626', '#0066cc', '#dc2626']
 
 export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGestacionalProps) {
   const insight = useMemo(() => getEdadGestacionalAiInsight(data, evento), [data, evento])
