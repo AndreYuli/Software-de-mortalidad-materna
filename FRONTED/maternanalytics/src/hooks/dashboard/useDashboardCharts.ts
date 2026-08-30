@@ -200,6 +200,14 @@ export function useDashboardCharts({
     }
   }, [mortalidadData, morbilidadData])
 
+  const edadRiesgoMortalidad = useMemo(() => {
+    return mortalidadData?.distribucion_edad_riesgo ?? null
+  }, [mortalidadData])
+
+  const edadRiesgoMorbilidad = useMemo(() => {
+    return morbilidadData?.distribucion_edad_riesgo ?? null
+  }, [morbilidadData])
+
   const momentoChartData = useMemo(() => {
     const labels = new Set<string>()
     const mortDist = (mortalidadData as any)?.momento_muerte?.distribucion || {}
@@ -347,6 +355,6 @@ export function useDashboardCharts({
     return available.length > 0 ? available : null
   }, [mortalidadData, morbilidadData])
 
-  return { lineChartData, barChartData, activeClusterData, clusteringChartData, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData }
+  return { lineChartData, barChartData, activeClusterData, clusteringChartData, demorasChartData, edadChartData, edadRiesgoMortalidad, edadRiesgoMorbilidad, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData }
 }
 

@@ -138,6 +138,19 @@ export function getEdadAiInsight(
   return `El rango etario con mayor frecuencia de eventos es ${topGroup} años, concentrando el ${topPct}% de los casos (${maxVal} pacientes). Este grupo representa el foco prioritario para estrategias de prevención preconcepcional y tamizaje temprano.`
 }
 
+// 3b. Distribución de Edad de Riesgo Obstétrico
+export function getEdadRiesgoAiInsight(
+  data: { labels: string[]; valores: number[]; total: number } | null,
+  evento: 'Morbilidad' | 'Mortalidad',
+): string | null {
+  if (!data || data.total === 0) return null
+
+  const casosRiesgo = (data.valores[0] || 0) + (data.valores[2] || 0)
+  const riesgoPct = pct(casosRiesgo, data.total)
+
+  return `El ${riesgoPct}% de los casos de ${evento.toLowerCase()} (${casosRiesgo} de ${data.total} pacientes) ocurrieron en los grupos de mayor riesgo obstétrico: menores de 19 años o de 35 años en adelante.`
+}
+
 // 4. Momento de Muerte / Ocurrencia
 export function getMomentoAiInsight(
   labels: string[],

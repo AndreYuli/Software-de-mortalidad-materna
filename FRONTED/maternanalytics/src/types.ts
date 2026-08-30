@@ -10,6 +10,7 @@ export interface AnalisisMeta {
   causas_cie10?: { top_causas: CausaCie10[]; total_causas_unicas: number }
   criterios_inclusion?: Record<string, CriterioInclusion>
   demoras?: Record<string, DemoraDetalle>
+  distribucion_edad_riesgo?: { labels: string[]; valores: number[]; total: number }
 }
 
 export interface EstadisticasBasicas {

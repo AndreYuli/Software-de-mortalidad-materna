@@ -3,6 +3,7 @@ import {
   getTimelineAiInsight,
   getTopCausasAiInsight,
   getEdadAiInsight,
+  getEdadRiesgoAiInsight,
   getMomentoAiInsight,
   getDemorasAiInsight,
   getSankeyAiInsight,
@@ -41,6 +42,17 @@ describe('aiChartInsights', () => {
     const result = getEdadAiInsight(labels, mort, morb)
     expect(result).toContain('20-29')
     expect(result).not.toMatch(/\d+\.\d+%/)
+  })
+
+  it('genera resumen de distribucion de edad de riesgo', () => {
+    const data = { labels: ['<19 años', '19-34 años', '≥35 años'], valores: [1, 3, 2], total: 6 }
+    const result = getEdadRiesgoAiInsight(data, 'Mortalidad')
+    expect(result).toContain('mortalidad')
+    expect(result).not.toMatch(/\d+\.\d+%/)
+  })
+
+  it('retorna null para distribucion de edad de riesgo sin datos', () => {
+    expect(getEdadRiesgoAiInsight(null, 'Morbilidad')).toBeNull()
   })
 
   it('genera resumen de momento de ocurrencia', () => {
