@@ -10,13 +10,19 @@ import {
   getMomentoAiInsight,
 } from '../../utils/aiChartInsights'
 
+export interface TopCausasChartData {
+  labels: string[]
+  values: number[]
+  colors: string[]
+}
+
 export interface TrendChartsRowProps {
   lineChartData: { labels: string[]; series: { name: string; color: string; data: number[] }[] }
-  barChartData: { labels: string[]; values: number[]; colors: string[] }
+  topCausasMortalidad: TopCausasChartData
+  topCausasMorbilidad: TopCausasChartData
   demorasChartData: { labels: string[]; values: number[] }
   edadChartData: { labels: string[]; mortalidadValues: number[]; morbilidadValues: number[] }
   momentoChartData: { labels: string[]; mortalidadValues: number[]; morbilidadValues: number[] }
-  segmento?: string
 }
 
 const wrapLabel = (text: string, maxLen: number = 45): string | string[] => {
@@ -43,22 +49,25 @@ const legendBottom = {
 
 export function TrendChartsRow({
   lineChartData,
-  barChartData,
+  topCausasMortalidad,
+  topCausasMorbilidad,
   demorasChartData,
   edadChartData,
   momentoChartData,
-  segmento,
 }: TrendChartsRowProps) {
-  const barTitle = segmento === 'morbilidad' ? 'Top 5 Criterios Principales' : 'Top 5 Causas Principales'
-
   const timelineInsight = useMemo(
     () => getTimelineAiInsight(lineChartData.labels, lineChartData.series),
     [lineChartData],
   )
 
-  const topCausasInsight = useMemo(
-    () => getTopCausasAiInsight(barChartData.labels, barChartData.values, segmento === 'morbilidad'),
-    [barChartData, segmento],
+  const topCausasMortalidadInsight = useMemo(
+    () => getTopCausasAiInsight(topCausasMortalidad.labels, topCausasMortalidad.values, false),
+    [topCausasMortalidad],
+  )
+
+  const topCausasMorbilidadInsight = useMemo(
+    () => getTopCausasAiInsight(topCausasMorbilidad.labels, topCausasMorbilidad.values, true),
+    [topCausasMorbilidad],
   )
 
   const demorasInsight = useMemo(
@@ -121,16 +130,16 @@ export function TrendChartsRow({
 
       <div className="charts-grid-row">
         <div className="chart-card-col-6">
-          <h3 className="chart-card-title">{barTitle}</h3>
+          <h3 className="chart-card-title">Top 10 Causas de Mortalidad</h3>
           <div style={{ height: '320px' }}>
-            {barChartData.values.length > 0 ? (
+            {topCausasMortalidad.values.length > 0 ? (
               <Bar
                 data={{
-                  labels: barChartData.labels.map((l) => wrapLabel(l)),
+                  labels: topCausasMortalidad.labels.map((l) => wrapLabel(l)),
                   datasets: [
                     {
-                      data: barChartData.values,
-                      backgroundColor: barChartData.colors,
+                      data: topCausasMortalidad.values,
+                      backgroundColor: topCausasMortalidad.colors,
                       borderColor: '#475569',
                       borderWidth: 1,
                     },
@@ -149,13 +158,51 @@ export function TrendChartsRow({
               />
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888' }}>
-                Sin registros de causas
+                Sin registros de causas de mortalidad
               </div>
             )}
           </div>
-          <ChartAiInsight insight={topCausasInsight} />
+          <ChartAiInsight insight={topCausasMortalidadInsight} />
         </div>
 
+        <div className="chart-card-col-6">
+          <h3 className="chart-card-title">Top 10 Causas de Morbilidad</h3>
+          <div style={{ height: '320px' }}>
+            {topCausasMorbilidad.values.length > 0 ? (
+              <Bar
+                data={{
+                  labels: topCausasMorbilidad.labels.map((l) => wrapLabel(l)),
+                  datasets: [
+                    {
+                      data: topCausasMorbilidad.values,
+                      backgroundColor: topCausasMorbilidad.colors,
+                      borderColor: '#475569',
+                      borderWidth: 1,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  indexAxis: 'y' as const,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    x: { title: { display: true, text: 'Casos' }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    y: { grid: { display: false } },
+                  },
+                }}
+              />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888' }}>
+                Sin registros de causas de morbilidad
+              </div>
+            )}
+          </div>
+          <ChartAiInsight insight={topCausasMorbilidadInsight} />
+        </div>
+      </div>
+
+      <div className="charts-grid-row">
         <div className="chart-card-col-6">
           <h3 className="chart-card-title">Demoras Críticas en la Atención</h3>
           <div style={{ height: '320px' }}>
@@ -194,9 +241,7 @@ export function TrendChartsRow({
           </div>
           <ChartAiInsight insight={demorasInsight} />
         </div>
-      </div>
 
-      <div className="charts-grid-row">
         <div className="chart-card-col-6">
           <h3 className="chart-card-title">Distribución por Edad Materna</h3>
           <div style={{ height: '320px' }}>
@@ -227,10 +272,12 @@ export function TrendChartsRow({
           </div>
           <ChartAiInsight insight={edadInsight} />
         </div>
+      </div>
 
-        <div className="chart-card-col-6">
+      <div className="charts-grid-row">
+        <div className="chart-card-col-12">
           <h3 className="chart-card-title">Momento de Ocurrencia / Muerte</h3>
-          <div style={{ height: '320px' }}>
+          <div style={{ height: '320px', maxWidth: '420px', margin: '0 auto' }}>
             {momentoChartData.labels.length > 0 ? (
               <Pie
                 data={{
