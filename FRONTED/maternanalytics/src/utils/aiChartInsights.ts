@@ -138,17 +138,18 @@ export function getEdadAiInsight(
   return `El rango etario con mayor frecuencia de eventos es ${topGroup} años, concentrando el ${topPct}% de los casos (${maxVal} pacientes). Este grupo representa el foco prioritario para estrategias de prevención preconcepcional y tamizaje temprano.`
 }
 
-// 3b. Distribución de Edad de Riesgo Obstétrico
-export function getEdadRiesgoAiInsight(
+// 3b. Distribución de Edad Gestacional
+export function getEdadGestacionalAiInsight(
   data: { labels: string[]; valores: number[]; total: number } | null,
   evento: 'Morbilidad' | 'Mortalidad',
 ): string | null {
   if (!data || data.total === 0) return null
 
-  const casosRiesgo = (data.valores[0] || 0) + (data.valores[2] || 0)
-  const riesgoPct = pct(casosRiesgo, data.total)
+  const casosATermino = data.valores[2] || 0
+  const casosFueraDeTermino = data.total - casosATermino
+  const riesgoPct = pct(casosFueraDeTermino, data.total)
 
-  return `El ${riesgoPct}% de los casos de ${evento.toLowerCase()} (${casosRiesgo} de ${data.total} pacientes) ocurrieron en los grupos de mayor riesgo obstétrico: menores de 19 años o de 35 años en adelante.`
+  return `El ${riesgoPct}% de los casos de ${evento.toLowerCase()} (${casosFueraDeTermino} de ${data.total} pacientes) tuvieron una gestación fuera del rango a término (37-41 semanas): parto pretérmino (antes de la semana 37) o postérmino (semana 42 en adelante).`
 }
 
 // 4. Momento de Muerte / Ocurrencia

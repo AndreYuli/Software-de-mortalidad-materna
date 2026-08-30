@@ -87,26 +87,31 @@ export function useDashboardCharts({
     return { labels: MONTHS_LABEL, series }
   }, [segmento, mortalidadData, morbilidadData, getMonthly])
 
-  const barChartData = useMemo(() => {
-    const list: { label: string; casos: number; color: string }[] = []
-    if ((segmento === 'ambos' || segmento === 'mortalidad') && mortalidadData?.causas_cie10?.top_causas) {
-      mortalidadData.causas_cie10.top_causas.forEach((c) => {
-        list.push({ label: getCie10Description(c.codigo), casos: c.casos, color: '#c0392b' })
-      })
+  const topCausasMortalidad = useMemo(() => {
+    if (!(segmento === 'ambos' || segmento === 'mortalidad')) {
+      return { labels: [], values: [], colors: [] }
     }
-    if ((segmento === 'ambos' || segmento === 'morbilidad') && morbilidadData?.criterios_inclusion) {
-      Object.values(morbilidadData.criterios_inclusion).forEach((c) => {
-        list.push({ label: `${c.nombre}`, casos: c.casos, color: '#2ca02c' })
-      })
-    }
-
-    const sorted = list.sort((a, b) => b.casos - a.casos).slice(0, 5).reverse()
+    const causas = mortalidadData?.causas_cie10?.top_causas ?? []
+    const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10).reverse()
     return {
-      labels: sorted.map((i) => i.label),
-      values: sorted.map((i) => i.casos),
-      colors: sorted.map((i) => i.color),
+      labels: sorted.map((c) => getCie10Description(c.codigo)),
+      values: sorted.map((c) => c.casos),
+      colors: sorted.map(() => '#c0392b'),
     }
-  }, [segmento, mortalidadData, morbilidadData])
+  }, [segmento, mortalidadData])
+
+  const topCausasMorbilidad = useMemo(() => {
+    if (!(segmento === 'ambos' || segmento === 'morbilidad')) {
+      return { labels: [], values: [], colors: [] }
+    }
+    const causas = morbilidadData?.causas_cie10?.top_causas ?? []
+    const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10).reverse()
+    return {
+      labels: sorted.map((c) => getCie10Description(c.codigo)),
+      values: sorted.map((c) => c.casos),
+      colors: sorted.map(() => '#2ca02c'),
+    }
+  }, [segmento, morbilidadData])
 
   const activeClusterData = useMemo(
     () => (clusteringSegment === 'mortalidad' ? mortalidadClustering : morbilidadClustering),
@@ -200,12 +205,12 @@ export function useDashboardCharts({
     }
   }, [mortalidadData, morbilidadData])
 
-  const edadRiesgoMortalidad = useMemo(() => {
-    return mortalidadData?.distribucion_edad_riesgo ?? null
+  const edadGestacionalMortalidad = useMemo(() => {
+    return mortalidadData?.distribucion_edad_gestacional ?? null
   }, [mortalidadData])
 
-  const edadRiesgoMorbilidad = useMemo(() => {
-    return morbilidadData?.distribucion_edad_riesgo ?? null
+  const edadGestacionalMorbilidad = useMemo(() => {
+    return morbilidadData?.distribucion_edad_gestacional ?? null
   }, [morbilidadData])
 
   const momentoChartData = useMemo(() => {
@@ -355,6 +360,6 @@ export function useDashboardCharts({
     return available.length > 0 ? available : null
   }, [mortalidadData, morbilidadData])
 
-  return { lineChartData, barChartData, activeClusterData, clusteringChartData, demorasChartData, edadChartData, edadRiesgoMortalidad, edadRiesgoMorbilidad, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData }
+  return { lineChartData, topCausasMortalidad, topCausasMorbilidad, activeClusterData, clusteringChartData, demorasChartData, edadChartData, edadGestacionalMortalidad, edadGestacionalMorbilidad, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData }
 }
 
