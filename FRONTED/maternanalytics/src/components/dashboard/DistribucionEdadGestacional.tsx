@@ -2,38 +2,38 @@ import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { CHART_FONT_FAMILY } from '../../constants/chartTheme'
 import { ChartAiInsight } from './ChartAiInsight'
-import { getEdadRiesgoAiInsight } from '../../utils/aiChartInsights'
+import { getEdadGestacionalAiInsight } from '../../utils/aiChartInsights'
 
-export interface DistribucionEdadRiesgoData {
+export interface DistribucionEdadGestacionalData {
   labels: string[]
   valores: number[]
   total: number
 }
 
-export interface DistribucionEdadRiesgoProps {
-  data: DistribucionEdadRiesgoData | null
+export interface DistribucionEdadGestacionalProps {
+  data: DistribucionEdadGestacionalData | null
   evento: 'Morbilidad' | 'Mortalidad'
 }
 
-const RISK_COLORS = ['#dc2626', '#0066cc', '#dc2626']
+const GESTACIONAL_COLORS = ['#dc2626', '#f59e0b', '#0066cc', '#dc2626']
 
-export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoProps) {
-  const insight = useMemo(() => getEdadRiesgoAiInsight(data, evento), [data, evento])
+export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGestacionalProps) {
+  const insight = useMemo(() => getEdadGestacionalAiInsight(data, evento), [data, evento])
 
   if (!data || data.labels.length === 0) {
     return (
       <div className="chart-card-col-12" style={{ textAlign: 'center', padding: '40px' }}>
-        <h3 className="chart-card-title">Distribución por Edad y Riesgo Obstétrico</h3>
-        <p style={{ color: '#64748b' }}>No hay datos suficientes de edad para generar esta gráfica.</p>
+        <h3 className="chart-card-title">Distribución por Edad Gestacional</h3>
+        <p style={{ color: '#64748b' }}>No hay datos suficientes de edad gestacional para generar esta gráfica.</p>
       </div>
     )
   }
 
   return (
     <div className="chart-card-col-12">
-      <h3 className="chart-card-title">Distribución por Edad y Riesgo Obstétrico ({evento})</h3>
+      <h3 className="chart-card-title">Distribución por Edad Gestacional ({evento})</h3>
       <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '10px' }}>
-        Las mujeres menores de 19 años o de 35 años en adelante tienen mayor riesgo de morbilidad y mortalidad materna.
+        Los partos pretérmino (antes de la semana 37) o postérmino (semana 42 en adelante) tienen mayor riesgo de morbilidad y mortalidad materna. El rango a término (37-41 semanas) es el de menor riesgo.
       </p>
       <div style={{ height: '280px' }}>
         <Bar
@@ -42,7 +42,7 @@ export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoP
             datasets: [
               {
                 data: data.valores,
-                backgroundColor: RISK_COLORS,
+                backgroundColor: GESTACIONAL_COLORS,
                 borderColor: '#475569',
                 borderWidth: 1,
               },
