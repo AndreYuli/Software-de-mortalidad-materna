@@ -15,6 +15,9 @@ import { SankeyMortalidad } from './SankeyMortalidad'
 import { SeveridadFallasMorbilidad } from './SeveridadFallasMorbilidad'
 import { AtencionOportunidad } from './AtencionOportunidad'
 import { ExportReportModal } from './ExportReportModal'
+import { useDashboardTabs } from '../../hooks/navigation/useDashboardTabs'
+import { SubTabs } from './SubTabs'
+import { SociodemograficoPendiente } from './SociodemograficoPendiente'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
 export interface AnalysisHomeSectionProps {
@@ -51,7 +54,7 @@ export function AnalysisHomeSection({
     latestMortalidad ? 'mortalidad' : 'morbilidad',
   )
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<'panorama' | 'morbilidad' | 'mortalidad' | 'demoras' | 'atencion'>('panorama')
+  const { activeTab, setActiveTab, activeSubTab, setActiveSubTab } = useDashboardTabs()
 
   const handleSegmentoChange = useCallback((value: Segmento) => {
     setSegmento(value)
@@ -148,10 +151,10 @@ export function AnalysisHomeSection({
 
             <div className="dashboard-tabs">
               <button
-                className={`tab-button ${activeTab === 'panorama' ? 'active' : ''}`}
-                onClick={() => setActiveTab('panorama')}
+                className={`tab-button ${activeTab === 'generalidades' ? 'active' : ''}`}
+                onClick={() => setActiveTab('generalidades')}
               >
-                Panorama General
+                Generalidades
               </button>
               <button
                 className={`tab-button ${activeTab === 'morbilidad' ? 'active' : ''}`}
@@ -164,18 +167,6 @@ export function AnalysisHomeSection({
                 onClick={() => setActiveTab('mortalidad')}
               >
                 Mortalidad (Ev. 550)
-              </button>
-              <button
-                className={`tab-button ${activeTab === 'demoras' ? 'active' : ''}`}
-                onClick={() => setActiveTab('demoras')}
-              >
-                Análisis de Demoras
-              </button>
-              <button
-                className={`tab-button ${activeTab === 'atencion' ? 'active' : ''}`}
-                onClick={() => setActiveTab('atencion')}
-              >
-                Atención y Oportunidad
               </button>
             </div>
           </div>
@@ -191,7 +182,7 @@ export function AnalysisHomeSection({
             yearCompareMorb={metrics.yearCompareMorb}
           />
 
-          {activeTab === 'panorama' && (
+          {activeTab === 'generalidades' && (
             <>
               <TrendChartsRow
                 lineChartData={lineChartData}
@@ -219,33 +210,51 @@ export function AnalysisHomeSection({
           )}
 
           {activeTab === 'morbilidad' && (
-            <SeveridadFallasMorbilidad
-              data={severidadFallasData}
-              morbKpis={morbKpis}
-              criteriosInclusion={criteriosInclusionData}
-              momentoOcurrencia={momentoOcurrenciaData}
-              tiempoRemision={tiempoRemisionData}
-            />
+            <>
+              <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
+
+              {activeSubTab === 'sociodemografico' && (
+                <SociodemograficoPendiente evento="Morbilidad" />
+              )}
+
+              {activeSubTab === 'clinico' && (
+                <>
+                  <SeveridadFallasMorbilidad
+                    data={severidadFallasData}
+                    morbKpis={morbKpis}
+                    criteriosInclusion={criteriosInclusionData}
+                    momentoOcurrencia={momentoOcurrenciaData}
+                    tiempoRemision={tiempoRemisionData}
+                  />
+                  <AtencionOportunidad
+                    kpis={atencionKpis}
+                    institucionReferencia={institucionReferenciaData}
+                    obstetricoEdad={obstetricoEdadData}
+                  />
+                </>
+              )}
+            </>
           )}
 
           {activeTab === 'mortalidad' && (
-            <div className="charts-grid-row">
-              <SankeyMortalidad data={sankeyFlujoData} />
-            </div>
-          )}
+            <>
+              <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
-          {activeTab === 'demoras' && (
-            <div className="charts-grid-row">
-              <HeatmapDemoras data={heatmapDemorasData} />
-            </div>
-          )}
+              {activeSubTab === 'sociodemografico' && (
+                <SociodemograficoPendiente evento="Mortalidad" />
+              )}
 
-          {activeTab === 'atencion' && (
-            <AtencionOportunidad
-              kpis={atencionKpis}
-              institucionReferencia={institucionReferenciaData}
-              obstetricoEdad={obstetricoEdadData}
-            />
+              {activeSubTab === 'clinico' && (
+                <>
+                  <div className="charts-grid-row">
+                    <SankeyMortalidad data={sankeyFlujoData} />
+                  </div>
+                  <div className="charts-grid-row">
+                    <HeatmapDemoras data={heatmapDemorasData} />
+                  </div>
+                </>
+              )}
+            </>
           )}
         </div>
 
