@@ -73,6 +73,7 @@ def calcular_completo(
                 "demoras": p.analizar_demoras(),
                 "causas_cie10": p.analizar_causas_cie10(top_n=15),
                 "obstetrico_edad": p.analizar_obstetrico_por_edad(),
+                "distribucion_edad_riesgo": p.analizar_distribucion_edad_riesgo(),
                 "heatmap_demoras": p.analizar_heatmap_causa_demoras(top_n=20),
                 "sankey_flujo": p.analizar_sankey_flujo(),
             }
@@ -87,6 +88,7 @@ def calcular_completo(
                 "institucion_referencia": p.analizar_institucion_referencia(),
                 "tiempo_remision": p.analizar_tiempo_remision(),
                 "obstetrico_edad": p.analizar_obstetrico_por_edad(),
+                "distribucion_edad_riesgo": p.analizar_distribucion_edad_riesgo(),
                 "severidad_fallas": p.analizar_severidad_fallas(),
             }
 
@@ -107,6 +109,7 @@ def ejecutar_clustering(
         analisis: Instancia del modelo Analisis.
         tipo_clustering: 'kmeans' o 'jerarquico'.
         n_clusters: Número de clusters.
+        db: Sesión de base de datos.
 
     Returns:
         Dict con resultado del clustering.
@@ -154,6 +157,7 @@ def calcular_heatmap(analisis: Analisis, db: Session) -> dict[str, Any]:
 
     Args:
         analisis: Instancia del modelo Analisis (debe ser de tipo morbilidad).
+        db: Sesión de base de datos.
 
     Returns:
         Dict con datos del heatmap.
