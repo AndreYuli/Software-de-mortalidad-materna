@@ -127,6 +127,34 @@
   box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
 }
 
+.dashboard-subtabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.subtab-button {
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subtab-button:hover {
+  background: #f1f5f9;
+}
+
+.subtab-button.active {
+  background: #eff6ff;
+  border-color: #0066cc;
+  color: #0066cc;
+}
+
 .tab-placeholder {
   background: #fff;
   border-radius: 16px;
