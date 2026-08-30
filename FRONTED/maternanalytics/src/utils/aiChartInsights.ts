@@ -111,7 +111,7 @@ export function getTopCausasAiInsight(
   const top3Val = values.slice(0, 3).reduce((a, b) => a + b, 0)
   const top3Pct = pct(top3Val, total)
 
-  const concepto = isMorbilidad ? 'criterio de morbilidad' : 'causa de mortalidad'
+  const concepto = isMorbilidad ? 'causa de morbilidad' : 'causa de mortalidad'
 
   return `El principal ${concepto} identificado es "${topName}", acumulando ${topVal} casos (${topPct}% del grupo evaluado). Las 3 primeras categorías concentran de forma combinada el ${top3Pct}% de todos los eventos (${top3Val} casos).`
 }
