@@ -79,8 +79,8 @@ export function useDashboardMetrics({
   const totalCasos = useMemo(() => totalMortalidad + totalMorbilidad, [totalMortalidad, totalMorbilidad])
 
   const tasaLetalidad = useMemo(
-    () => (totalCasos > 0 ? String(Math.round((totalMortalidad / totalCasos) * 100)) : '0'),
-    [totalCasos, totalMortalidad],
+    () => (totalMorbilidad > 0 ? String(Math.round((totalMortalidad / totalMorbilidad) * 100)) : '0'),
+    [totalMorbilidad, totalMortalidad],
   )
 
   const compareFor = useCallback(
