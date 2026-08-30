@@ -105,17 +105,6 @@ class MorbilidadProcessor(ProcesadorBase):
                 self.df[col] = pd.to_numeric(self.df[col], errors="coerce")
         self.df = self.df.dropna(how="all")
 
-    def _find_col(self, candidates: list[str]) -> str | None:
-        """Busca la primera columna presente en el DataFrame de entre las candidatas.
-
-        Args:
-            candidates: Lista de nombres de columna candidatos.
-
-        Returns:
-            Nombre de la primera columna encontrada, o None si ninguna existe.
-        """
-        return next((c for c in candidates if c in self.df.columns), None)
-
     def calcular_estadisticas_basicas(self) -> dict[str, Any]:
         """Calcula los indicadores epidemiológicos básicos del conjunto de casos.
 

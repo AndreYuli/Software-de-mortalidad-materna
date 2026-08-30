@@ -27,6 +27,17 @@ class ProcesadorBase:
             if not edades.empty:
                 stats["edad_promedio"] = float(edades.mean())
 
+    def _find_col(self, candidates: list[str]) -> str | None:
+        """Busca la primera columna presente en el DataFrame de entre las candidatas.
+
+        Args:
+            candidates: Lista de nombres de columna candidatos.
+
+        Returns:
+            Nombre de la primera columna encontrada, o None si ninguna existe.
+        """
+        return next((c for c in candidates if c in self.df.columns), None)
+
     def analizar_obstetrico_por_edad(self, variables: list[tuple[str, str]]) -> dict[str, Any]:
         """Cruza variables obstétricas con grupos de edad para detectar patrones.
 
@@ -118,14 +129,7 @@ class ProcesadorBase:
             registradas). Dict vacío si no hay columna de semanas de
             gestación o no hay datos válidos.
         """
-        columna = next(
-            (
-                c
-                for c in ("9.2 Semana gestación", "Edad gestacional ocurrencia (sem)")
-                if c in self.df.columns
-            ),
-            None,
-        )
+        columna = self._find_col(["9.2 Semana gestación", "Edad gestacional ocurrencia (sem)"])
         if columna is None:
             return {}
         semanas = pd.to_numeric(self.df[columna], errors="coerce").dropna()
