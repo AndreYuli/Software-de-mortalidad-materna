@@ -1,3 +1,5 @@
+import cie10Nombres from './cie10Nombres.json'
+
 export const COLUMNAS_MORTALIDAD = [
   'A. Nombres y Apellidos', 'B. Tipo ID', 'C. Número ID',
   '5.1 Sitio de Defunción', '6.1 Convivencia', '6.3 Escolaridad',
@@ -44,38 +46,12 @@ export const MESES_ES = [
   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
 ]
 
-export const CIE10_DESCRIPTIONS: Record<string, string> = {
-  'O14': 'Hipertensión gestacional con preeclampsia',
-  'O14.1': 'Hipertensión gestacional con preeclampsia severa',
-  'O15': 'Eclampsia',
-  'O15.0': 'Eclampsia en el embarazo',
-  'O72': 'Hemorragia posparto',
-  'O72.1': 'Hemorragia posparto inmediata',
-  'O85': 'Sepsis puerperal',
-  'O88': 'Embolia obstétrica',
-  'O94': 'Secuelas de complicaciones obstétricas',
-  'O98': 'Infecciones maternas que complican el embarazo',
-  'O98.0': 'Tuberculosis en embarazo',
-  'O41.1': 'Corioamnionitis (Infección de saco amniótico)',
-  'O08.1': 'Hemorragia por aborto o ectópico',
-  'O44.0': 'Placenta previa con hemorragia',
-  'O99.3': 'Trastornos mentales o nerviosos en embarazo',
-  'O26.6': 'Trastornos del hígado en embarazo',
-  'O10.0': 'Hipertensión crónica preexistente',
-  'O20.0': 'Amenaza de aborto',
-  'O00.1': 'Embarazo ectópico tubárico',
-  'O36.4': 'Muerte fetal intrauterina',
-  'O62.1': 'Inercia uterina / fallo contracción',
-  'O34.2': 'Cicatriz uterina por cesárea previa',
-  'O11': 'Hipertensión crónica con preeclampsia sobreagregada',
-  'O46.0': 'Hemorragia anteparto con coagulopatía',
-  'O24.4': 'Diabetes gestacional',
-}
+export const CIE10_DESCRIPTIONS: Record<string, string> = cie10Nombres
 
 export const CLUSTER_COLORS = ['#0066cc', '#c0392b', '#2ca02c', '#f39c12', '#6f42c1', '#16a085', '#d35400', '#8e44ad']
 
 export function getCie10Description(code: unknown): string {
-  const normalized = String(code ?? '').trim().toUpperCase().replace(/\s+/g, '');
+  const normalized = String(code ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
   if (!normalized) return 'Descripción no disponible';
   if (CIE10_DESCRIPTIONS[normalized]) return CIE10_DESCRIPTIONS[normalized];
   const prefix3 = normalized.slice(0, 3);
