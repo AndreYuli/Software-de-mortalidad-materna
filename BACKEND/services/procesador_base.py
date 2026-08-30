@@ -103,36 +103,44 @@ class ProcesadorBase:
         }
         return resultado
 
-    def analizar_distribucion_edad_riesgo(self) -> dict[str, Any]:
-        """Agrupa los casos por los cortes de edad de mayor riesgo obstétrico.
+    def analizar_distribucion_edad_gestacional(self) -> dict[str, Any]:
+        """Agrupa los casos por semanas de gestación en categorías clínicas estándar.
 
-        Los cortes (<19, 19-34, ≥35 años) son los definidos por la experta de
-        dominio para priorizar el seguimiento de los extremos de edad
-        materna, y son distintos de los 4 grupos usados en
-        `analizar_obstetrico_por_edad` (que sirven para cruces con otras
-        variables obstétricas, no para esta distribución simple).
+        Los cortes (<28, 28-36, 37-41, ≥42 semanas) distinguen partos
+        pretérmino, a término y postérmino, categorías clínicas estándar
+        para evaluar el riesgo asociado a la duración de la gestación.
+        Mortalidad y morbilidad usan columnas de origen distintas, por eso
+        se busca la primera que exista.
 
         Returns:
-            Dict con 'labels' (nombres de los 3 grupos), 'valores' (conteo
-            de casos por grupo) y 'total' (casos con edad registrada). Dict
-            vacío si no hay columna 'Edad' o no hay datos válidos.
+            Dict con 'labels' (nombres de los 4 grupos), 'valores' (conteo
+            de casos por grupo) y 'total' (casos con semanas de gestación
+            registradas). Dict vacío si no hay columna de semanas de
+            gestación o no hay datos válidos.
         """
-        resultado: dict[str, Any] = {}
-        if "Edad" not in self.df.columns:
-            return resultado
-        edades = pd.to_numeric(self.df["Edad"], errors="coerce").dropna()
-        if edades.empty:
-            return resultado
+        columna = next(
+            (
+                c
+                for c in ("9.2 Semana gestación", "Edad gestacional ocurrencia (sem)")
+                if c in self.df.columns
+            ),
+            None,
+        )
+        if columna is None:
+            return {}
+        semanas = pd.to_numeric(self.df[columna], errors="coerce").dropna()
+        if semanas.empty:
+            return {}
 
         grupos = [
-            {"label": "<19 años", "min": 0, "max": 18},
-            {"label": "19-34 años", "min": 19, "max": 34},
-            {"label": "≥35 años", "min": 35, "max": 120},
+            {"label": "<28 semanas", "min": 0, "max": 27},
+            {"label": "28-36 semanas", "min": 28, "max": 36},
+            {"label": "37-41 semanas", "min": 37, "max": 41},
+            {"label": "≥42 semanas", "min": 42, "max": 99},
         ]
-        valores = [int(((edades >= g["min"]) & (edades <= g["max"])).sum()) for g in grupos]
-        resultado = {
+        valores = [int(((semanas >= g["min"]) & (semanas <= g["max"])).sum()) for g in grupos]
+        return {
             "labels": [g["label"] for g in grupos],
             "valores": valores,
-            "total": int(len(edades)),
+            "total": int(len(semanas)),
         }
-        return resultado

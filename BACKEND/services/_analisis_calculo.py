@@ -73,7 +73,7 @@ def calcular_completo(
                 "demoras": p.analizar_demoras(),
                 "causas_cie10": p.analizar_causas_cie10(top_n=10),
                 "obstetrico_edad": p.analizar_obstetrico_por_edad(),
-                "distribucion_edad_riesgo": p.analizar_distribucion_edad_riesgo(),
+                "distribucion_edad_gestacional": p.analizar_distribucion_edad_gestacional(),
                 "heatmap_demoras": p.analizar_heatmap_causa_demoras(top_n=20),
                 "sankey_flujo": p.analizar_sankey_flujo(),
             }
@@ -89,7 +89,7 @@ def calcular_completo(
                 "institucion_referencia": p.analizar_institucion_referencia(),
                 "tiempo_remision": p.analizar_tiempo_remision(),
                 "obstetrico_edad": p.analizar_obstetrico_por_edad(),
-                "distribucion_edad_riesgo": p.analizar_distribucion_edad_riesgo(),
+                "distribucion_edad_gestacional": p.analizar_distribucion_edad_gestacional(),
                 "severidad_fallas": p.analizar_severidad_fallas(),
             }
 

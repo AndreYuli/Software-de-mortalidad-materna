@@ -32,6 +32,7 @@ def df_mortalidad_ejemplo() -> pd.DataFrame:
             "10.3.2 Demora 2": [1, 0, 0, 1, 0, 1],
             "10.3.3 Demora 3": [0, 0, 1, 1, 0, 0],
             "10.3.4 Demora 4": [1, 1, 0, 1, 0, 0],
+            "9.2 Semana gestación": [26, 32, 38, 40, 42, 35],
         }
     )
 
