@@ -18,7 +18,7 @@ import { ExportReportModal } from './ExportReportModal'
 import { useDashboardTabs } from '../../hooks/navigation/useDashboardTabs'
 import { SubTabs } from './SubTabs'
 import { SociodemograficoPendiente } from './SociodemograficoPendiente'
-import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
+import { DistribucionEdadGestacional } from './DistribucionEdadGestacional'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
 export interface AnalysisHomeSectionProps {
@@ -71,7 +71,7 @@ export function AnalysisHomeSection({
 
   const metrics = useDashboardMetrics({ segmento, mortalidadData, morbilidadData, filterYear, filterMonth })
 
-  const { lineChartData, barChartData, activeClusterData, clusteringChartData, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData, edadRiesgoMortalidad, edadRiesgoMorbilidad } = useDashboardCharts({
+  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, activeClusterData, clusteringChartData, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData, edadGestacionalMortalidad, edadGestacionalMorbilidad } = useDashboardCharts({
     segmento,
     mortalidadData,
     morbilidadData,
@@ -109,8 +109,8 @@ export function AnalysisHomeSection({
         morbilidad: lineChartData.series.find((s) => s.name.toLowerCase().includes('morbilidad'))?.data || [],
       },
       causasPrincipales: {
-        causas: barChartData.labels,
-        valores: barChartData.values,
+        causas: [...topCausasMortalidad.labels, ...topCausasMorbilidad.labels],
+        valores: [...topCausasMortalidad.values, ...topCausasMorbilidad.values],
       },
       demoras: {
         nombres: demorasChartData.labels,
@@ -130,7 +130,8 @@ export function AnalysisHomeSection({
     segmento,
     metrics,
     lineChartData,
-    barChartData,
+    topCausasMortalidad,
+    topCausasMorbilidad,
     demorasChartData,
     edadChartData,
     severidadFallasData,
@@ -187,11 +188,11 @@ export function AnalysisHomeSection({
             <>
               <TrendChartsRow
                 lineChartData={lineChartData}
-                barChartData={barChartData}
+                topCausasMortalidad={topCausasMortalidad}
+                topCausasMorbilidad={topCausasMorbilidad}
                 demorasChartData={demorasChartData}
                 edadChartData={edadChartData}
                 momentoChartData={momentoChartData}
-                segmento={segmento}
               />
 
               <ClusteringSection
@@ -216,7 +217,7 @@ export function AnalysisHomeSection({
 
               {activeSubTab === 'sociodemografico' && (
                 <>
-                  <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
+                  <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
                   <SociodemograficoPendiente evento="Morbilidad" />
                 </>
               )}
@@ -246,7 +247,7 @@ export function AnalysisHomeSection({
 
               {activeSubTab === 'sociodemografico' && (
                 <>
-                  <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
+                  <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
                   <SociodemograficoPendiente evento="Mortalidad" />
                 </>
               )}
