@@ -35,6 +35,8 @@ _COLS_SEVERIDAD = [
     "Transfusin",
 ]
 
+_COLUMNA_CAUSA_PRINCIPAL = "Causa principal CIE-10"
+
 
 def _normalizar(texto: str) -> str:
     """Elimina tildes y pasa a minúsculas.
@@ -245,6 +247,17 @@ class MorbilidadProcessor(ProcesadorBase):
                     "total": int(len(serie)),
                 }
         return resultado
+
+    def analizar_causas_cie10(self, top_n: int = 10) -> dict[str, Any]:
+        """Identifica las causas principales más frecuentes codificadas en CIE-10.
+
+        Args:
+            top_n: Número de causas más frecuentes a incluir.
+
+        Returns:
+            Dict con top_causas y total_causas_unicas.
+        """
+        return self._analizar_causas_cie10(_COLUMNA_CAUSA_PRINCIPAL, top_n)
 
     def analizar_obstetrico_por_edad(self) -> dict[str, Any]:
         """Cruza variables obstétricas con grupos de edad para detectar patrones.

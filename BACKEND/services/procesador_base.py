@@ -73,6 +73,36 @@ class ProcesadorBase:
             }
         return resultado
 
+    def _analizar_causas_cie10(self, columna: str, top_n: int) -> dict[str, Any]:
+        """Identifica las causas más frecuentes codificadas en CIE-10 de una columna.
+
+        Args:
+            columna: Nombre de la columna con el código CIE-10 de la causa.
+            top_n: Número de causas más frecuentes a incluir.
+
+        Returns:
+            Dict con top_causas (código, casos, porcentaje) y
+            total_causas_unicas. Dict vacío si la columna no existe.
+        """
+        resultado: dict[str, Any] = {}
+        if columna not in self.df.columns:
+            return resultado
+        total_casos = len(self.df)
+        causas = self.df[columna].value_counts().head(top_n)
+        top_causas: list[dict[str, Any]] = [
+            {
+                "codigo": str(k),
+                "casos": int(v),
+                "porcentaje": float(v / total_casos * 100) if total_casos > 0 else 0.0,
+            }
+            for k, v in causas.items()
+        ]
+        resultado = {
+            "top_causas": top_causas,
+            "total_causas_unicas": int(self.df[columna].nunique()),
+        }
+        return resultado
+
     def analizar_distribucion_edad_riesgo(self) -> dict[str, Any]:
         """Agrupa los casos por los cortes de edad de mayor riesgo obstétrico.
 

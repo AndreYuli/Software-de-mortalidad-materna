@@ -176,7 +176,7 @@ class MortalidadProcessor(ProcesadorBase):
             prefix_destino="[Muerte]",
         )
 
-    def analizar_causas_cie10(self, top_n: int = 15) -> dict[str, Any]:
+    def analizar_causas_cie10(self, top_n: int = 10) -> dict[str, Any]:
         """Identifica las causas de muerte más frecuentes codificadas en CIE-10.
 
         Args:
@@ -185,23 +185,7 @@ class MortalidadProcessor(ProcesadorBase):
         Returns:
             Dict con top_causas y total_causas_unicas.
         """
-        resultado: dict[str, Any] = {}
-        if _COLUMNA_CAUSA_BASICA in self.df.columns:
-            total_casos = len(self.df)
-            causas = self.df[_COLUMNA_CAUSA_BASICA].value_counts().head(top_n)
-            top_causas: list[dict[str, Any]] = [
-                {
-                    "codigo": str(k),
-                    "casos": int(v),
-                    "porcentaje": float(v / total_casos * 100) if total_casos > 0 else 0.0,
-                }
-                for k, v in causas.items()
-            ]
-            resultado = {
-                "top_causas": top_causas,
-                "total_causas_unicas": int(self.df[_COLUMNA_CAUSA_BASICA].nunique()),
-            }
-        return resultado
+        return self._analizar_causas_cie10(_COLUMNA_CAUSA_BASICA, top_n)
 
     def analizar_obstetrico_por_edad(self) -> dict[str, Any]:
         """Cruza variables obstétricas con grupos de edad para detectar patrones.

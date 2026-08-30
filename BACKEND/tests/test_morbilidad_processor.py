@@ -35,3 +35,12 @@ def test_analizar_distribucion_edad_riesgo_agrupa_por_cortes_de_riesgo():
     assert resultado["labels"] == ["<19 años", "19-34 años", "≥35 años"]
     assert resultado["valores"] == [0, 6, 0]
     assert resultado["total"] == 6
+
+
+def test_analizar_causas_cie10_top_causas():
+    """El top de causas CIE-10 de morbilidad debe respetar top_n y los conteos."""
+    p = MorbilidadProcessor(df_morbilidad_ejemplo())
+    resultado = p.analizar_causas_cie10(top_n=5)
+    assert resultado["total_causas_unicas"] == 3
+    top = {c["codigo"]: c["casos"] for c in resultado["top_causas"]}
+    assert top["O141"] == 3

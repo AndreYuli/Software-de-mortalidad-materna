@@ -56,5 +56,6 @@ def df_morbilidad_ejemplo() -> pd.DataFrame:
             "Total criterios": [1, 1, 2, 0, 1, 1],
             "Días estancia hospitalaria": [3, 5, 8, 2, 4, 6],
             "Tiempo remisión (h)": [2.5, 1.0, 4.0, 0.5, 3.0, 6.0],
+            "Causa principal CIE-10": ["O141", "O721", "O141", "O150", "O721", "O141"],
         }
     )
