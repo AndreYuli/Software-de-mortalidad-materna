@@ -18,6 +18,7 @@ import { ExportReportModal } from './ExportReportModal'
 import { useDashboardTabs } from '../../hooks/navigation/useDashboardTabs'
 import { SubTabs } from './SubTabs'
 import { SociodemograficoPendiente } from './SociodemograficoPendiente'
+import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
 export interface AnalysisHomeSectionProps {
@@ -70,7 +71,7 @@ export function AnalysisHomeSection({
 
   const metrics = useDashboardMetrics({ segmento, mortalidadData, morbilidadData, filterYear, filterMonth })
 
-  const { lineChartData, barChartData, activeClusterData, clusteringChartData, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData } = useDashboardCharts({
+  const { lineChartData, barChartData, activeClusterData, clusteringChartData, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData, edadRiesgoMortalidad, edadRiesgoMorbilidad } = useDashboardCharts({
     segmento,
     mortalidadData,
     morbilidadData,
@@ -214,7 +215,10 @@ export function AnalysisHomeSection({
               <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
               {activeSubTab === 'sociodemografico' && (
-                <SociodemograficoPendiente evento="Morbilidad" />
+                <>
+                  <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
+                  <SociodemograficoPendiente evento="Morbilidad" />
+                </>
               )}
 
               {activeSubTab === 'clinico' && (
@@ -241,7 +245,10 @@ export function AnalysisHomeSection({
               <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
               {activeSubTab === 'sociodemografico' && (
-                <SociodemograficoPendiente evento="Mortalidad" />
+                <>
+                  <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
+                  <SociodemograficoPendiente evento="Mortalidad" />
+                </>
               )}
 
               {activeSubTab === 'clinico' && (
