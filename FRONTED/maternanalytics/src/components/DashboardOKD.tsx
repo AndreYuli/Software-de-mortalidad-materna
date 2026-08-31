@@ -1,10 +1,11 @@
 import './dashboard/DashboardShell.css'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { useMemo, useCallback } from 'react'
+import { useMemo, useCallback, useState } from 'react'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { Sidebar, type DashboardFileStatus, type FileIndicator } from './dashboard/Sidebar'
 import { ViewRouter } from './dashboard/ViewRouter'
 import type { ActiveView } from '../hooks/navigation/useActiveView'
+import { MenuIcon } from './icons'
 
 export type { DashboardFileStatus, FileIndicator }
 
@@ -16,6 +17,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
   const data = useDashboardData()
   const location = useLocation()
   const navigate = useNavigate()
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
 
   // Sincronizar la vista activa con la ruta URL actual
   const activeView: ActiveView = useMemo(() => {
@@ -30,6 +32,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
       if (view === 'mortalidad') navigate('/cargar-mortalidad')
       else if (view === 'morbilidad') navigate('/cargar-morbilidad')
       else navigate('/dashboard')
+      setIsMobileNavOpen(false)
     },
     [data, navigate],
   )
@@ -44,6 +47,20 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
 
   return (
     <div className="dashboard-okd-container">
+      <button
+        className="mobile-topbar-menu-btn"
+        onClick={() => setIsMobileNavOpen(true)}
+        title="Abrir menú"
+        aria-label="Abrir menú"
+        type="button"
+      >
+        <MenuIcon />
+      </button>
+
+      {isMobileNavOpen && (
+        <div className="sidebar-overlay" onClick={() => setIsMobileNavOpen(false)} />
+      )}
+
       <Sidebar
         user={{ username: data.username, email: data.email, avatarLetter: data.avatarLetter }}
         activeView={activeView}
@@ -59,6 +76,8 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
           },
         }}
         onLogout={handleLogout}
+        isMobileOpen={isMobileNavOpen}
+        onMobileClose={() => setIsMobileNavOpen(false)}
       />
 
       <main className="main-content-okd">

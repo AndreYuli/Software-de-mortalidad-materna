@@ -26,6 +26,28 @@
   font-weight: 600;
 }
 
+.sidebar-close-btn {
+  display: none;
+  margin-left: auto;
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.sidebar-close-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
 .logo-icon-okd {
   width: 28px;
   height: 28px;
@@ -185,4 +207,67 @@
   background: rgba(192, 57, 43, 0.2);
   border-color: #c0392b;
   color: #ff8f8f;
+}
+
+/* ========== BOTÓN DE MENÚ MÓVIL (fuera del sidebar) ========== */
+.mobile-topbar-menu-btn {
+  display: none;
+}
+
+/* ========== OVERLAY DEL DRAWER MÓVIL ========== */
+.sidebar-overlay {
+  display: none;
+}
+
+/* ========== RESPONSIVIDAD: sidebar como drawer fuera de pantalla ========== */
+@media (max-width: 768px) {
+  .mobile-topbar-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    width: 40px;
+    height: 40px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    color: #fff;
+    cursor: pointer;
+    z-index: 1001;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+
+  .mobile-topbar-menu-btn svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  .sidebar-okd {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    max-width: 85vw;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 1002;
+  }
+
+  .sidebar-okd.sidebar-okd--open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.5);
+    z-index: 999;
+  }
 }

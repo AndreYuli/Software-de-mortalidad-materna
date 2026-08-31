@@ -1,6 +1,6 @@
 import './Sidebar.css'
 import type { ActiveView } from '../../hooks/navigation/useActiveView'
-import { LogoIcon, DashboardIcon, UploadIcon, LogoutIcon } from '../icons'
+import { LogoIcon, DashboardIcon, UploadIcon, LogoutIcon, CloseIcon } from '../icons'
 import { NavItem } from './NavItem'
 import { Avatar } from './Avatar'
 
@@ -24,6 +24,8 @@ export interface SidebarProps {
   onNavigate: (view: ActiveView) => void
   fileStatus: DashboardFileStatus
   onLogout: () => void
+  isMobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
 export function Sidebar({
@@ -32,9 +34,11 @@ export function Sidebar({
   onNavigate,
   fileStatus,
   onLogout,
+  isMobileOpen = false,
+  onMobileClose,
 }: SidebarProps) {
   return (
-    <aside className="sidebar-okd">
+    <aside className={`sidebar-okd ${isMobileOpen ? 'sidebar-okd--open' : ''}`}>
       <div className="sidebar-header-okd">
         <div className="logo-icon-okd">
           <LogoIcon width="100%" height="100%" />
@@ -42,6 +46,15 @@ export function Sidebar({
         <h2 className="brand-title-okd">
           Vida<span>Materna</span>
         </h2>
+        <button
+          className="sidebar-close-btn"
+          onClick={onMobileClose}
+          title="Cerrar menú"
+          aria-label="Cerrar menú"
+          type="button"
+        >
+          <CloseIcon />
+        </button>
       </div>
 
       <nav className="sidebar-nav-okd">

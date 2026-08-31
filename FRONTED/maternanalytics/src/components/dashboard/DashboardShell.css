@@ -67,6 +67,12 @@
   padding: 24px;
 }
 
+@media (max-width: 768px) {
+  .content-area-okd {
+    padding: 72px 12px 24px;
+  }
+}
+
 .analysis-home {
   display: flex;
   flex-direction: column;
