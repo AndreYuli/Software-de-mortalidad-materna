@@ -152,6 +152,18 @@ export function getEdadGestacionalAiInsight(
   return `El ${riesgoPct}% de los casos de ${evento.toLowerCase()} (${casosFueraDeTermino} de ${data.total} pacientes) tuvieron una gestación fuera del rango a término (37-41 semanas): parto pretérmino (antes de la semana 37) o postérmino (semana 42 en adelante).`
 }
 
+export function getEdadRiesgoAiInsight(
+  data: { labels: string[]; valores: number[]; total: number } | null,
+  evento: 'Morbilidad' | 'Mortalidad',
+): string | null {
+  if (!data || data.total === 0) return null
+
+  const casosRiesgo = (data.valores[0] || 0) + (data.valores[2] || 0)
+  const riesgoPct = pct(casosRiesgo, data.total)
+
+  return `El ${riesgoPct}% de los casos de ${evento.toLowerCase()} (${casosRiesgo} de ${data.total} pacientes) ocurrieron en los grupos de mayor riesgo obstétrico: menores de 19 años o de 35 años en adelante.`
+}
+
 // 4. Momento de Muerte / Ocurrencia
 export function getMomentoAiInsight(
   labels: string[],

@@ -1,24 +1,13 @@
 import { useCallback, useMemo } from 'react'
 import type { AnalisisCompleto } from '../../types'
-import { getCie10Description, getClusterColor } from '../../constants/dashboardConstants'
-import type { ClusteringResult } from './useAnalysisHomeData'
+import { getCie10Description } from '../../constants/dashboardConstants'
 import type { Segmento } from './useDashboardMetrics'
-
-export type ClusteringPoint2D = { x: number; y: number; color: string; label: string }
-export type ClusteringPoint3D = { x: number; y: number; z: number; color: string; label: string }
-export type ClusteringChartData =
-  | { dim: '2d'; points: ClusteringPoint2D[] }
-  | { dim: '3d'; points: ClusteringPoint3D[] }
 
 export interface UseDashboardChartsParams {
   segmento: Segmento
   mortalidadData: AnalisisCompleto | null
   morbilidadData: AnalisisCompleto | null
   filterYear: string
-  pcaDim: '2d' | '3d'
-  clusteringSegment: 'mortalidad' | 'morbilidad'
-  mortalidadClustering: ClusteringResult | null
-  morbilidadClustering: ClusteringResult | null
 }
 
 const MONTHS_LABEL = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
@@ -46,20 +35,12 @@ function getMonthlyData(dist: Record<string, Record<string, number>> | undefined
 }
 
 /**
- * Arma los datasets que consumen Chart.js/ECharts (evolución temporal, top
- * causas y clustering). Única responsabilidad: transformar los datos del
- * análisis en estructuras de gráfica, sin fetch ni cálculo de KPIs.
+ * Arma los datasets que consumen Chart.js (top causas, edad gestacional) y
+ * los que alimenta el export de reporte (evolución mensual, demoras, edad
+ * materna, fallas orgánicas). Única responsabilidad: transformar los datos
+ * del análisis en estructuras de gráfica/export, sin fetch ni KPIs de UI.
  */
-export function useDashboardCharts({
-  segmento,
-  mortalidadData,
-  morbilidadData,
-  filterYear,
-  pcaDim,
-  clusteringSegment,
-  mortalidadClustering,
-  morbilidadClustering,
-}: UseDashboardChartsParams) {
+export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, filterYear }: UseDashboardChartsParams) {
   const getMonthly = useCallback(
     (dist: Record<string, Record<string, number>> | undefined) => getMonthlyData(dist, filterYear),
     [filterYear],
@@ -113,49 +94,6 @@ export function useDashboardCharts({
     }
   }, [segmento, morbilidadData])
 
-  const activeClusterData = useMemo(
-    () => (clusteringSegment === 'mortalidad' ? mortalidadClustering : morbilidadClustering),
-    [clusteringSegment, mortalidadClustering, morbilidadClustering],
-  )
-
-  const clusterMarkerColors = useMemo(
-    () => activeClusterData?.clusters?.map((clusterId) => getClusterColor(clusterId)) || [],
-    [activeClusterData?.clusters],
-  )
-
-  const clusteringChartData = useMemo((): ClusteringChartData | null => {
-    if (!activeClusterData) return null
-
-    if (pcaDim === '3d' && activeClusterData.pca_3d) {
-      const { x, y, z } = activeClusterData.pca_3d
-      return {
-        dim: '3d',
-        points: x.map((xi, i) => ({
-          x: xi,
-          y: y[i],
-          z: z[i],
-          color: clusterMarkerColors[i] ?? '#95a5a6',
-          label: `Caso ${i + 1} · Cluster ${activeClusterData.clusters![i]}`,
-        })),
-      }
-    }
-
-    if (activeClusterData.pca_2d) {
-      const { x, y } = activeClusterData.pca_2d
-      return {
-        dim: '2d',
-        points: x.map((xi, i) => ({
-          x: xi,
-          y: y[i],
-          color: clusterMarkerColors[i] ?? '#95a5a6',
-          label: `Caso ${i + 1} · Cluster ${activeClusterData.clusters![i]}`,
-        })),
-      }
-    }
-
-    return null
-  }, [activeClusterData, pcaDim, clusterMarkerColors])
-
   const demorasChartData = useMemo(() => {
     const list: { label: string; casos: number }[] = []
     if (mortalidadData?.demoras) {
@@ -171,7 +109,7 @@ export function useDashboardCharts({
 
   const edadChartData = useMemo(() => {
     const labels = new Set<string>()
-    
+
     const extractAgeGroups = (data: any) => {
       if (!data?.obstetrico_edad) return {}
       const gestKey = Object.keys(data.obstetrico_edad).find((k) => k.toLowerCase().includes('estaciones'))
@@ -213,29 +151,13 @@ export function useDashboardCharts({
     return morbilidadData?.distribucion_edad_gestacional ?? null
   }, [morbilidadData])
 
-  const momentoChartData = useMemo(() => {
-    const labels = new Set<string>()
-    const mortDist = (mortalidadData as any)?.momento_muerte?.distribucion || {}
-    const morbDist = (morbilidadData as any)?.momento_ocurrencia?.distribucion || {}
-
-    Object.keys(mortDist).forEach((k) => labels.add(k))
-    Object.keys(morbDist).forEach((k) => labels.add(k))
-    
-    const sortedLabels = Array.from(labels).sort()
-    return {
-      labels: sortedLabels,
-      mortalidadValues: sortedLabels.map((l) => mortDist[l] || 0),
-      morbilidadValues: sortedLabels.map((l) => morbDist[l] || 0),
-    }
-  }, [mortalidadData, morbilidadData])
-
-  const heatmapDemorasData = useMemo(() => {
-    return (mortalidadData as any)?.heatmap_demoras
+  const edadRiesgoMortalidad = useMemo(() => {
+    return mortalidadData?.distribucion_edad_riesgo ?? null
   }, [mortalidadData])
 
-  const sankeyFlujoData = useMemo(() => {
-    return (mortalidadData as any)?.sankey_flujo
-  }, [mortalidadData])
+  const edadRiesgoMorbilidad = useMemo(() => {
+    return morbilidadData?.distribucion_edad_riesgo ?? null
+  }, [morbilidadData])
 
   const severidadFallasData = useMemo(() => {
     return (morbilidadData as any)?.severidad_fallas
@@ -254,112 +176,17 @@ export function useDashboardCharts({
     }
   }, [morbilidadData])
 
-  const criteriosInclusionData = useMemo(() => {
-    if (!morbilidadData?.criterios_inclusion) return null
-    const items = Object.values(morbilidadData.criterios_inclusion).map((c: any) => ({
-      nombre: c.nombre,
-      casos: c.casos,
-      porcentaje: c.porcentaje,
-    }))
-    return items.sort((a, b) => b.casos - a.casos)
-  }, [morbilidadData])
-
-  const momentoOcurrenciaData = useMemo(() => {
-    const dist = (morbilidadData as any)?.momento_ocurrencia?.distribucion
-    if (!dist || Object.keys(dist).length === 0) return null
-    return Object.entries(dist).map(([label, count]) => ({
-      label,
-      count: count as number,
-    }))
-  }, [morbilidadData])
-
-  const tiempoRemisionData = useMemo(() => {
-    const data = (morbilidadData as any)?.tiempo_remision
-    if (!data || !data.valores || data.valores.length === 0) return null
-    return {
-      valores: data.valores as number[],
-      min: data.min as number,
-      q1: data.q1 as number,
-      median: data.median as number,
-      mean: data.mean as number,
-      q3: data.q3 as number,
-      max: data.max as number,
-      total: data.total as number,
-    }
-  }, [morbilidadData])
-
-  /* ── Atención & Oportunidad tab data ── */
-
-  const atencionKpis = useMemo(() => {
-    const mortStats = (mortalidadData as any)?.estadisticas_basicas
-    const morbStats = (morbilidadData as any)?.estadisticas_basicas
-    if (!mortStats && !morbStats) return null
-
-    const cpnMort = mortStats?.controles_prenatales_promedio ?? null
-    const gestMort = mortStats?.gestaciones_promedio ?? null
-
-    // Prenatal controls: mortalidad has explicit column '8.1 No. CPN'
-    // Morbilidad has 'N° controles prenatales' but it's exposed differently
-    const estanciaMorb = morbStats?.estancia_hospitalaria_promedio ?? null
-    const estanciaUciMorb = morbStats?.estancia_uci_promedio ?? null
-
-    return {
-      cpnPromedio: cpnMort != null ? Math.round(cpnMort) : null,
-      gestacionesPromedio: gestMort != null ? Math.round(gestMort) : null,
-      estanciaHospitalaria: estanciaMorb != null ? Math.round(estanciaMorb) : null,
-      estanciaUci: estanciaUciMorb != null ? Math.round(estanciaUciMorb) : null,
-      totalMort: mortStats?.total_casos ?? 0,
-      totalMorb: morbStats?.total_casos ?? 0,
-    }
-  }, [mortalidadData, morbilidadData])
-
-  const institucionReferenciaData = useMemo(() => {
-    const data = (morbilidadData as any)?.institucion_referencia
-    if (!data || !data.instituciones || data.instituciones.length === 0) return null
-    return {
-      instituciones: data.instituciones as string[],
-      conteos: data.conteos as number[],
-      con_uci: data.con_uci as number[],
-      con_cirugia: data.con_cirugia as number[],
-      totalConDato: data.total_con_dato as number,
-      totalCasos: data.total_casos as number,
-    }
-  }, [morbilidadData])
-
-  const obstetricoEdadData = useMemo(() => {
-    // Extract prenatal/obstetric data by age from both datasets
-    const extractVar = (data: any, colKey: string) => {
-      const obj = data?.obstetrico_edad?.[colKey]
-      if (!obj) return null
-      return {
-        nombre: obj.nombre as string,
-        valoresEje: obj.valores_eje as number[],
-        conteos: obj.conteos_total as number[],
-        porEdad: obj.por_edad as Record<string, number[]>,
-        promedio: obj.promedio as number,
-        total: obj.total as number,
-      }
-    }
-
-    // Mortalidad uses '6.5 Gestaciones', '8.1 No. CPN' etc.
-    // Morbilidad uses 'N° gestaciones', 'N° controles prenatales' etc.
-    const mortGest = extractVar(mortalidadData, '6.5 Gestaciones')
-    const morbGest = extractVar(morbilidadData, 'N° gestaciones')
-    const mortCesareas = extractVar(mortalidadData, '6.7 Cesáreas')
-    const morbCesareas = extractVar(morbilidadData, 'Cesáreas')
-    const mortPartos = extractVar(mortalidadData, '6.6 Partos Vaginales')
-    const morbPartos = extractVar(morbilidadData, 'Partos vaginales')
-
-    const variables: { label: string; mort: any; morb: any }[] = [
-      { label: 'Gestaciones', mort: mortGest, morb: morbGest },
-      { label: 'Partos Vaginales', mort: mortPartos, morb: morbPartos },
-      { label: 'Cesáreas', mort: mortCesareas, morb: morbCesareas },
-    ]
-
-    const available = variables.filter(v => v.mort || v.morb)
-    return available.length > 0 ? available : null
-  }, [mortalidadData, morbilidadData])
-
-  return { lineChartData, topCausasMortalidad, topCausasMorbilidad, activeClusterData, clusteringChartData, demorasChartData, edadChartData, edadGestacionalMortalidad, edadGestacionalMorbilidad, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData }
+  return {
+    lineChartData,
+    topCausasMortalidad,
+    topCausasMorbilidad,
+    demorasChartData,
+    edadChartData,
+    edadGestacionalMortalidad,
+    edadGestacionalMorbilidad,
+    edadRiesgoMortalidad,
+    edadRiesgoMorbilidad,
+    severidadFallasData,
+    morbKpis,
+  }
 }
-

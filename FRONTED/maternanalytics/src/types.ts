@@ -5,12 +5,14 @@ export interface AnalisisMeta {
   limpieza_datos: Record<string, unknown>
   total_registros?: number
   anos_disponibles: number[]
-  filtros_activos: { year: string | null; month: string | null }
+  ultima_semana_reportada?: { anio: number; semana: number } | null
+  filtros_activos: { year: string | null; month: string | null; week?: string | null; day?: string | null }
   distribucion_mensual?: Record<string, Record<string, number>>
   causas_cie10?: { top_causas: CausaCie10[]; total_causas_unicas: number }
   criterios_inclusion?: Record<string, CriterioInclusion>
   demoras?: Record<string, DemoraDetalle>
   distribucion_edad_gestacional?: { labels: string[]; valores: number[]; total: number }
+  distribucion_edad_riesgo?: { labels: string[]; valores: number[]; total: number }
 }
 
 export interface EstadisticasBasicas {
