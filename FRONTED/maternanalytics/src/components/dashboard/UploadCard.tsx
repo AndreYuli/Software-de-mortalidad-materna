@@ -45,6 +45,10 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) processSelectedFile(e.target.files[0])
+    // Sin esto, seleccionar el mismo archivo dos veces seguidas (p. ej. tras
+    // "Eliminar archivo") no dispara 'change' porque el input nativo no
+    // considera que su valor cambió.
+    e.target.value = ''
   }
 
   const missingColumns = error?.missing ?? []

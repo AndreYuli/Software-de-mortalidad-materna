@@ -1,6 +1,7 @@
 import './UploadSection.css'
-import type { FileValidationError } from '../../utils/excelValidation'
+import type { FileValidationError, FilePreview } from '../../utils/excelValidation'
 import { UploadCard } from './UploadCard'
+import { FilePreviewTable } from './FilePreviewTable'
 import { CheckIcon, ErrorIcon, SpinnerIcon, SendIcon } from '../icons'
 
 interface UploadSectionProps {
@@ -9,6 +10,7 @@ interface UploadSectionProps {
   eventLabel: string
   file: File | null // 1. Tipado nativo consistente con 'onFile'
   error: FileValidationError | null
+  preview: FilePreview | null
   validating: boolean
   done: boolean
   analyzeError: string | null
@@ -23,6 +25,7 @@ export function UploadSection({
   description,
   file,
   error,
+  preview,
   validating,
   done,
   analyzeError,
@@ -56,6 +59,9 @@ export function UploadSection({
         onRemove={handleRemove}
         eventLabel={eventLabel}
       />
+
+      {/* Vista previa del archivo: columnas, primeras filas y cantidad de registros */}
+      {file && !error && preview && <FilePreviewTable preview={preview} />}
 
       {/* Mensaje de Éxito (A11y mejorado con role="status") */}
       {done && (

@@ -78,6 +78,45 @@ export function findBestSheet(workbook: XLSX.WorkBook, requiredColumns: string[]
   return bestSheet
 }
 
+export interface FilePreview {
+  headers: string[]
+  rows: unknown[][]
+  totalRows: number
+}
+
+function isRowEmpty(row: unknown[]): boolean {
+  return row.every((cell) => cell === undefined || cell === null || String(cell).trim() === '')
+}
+
+export async function previewExcel(
+  file: File,
+  requiredColumns: string[],
+  tipo: TipoEvento,
+): Promise<FilePreview | null> {
+  try {
+    const buffer = await file.arrayBuffer()
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' })
+    const bestSheetName = findBestSheet(workbook, requiredColumns, tipo)
+    const jsonData: unknown[][] = XLSX.utils.sheet_to_json(workbook.Sheets[bestSheetName], { header: 1 })
+
+    if (jsonData.length === 0) return null
+
+    const headerRowIndex = findHeaderRow(jsonData, requiredColumns, tipo)
+    const headers = ((jsonData[headerRowIndex] as unknown[]) || []).map((header) => String(header ?? '').trim())
+    if (headers.length === 0) return null
+
+    const dataRows = (jsonData.slice(headerRowIndex + 1) as unknown[][]).filter((row) => !isRowEmpty(row))
+
+    return {
+      headers,
+      rows: dataRows.slice(0, 5),
+      totalRows: dataRows.length,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function validateColumns(
   file: File,
   requiredColumns: string[],

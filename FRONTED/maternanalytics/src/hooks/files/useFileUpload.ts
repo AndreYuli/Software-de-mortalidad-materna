@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { API_URL } from '../../api'
-import { validateColumns, type FileValidationError } from '../../utils/excelValidation'
+import { validateColumns, previewExcel, type FileValidationError, type FilePreview } from '../../utils/excelValidation'
 import { COLUMNAS_MORTALIDAD, COLUMNAS_MORBILIDAD } from '../../constants/dashboardConstants'
 
 export interface UseFileUploadOptions {
@@ -10,6 +10,7 @@ export interface UseFileUploadOptions {
 export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFileUploadOptions) {
   const [file, setFile] = useState<File | null>(null)
   const [error, setError] = useState<FileValidationError | null>(null)
+  const [preview, setPreview] = useState<FilePreview | null>(null)
   const [validating, setValidating] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [done, setDone] = useState(false)
@@ -21,6 +22,7 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
     if (!selectedFile) {
       setFile(null)
       setError(null)
+      setPreview(null)
       setDone(false)
       setAnalyzeError(null)
       return
@@ -28,6 +30,7 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
 
     setFile(selectedFile)
     setError(null)
+    setPreview(null)
     setDone(false)
     setAnalyzeError(null)
     setValidating(true)
@@ -36,7 +39,11 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
     setValidating(false)
     if (!result.valid) {
       setError(result)
+      return
     }
+
+    const filePreview = await previewExcel(selectedFile, columns, tipo)
+    setPreview(filePreview)
   }, [columns, tipo])
 
   const handleAnalyze = useCallback(async () => {
@@ -84,6 +91,7 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
   return {
     file,
     error,
+    preview,
     validating,
     analyzing,
     done,
