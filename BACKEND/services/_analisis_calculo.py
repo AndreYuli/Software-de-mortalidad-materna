@@ -11,6 +11,7 @@ from services._analisis_filtros import (
     _enriquecer_df_con_fecha,
     _extraer_anos_disponibles,
     _filtrar_por_fecha,
+    _ultima_semana_reportada,
 )
 from services._analisis_persistencia import _construir_df_desde_bd
 from services._morbilidad_processor import MorbilidadProcessor
@@ -25,7 +26,12 @@ _COLUMNAS_EXTRA = [
 
 
 def calcular_completo(
-    analisis: Analisis, year: str | None, month: str | None, db: Session
+    analisis: Analisis,
+    year: str | None,
+    month: str | None,
+    db: Session,
+    week: str | None = None,
+    day: str | None = None,
 ) -> dict[str, Any]:
     """Genera el análisis estadístico completo con filtros de fecha opcionales.
 
@@ -34,6 +40,8 @@ def calcular_completo(
         year: Año para filtrar (opcional).
         month: Mes para filtrar (opcional).
         db: Sesión de base de datos.
+        week: Semana ISO del año para filtrar (opcional).
+        day: Día del mes para filtrar (opcional).
 
     Returns:
         Dict con estadísticas, distribuciones y metadatos.
@@ -51,7 +59,8 @@ def calcular_completo(
         df, limpieza = preparar_dataframe_analisis(df)
         df = _enriquecer_df_con_fecha(db, df, analisis.tipo)
         anos = _extraer_anos_disponibles(df, analisis.tipo)
-        df = _filtrar_por_fecha(df, analisis.tipo, year, month)
+        ultima_semana = _ultima_semana_reportada(df, analisis.tipo)
+        df = _filtrar_por_fecha(df, analisis.tipo, year, month, week, day)
 
         meta: dict[str, Any] = {
             "id": analisis.id,
@@ -59,7 +68,8 @@ def calcular_completo(
             "fecha_carga": analisis.fecha_carga.isoformat(),
             "limpieza_datos": limpieza,
             "anos_disponibles": anos,
-            "filtros_activos": {"year": year, "month": month},
+            "ultima_semana_reportada": ultima_semana,
+            "filtros_activos": {"year": year, "month": month, "week": week, "day": day},
             "distribucion_mensual": _calcular_distribucion_mensual(df, analisis.tipo),
         }
 
@@ -73,6 +83,7 @@ def calcular_completo(
                 "demoras": p.analizar_demoras(),
                 "causas_cie10": p.analizar_causas_cie10(top_n=10),
                 "obstetrico_edad": p.analizar_obstetrico_por_edad(),
+                "distribucion_edad_riesgo": p.analizar_distribucion_edad_riesgo(),
                 "distribucion_edad_gestacional": p.analizar_distribucion_edad_gestacional(),
                 "heatmap_demoras": p.analizar_heatmap_causa_demoras(top_n=20),
                 "sankey_flujo": p.analizar_sankey_flujo(),
@@ -89,6 +100,7 @@ def calcular_completo(
                 "institucion_referencia": p.analizar_institucion_referencia(),
                 "tiempo_remision": p.analizar_tiempo_remision(),
                 "obstetrico_edad": p.analizar_obstetrico_por_edad(),
+                "distribucion_edad_riesgo": p.analizar_distribucion_edad_riesgo(),
                 "distribucion_edad_gestacional": p.analizar_distribucion_edad_gestacional(),
                 "severidad_fallas": p.analizar_severidad_fallas(),
             }

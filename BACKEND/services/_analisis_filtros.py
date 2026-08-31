@@ -45,13 +45,13 @@ def _detectar_col_fecha(df: pd.DataFrame, tipo: str) -> str | None:
         if col in df.columns and df[col].notna().any():
             columna_fecha = col
             break
-    # 2. Si no encontramos ninguna con datos, tomamos la primera candidata presente (aunque esté vacía)
+    # 2. Si ninguna tiene datos, tomamos la primera candidata presente (aunque esté vacía)
     if columna_fecha is None:
         for col in candidatos:
             if col in df.columns:
                 columna_fecha = col
                 break
-    # 3. Si no hay candidatos, buscamos cualquier columna que contenga 'fecha' y tenga datos (solo para morbilidad)
+    # 3. Sin candidatos, buscamos cualquier columna con 'fecha' y datos (solo morbilidad)
     if columna_fecha is None and tipo == "morbilidad":
         columna_fecha = next(
             (col for col in df.columns if "fecha" in str(col).lower() and df[col].notna().any()),
@@ -86,14 +86,18 @@ def _filtrar_por_fecha(
     tipo: str,
     year: str | None,
     month: str | None,
+    week: str | None = None,
+    day: str | None = None,
 ) -> pd.DataFrame:
-    """Filtra el DataFrame por año y/o mes según la columna de fecha detectada.
+    """Filtra el DataFrame por año, mes, semana ISO y/o día según la columna de fecha detectada.
 
     Args:
         df: DataFrame a filtrar.
         tipo: Tipo de análisis.
         year: Año como string, o None para no filtrar.
-        month: Mes como string, o None para no filtrar.
+        month: Mes (1-12) como string, o None para no filtrar.
+        week: Semana ISO del año (1-53) como string, o None para no filtrar.
+        day: Día del mes (1-31) como string, o None para no filtrar.
 
     Returns:
         DataFrame filtrado y con índice reiniciado.
@@ -107,8 +111,38 @@ def _filtrar_por_fecha(
             mask &= fechas.dt.year == int(year)
         if month:
             mask &= fechas.dt.month == int(month)
+        if week:
+            # .astype(int) directo rompe si hay fechas NaT (isocalendar da <NA>
+            # nullable); comparar en el dtype nullable y luego fillna(False).
+            mask &= (fechas.dt.isocalendar().week == int(week)).fillna(False)
+        if day:
+            mask &= fechas.dt.day == int(day)
         df_filtrado = df[mask].reset_index(drop=True)
     return df_filtrado
+
+
+def _ultima_semana_reportada(df: pd.DataFrame, tipo: str) -> dict[str, int] | None:
+    """Calcula la semana ISO y el año del caso más reciente en el DataFrame completo.
+
+    Se usa para que el tablero principal indique la semana de la última
+    carga, independientemente de qué filtros estén activos.
+
+    Args:
+        df: DataFrame completo (sin filtrar), con datos de análisis.
+        tipo: Tipo de análisis.
+
+    Returns:
+        Dict con 'anio' y 'semana', o None si no hay columna de fecha o datos válidos.
+    """
+    col = _detectar_col_fecha(df, tipo)
+    if col is None:
+        return None
+    fechas = parse_fecha_robusta(df[col]).dropna()
+    if fechas.empty:
+        return None
+    fecha_max = fechas.max()
+    iso = fecha_max.isocalendar()
+    return {"anio": int(iso.year), "semana": int(iso.week)}
 
 
 def _calcular_distribucion_mensual(df: pd.DataFrame, tipo: str) -> dict[str, Any]:

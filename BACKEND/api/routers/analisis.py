@@ -113,6 +113,8 @@ def analisis_completo(
     pk: int,
     year: str | None = Query(default=None),
     month: str | None = Query(default=None),
+    week: str | None = Query(default=None),
+    day: str | None = Query(default=None),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     """Devuelve el análisis estadístico completo con filtros opcionales.
@@ -121,6 +123,8 @@ def analisis_completo(
         pk: ID del análisis.
         year: Año para filtrar los datos (opcional).
         month: Mes para filtrar los datos (opcional).
+        week: Semana ISO del año para filtrar los datos (opcional).
+        day: Día del mes para filtrar los datos (opcional).
         db: Sesión de base de datos inyectada.
 
     Returns:
@@ -138,6 +142,8 @@ def analisis_completo(
             year=year,
             month=month,
             db=db,
+            week=week,
+            day=day,
         )
     return resultado
 
