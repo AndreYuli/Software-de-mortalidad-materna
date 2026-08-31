@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# skills CLI: regenerated from skills-lock.json, not committed
+.agents/
+.playwright-cli/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
