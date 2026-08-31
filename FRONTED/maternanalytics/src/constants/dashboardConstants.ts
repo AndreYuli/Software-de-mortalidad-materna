@@ -56,6 +56,10 @@ export function getCie10Description(code: unknown): string {
   if (CIE10_DESCRIPTIONS[normalized]) return CIE10_DESCRIPTIONS[normalized];
   const prefix3 = normalized.slice(0, 3);
   if (CIE10_DESCRIPTIONS[prefix3]) return CIE10_DESCRIPTIONS[prefix3];
+  // El catálogo oficial marca las categorías de 3 caracteres sin subdivisión
+  // con una "X" de relleno (p. ej. 'O85X'), mientras que los datos de origen
+  // suelen traer el código sin ese relleno (p. ej. 'O85').
+  if (normalized.length === 3 && CIE10_DESCRIPTIONS[`${prefix3}X`]) return CIE10_DESCRIPTIONS[`${prefix3}X`];
   return 'Descripción no disponible';
 }
 

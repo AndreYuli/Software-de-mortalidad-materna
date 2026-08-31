@@ -11,6 +11,11 @@ describe('getCie10Description', () => {
     expect(getCie10Description('Z999999')).toBe('Descripción no disponible')
   })
 
+  it('resuelve un código de 3 caracteres contra la entrada con relleno "X" del catálogo', () => {
+    expect(getCie10Description('O85')).toBe('Sepsis Puerperal')
+    expect(getCie10Description('O94')).toBe('Secuelas De Complicaciones Del Embarazo, Del Parto Y Del Puerperio')
+  })
+
   it('retorna el mensaje por defecto para un código vacío o nulo', () => {
     expect(getCie10Description('')).toBe('Descripción no disponible')
     expect(getCie10Description(null)).toBe('Descripción no disponible')
