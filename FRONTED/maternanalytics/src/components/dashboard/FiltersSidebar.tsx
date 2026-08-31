@@ -2,6 +2,9 @@ import { MESES_ES } from '../../constants/dashboardConstants'
 import type { Segmento } from '../../hooks/dashboard/useDashboardMetrics'
 import './FiltersSidebar.css'
 
+const SEMANAS_ISO = Array.from({ length: 53 }, (_, i) => i + 1)
+const DIAS_MES = Array.from({ length: 31 }, (_, i) => i + 1)
+
 export interface FiltersSidebarProps {
   segmento?: Segmento
   onSegmentoChange?: (segmento: Segmento) => void
@@ -12,6 +15,10 @@ export interface FiltersSidebarProps {
   availableYears: number[]
   filterMonth: string
   onMonthChange: (month: string) => void
+  filterWeek: string
+  onWeekChange: (week: string) => void
+  filterDay: string
+  onDayChange: (day: string) => void
   onExport: () => void
 }
 
@@ -21,13 +28,19 @@ export function FiltersSidebar({
   availableYears,
   filterMonth,
   onMonthChange,
+  filterWeek,
+  onWeekChange,
+  filterDay,
+  onDayChange,
   onExport,
 }: FiltersSidebarProps) {
-  const hasActiveFilters = Boolean(filterYear || filterMonth)
+  const hasActiveFilters = Boolean(filterYear || filterMonth || filterWeek || filterDay)
 
   const handleClearFilters = () => {
     onYearChange('')
     onMonthChange('')
+    onWeekChange('')
+    onDayChange('')
   }
 
   return (
@@ -44,9 +57,10 @@ export function FiltersSidebar({
       <div className="sidebar-filter-content">
         {/* Year Filter */}
         <div className="filter-field-group">
-          <label className="field-label">Año de Reporte</label>
+          <label className="field-label" htmlFor="filter-year">Año de Reporte</label>
           <div className="custom-select-wrapper">
             <select
+              id="filter-year"
               value={filterYear}
               onChange={(e) => onYearChange(e.target.value)}
               className="sidebar-select"
@@ -64,9 +78,10 @@ export function FiltersSidebar({
 
         {/* Month Filter */}
         <div className="filter-field-group">
-          <label className="field-label">Mes de Reporte</label>
+          <label className="field-label" htmlFor="filter-month">Mes de Reporte</label>
           <div className="custom-select-wrapper">
             <select
+              id="filter-month"
               value={filterMonth}
               onChange={(e) => onMonthChange(e.target.value)}
               className="sidebar-select"
@@ -83,6 +98,58 @@ export function FiltersSidebar({
           {!filterYear && (
             <small className="field-helper warning">
               * Selecciona un año primero para habilitar meses.
+            </small>
+          )}
+        </div>
+
+        {/* Week Filter */}
+        <div className="filter-field-group">
+          <label className="field-label" htmlFor="filter-week">Semana de Reporte</label>
+          <div className="custom-select-wrapper">
+            <select
+              id="filter-week"
+              value={filterWeek}
+              onChange={(e) => onWeekChange(e.target.value)}
+              className="sidebar-select"
+              disabled={!filterYear}
+            >
+              <option value="">Todas las semanas</option>
+              {SEMANAS_ISO.map((w) => (
+                <option key={w} value={String(w)}>
+                  Semana {w}
+                </option>
+              ))}
+            </select>
+          </div>
+          {!filterYear && (
+            <small className="field-helper warning">
+              * Selecciona un año primero para habilitar semanas.
+            </small>
+          )}
+        </div>
+
+        {/* Day Filter */}
+        <div className="filter-field-group">
+          <label className="field-label" htmlFor="filter-day">Día de Reporte</label>
+          <div className="custom-select-wrapper">
+            <select
+              id="filter-day"
+              value={filterDay}
+              onChange={(e) => onDayChange(e.target.value)}
+              className="sidebar-select"
+              disabled={!filterMonth}
+            >
+              <option value="">Todos los días</option>
+              {DIAS_MES.map((d) => (
+                <option key={d} value={String(d)}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </div>
+          {!filterMonth && (
+            <small className="field-helper warning">
+              * Selecciona un mes primero para habilitar días.
             </small>
           )}
         </div>

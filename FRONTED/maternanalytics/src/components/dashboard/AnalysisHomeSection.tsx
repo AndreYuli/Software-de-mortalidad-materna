@@ -9,16 +9,11 @@ import { DashboardErrorState } from './DashboardErrorState'
 import { FiltersSidebar } from './FiltersSidebar'
 import { KpiRow } from './KpiRow'
 import { TrendChartsRow } from './TrendChartsRow'
-import { ClusteringSection } from './ClusteringSection'
-import { HeatmapDemoras } from './HeatmapDemoras'
-import { SankeyMortalidad } from './SankeyMortalidad'
-import { SeveridadFallasMorbilidad } from './SeveridadFallasMorbilidad'
-import { AtencionOportunidad } from './AtencionOportunidad'
 import { ExportReportModal } from './ExportReportModal'
 import { useDashboardTabs } from '../../hooks/navigation/useDashboardTabs'
 import { SubTabs } from './SubTabs'
-import { SociodemograficoPendiente } from './SociodemograficoPendiente'
 import { DistribucionEdadGestacional } from './DistribucionEdadGestacional'
+import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
 export interface AnalysisHomeSectionProps {
@@ -27,10 +22,14 @@ export interface AnalysisHomeSectionProps {
   onGoToUpload: (view: 'mortalidad' | 'morbilidad') => void
   filterYear: string
   filterMonth: string
+  filterWeek: string
+  filterDay: string
   availableYears: number[]
   onAvailableYears: (years: number[]) => void
   onYearChange: (year: string) => void
   onMonthChange: (month: string) => void
+  onWeekChange: (week: string) => void
+  onDayChange: (day: string) => void
 }
 
 export function AnalysisHomeSection({
@@ -39,10 +38,14 @@ export function AnalysisHomeSection({
   onGoToUpload,
   filterYear,
   filterMonth,
+  filterWeek,
+  filterDay,
   availableYears,
   onAvailableYears,
   onYearChange,
   onMonthChange,
+  onWeekChange,
+  onDayChange,
 }: AnalysisHomeSectionProps) {
   const [segmento, setSegmento] = useState<Segmento>(() => {
     if (latestMortalidad && latestMorbilidad) return 'ambos'
@@ -50,36 +53,46 @@ export function AnalysisHomeSection({
     if (latestMorbilidad) return 'morbilidad'
     return 'ambos'
   })
-  const [pcaDim, setPcaDim] = useState<'2d' | '3d'>('2d')
-  const [clusteringSegment, setClusteringSegment] = useState<'mortalidad' | 'morbilidad'>(() =>
-    latestMortalidad ? 'mortalidad' : 'morbilidad',
-  )
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
   const { activeTab, setActiveTab, activeSubTab, setActiveSubTab } = useDashboardTabs()
 
   const handleSegmentoChange = useCallback((value: Segmento) => {
     setSegmento(value)
-    if (value !== 'ambos') setClusteringSegment(value)
   }, [])
 
   const handleExportReport = useCallback(() => {
     setIsExportModalOpen(true)
   }, [])
 
-  const { mortalidadData, morbilidadData, mortalidadClustering, morbilidadClustering, loading, error, hasData } =
-    useAnalysisHomeData({ latestMortalidad, latestMorbilidad, filterYear, filterMonth, onAvailableYears })
+  const { mortalidadData, morbilidadData, loading, error, hasData } = useAnalysisHomeData({
+    latestMortalidad,
+    latestMorbilidad,
+    filterYear,
+    filterMonth,
+    filterWeek,
+    filterDay,
+    onAvailableYears,
+  })
 
   const metrics = useDashboardMetrics({ segmento, mortalidadData, morbilidadData, filterYear, filterMonth })
 
-  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, activeClusterData, clusteringChartData, demorasChartData, edadChartData, momentoChartData, heatmapDemorasData, sankeyFlujoData, severidadFallasData, morbKpis, criteriosInclusionData, momentoOcurrenciaData, tiempoRemisionData, atencionKpis, institucionReferenciaData, obstetricoEdadData, edadGestacionalMortalidad, edadGestacionalMorbilidad } = useDashboardCharts({
+  const ultimaSemanaReportada = useMemo(() => {
+    const candidatos = [mortalidadData?.ultima_semana_reportada, morbilidadData?.ultima_semana_reportada].filter(
+      (v): v is { anio: number; semana: number } => Boolean(v),
+    )
+    if (candidatos.length === 0) return null
+    return candidatos.reduce((mas_reciente, actual) =>
+      actual.anio > mas_reciente.anio || (actual.anio === mas_reciente.anio && actual.semana > mas_reciente.semana)
+        ? actual
+        : mas_reciente,
+    )
+  }, [mortalidadData, morbilidadData])
+
+  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, demorasChartData, edadChartData, severidadFallasData, morbKpis, edadGestacionalMortalidad, edadGestacionalMorbilidad, edadRiesgoMortalidad, edadRiesgoMorbilidad } = useDashboardCharts({
     segmento,
     mortalidadData,
     morbilidadData,
     filterYear,
-    pcaDim,
-    clusteringSegment,
-    mortalidadClustering,
-    morbilidadClustering,
   })
 
   const reportExportData = useMemo(() => {
@@ -149,6 +162,11 @@ export function AnalysisHomeSection({
             <div className="dash-control-title">
               <h1>Análisis Epidemiológico</h1>
               <p>Panel descriptivo y de inteligencia de salud pública de VidaMaterna</p>
+              {ultimaSemanaReportada && (
+                <p className="dash-ultima-semana">
+                  Última carga: Semana {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
+                </p>
+              )}
             </div>
 
             <div className="dashboard-tabs">
@@ -185,30 +203,7 @@ export function AnalysisHomeSection({
           />
 
           {activeTab === 'generalidades' && (
-            <>
-              <TrendChartsRow
-                lineChartData={lineChartData}
-                topCausasMortalidad={topCausasMortalidad}
-                topCausasMorbilidad={topCausasMorbilidad}
-                demorasChartData={demorasChartData}
-                edadChartData={edadChartData}
-                momentoChartData={momentoChartData}
-              />
-
-              <ClusteringSection
-                segmento={segmento}
-                clusteringSegment={clusteringSegment}
-                onClusteringSegmentChange={setClusteringSegment}
-                pcaDim={pcaDim}
-                onPcaDimChange={setPcaDim}
-                activeClusterData={activeClusterData}
-                clusteringChartData={clusteringChartData}
-                latestMortalidad={latestMortalidad}
-                latestMorbilidad={latestMorbilidad}
-                filterYear={filterYear}
-                filterMonth={filterMonth}
-              />
-            </>
+            <TrendChartsRow topCausasMortalidad={topCausasMortalidad} topCausasMorbilidad={topCausasMorbilidad} />
           )}
 
           {activeTab === 'morbilidad' && (
@@ -216,27 +211,11 @@ export function AnalysisHomeSection({
               <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
               {activeSubTab === 'sociodemografico' && (
-                <>
-                  <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
-                  <SociodemograficoPendiente evento="Morbilidad" />
-                </>
+                <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
               )}
 
               {activeSubTab === 'clinico' && (
-                <>
-                  <SeveridadFallasMorbilidad
-                    data={severidadFallasData}
-                    morbKpis={morbKpis}
-                    criteriosInclusion={criteriosInclusionData}
-                    momentoOcurrencia={momentoOcurrenciaData}
-                    tiempoRemision={tiempoRemisionData}
-                  />
-                  <AtencionOportunidad
-                    kpis={atencionKpis}
-                    institucionReferencia={institucionReferenciaData}
-                    obstetricoEdad={obstetricoEdadData}
-                  />
-                </>
+                <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
               )}
             </>
           )}
@@ -246,21 +225,11 @@ export function AnalysisHomeSection({
               <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
               {activeSubTab === 'sociodemografico' && (
-                <>
-                  <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
-                  <SociodemograficoPendiente evento="Mortalidad" />
-                </>
+                <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
               )}
 
               {activeSubTab === 'clinico' && (
-                <>
-                  <div className="charts-grid-row">
-                    <SankeyMortalidad data={sankeyFlujoData} />
-                  </div>
-                  <div className="charts-grid-row">
-                    <HeatmapDemoras data={heatmapDemorasData} />
-                  </div>
-                </>
+                <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
               )}
             </>
           )}
@@ -276,6 +245,10 @@ export function AnalysisHomeSection({
           availableYears={availableYears}
           filterMonth={filterMonth}
           onMonthChange={onMonthChange}
+          filterWeek={filterWeek}
+          onWeekChange={onWeekChange}
+          filterDay={filterDay}
+          onDayChange={onDayChange}
           onExport={handleExportReport}
         />
       </div>

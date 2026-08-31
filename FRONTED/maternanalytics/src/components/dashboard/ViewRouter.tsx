@@ -19,10 +19,14 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           onGoToUpload={onNavigate}
           filterYear={data.filterYear}
           filterMonth={data.filterMonth}
+          filterWeek={data.filterWeek}
+          filterDay={data.filterDay}
           availableYears={data.availableYears}
           onAvailableYears={data.setAvailableYears}
           onYearChange={data.setFilterYear}
           onMonthChange={data.setFilterMonth}
+          onWeekChange={data.setFilterWeek}
+          onDayChange={data.setFilterDay}
         />
       )
 
@@ -34,6 +38,7 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           eventLabel="Mortalidad Materna (Evento 550)"
           file={data.mortalidadFile}
           error={data.mortalidadError}
+          preview={data.mortalidadPreview}
           validating={data.mortalidadValidating}
           done={data.mortalidadDone}
           analyzeError={data.mortalidadAnalyzeError}
@@ -52,6 +57,7 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           eventLabel="Morbilidad Materna Extrema (Evento 549)"
           file={data.morbilidadFile}
           error={data.morbilidadError}
+          preview={data.morbilidadPreview}
           validating={data.morbilidadValidating}
           done={data.morbilidadDone}
           analyzeError={data.morbilidadAnalyzeError}
