@@ -5,7 +5,7 @@ export function DashboardLoadingState() {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '400px' }}>
       <div className="spinner"></div>
       <p style={{ marginTop: '16px', color: '#64748b', fontWeight: '600' }}>
-        Generando panel estratégico y calculando clustering...
+        Generando panel estratégico...
       </p>
     </div>
   )
