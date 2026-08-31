@@ -66,6 +66,15 @@ def test_analizar_sankey_flujo_genera_nodos_y_enlaces_con_prefijos():
     assert any(n.startswith("[Muerte]") for n in resultado["nodos"])
 
 
+def test_analizar_distribucion_edad_riesgo_agrupa_por_cortes_de_riesgo():
+    """Debe agrupar en <19, 19-34 y >=35 anos usando los cortes de riesgo obstetrico."""
+    p = MortalidadProcessor(df_mortalidad_ejemplo())
+    resultado = p.analizar_distribucion_edad_riesgo()
+    assert resultado["labels"] == ["<19 años", "19-34 años", "≥35 años"]
+    assert resultado["valores"] == [0, 5, 1]
+    assert resultado["total"] == 6
+
+
 def test_analizar_distribucion_edad_gestacional_agrupa_por_categorias_clinicas():
     """Debe agrupar en <28, 28-36, 37-41 y >=42 semanas de gestacion."""
     p = MortalidadProcessor(df_mortalidad_ejemplo())
