@@ -4,7 +4,7 @@
 
 **Goal:** Que el nombre completo de cada causa CIE-10 sea siempre legible junto a su barra en "Top 10 Causas de Mortalidad" y "Top 10 Causas de Morbilidad", sin recortes ni `"..."`, tanto en el eje como en el tooltip.
 
-**Architecture:** Todo el cambio vive en un solo archivo, `TrendChartsRow.tsx`. Se quita el límite de 2 líneas de `wrapLabel`, se agrega una función pura `calculateChartHeight` que calcula el alto del contenedor según cuántas líneas ocupan las etiquetas, y se extrae un subcomponente `CausasBarChart` que unifica la config de Chart.js (antes duplicada dos veces) agregando un callback de tooltip que siempre muestra el texto original completo.
+**Architecture:** Se quita el límite de 2 líneas de `wrapLabel` y se agrega una función pura `calculateChartHeight` (Tasks 1-2, inicialmente ambas dentro de `TrendChartsRow.tsx`). En el Task 3 se extrae un subcomponente `CausasBarChart` que unifica la config de Chart.js (antes duplicada dos veces) con un callback de tooltip que siempre muestra el texto original completo, y — por un hallazgo de la revisión de calidad del Task 2 (`react-refresh/only-export-components`: un archivo de componente no puede exportar también funciones/constantes sueltas sin romper Fast Refresh) — `wrapLabel` y `calculateChartHeight` se mueven a un módulo de utilidades nuevo, `src/utils/causasChartLabels.ts`, siguiendo el patrón ya usado en el proyecto para helpers puros (`src/utils/aiChartInsights.ts`, `src/utils/excelValidation.ts`). `TrendChartsRow.tsx` queda como archivo de componente puro (solo `CausasBarChart` interno y `TrendChartsRow` exportado).
 
 **Tech Stack:** React + TypeScript, Chart.js v4 vía `react-chartjs-2`, Vitest + Testing Library.
 
@@ -197,41 +197,75 @@ git commit -m "feat: alto dinamico de grafica segun lineas de etiqueta"
 
 ---
 
-## Task 3: Extraer `CausasBarChart` y usar tooltip con el texto completo
+## Task 3: Mover `wrapLabel`/`calculateChartHeight` a un módulo de utilidades, extraer `CausasBarChart` y usar tooltip con el texto completo
+
+**Contexto añadido tras la revisión de calidad del Task 2:** `pnpm run lint` ya falla hoy con 2 errores `react-refresh/only-export-components` en `TrendChartsRow.tsx` (uno por `wrapLabel`, otro por `calculateChartHeight`) — un archivo de componente de React no puede exportar también funciones/constantes sueltas sin romper Fast Refresh. Este task, además de extraer `CausasBarChart`, mueve `wrapLabel` y `calculateChartHeight` a un módulo de utilidades nuevo (`src/utils/causasChartLabels.ts`), siguiendo el mismo patrón que ya usa el proyecto para helpers puros de gráficas (`src/utils/aiChartInsights.ts`). Así `TrendChartsRow.tsx` queda como archivo de componente puro y el lint pasa limpio.
 
 **Files:**
+- Create: `FRONTED/maternanalytics/src/utils/causasChartLabels.ts`
+- Create: `FRONTED/maternanalytics/src/utils/causasChartLabels.test.ts`
 - Modify: `FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.tsx`
-
-Este task no agrega tests nuevos: reutiliza los 2 tests de renderizado que ya existen (`TrendChartsRow` con datos / estado vacío) como red de seguridad del refactor — deben seguir pasando exactamente igual después del cambio.
+- Modify: `FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.test.tsx`
 
 - [ ] **Step 1: Confirmar que los tests de renderizado pasan antes del refactor**
 
 Run: `cd FRONTED/maternanalytics && pnpm exec vitest run src/components/dashboard/TrendChartsRow.test.tsx`
 Expected: PASS (7 tests, mismo resultado que al final del Task 2).
 
-- [ ] **Step 2: Reescribir `TrendChartsRow.tsx` completo con el subcomponente `CausasBarChart`**
+- [ ] **Step 2: Escribir el test que falla para el nuevo módulo de utilidades**
 
-Reemplaza **todo el contenido** de `FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.tsx` por:
+Crea `FRONTED/maternanalytics/src/utils/causasChartLabels.test.ts` con este contenido (son los mismos 5 tests de `wrapLabel`/`calculateChartHeight` que hoy viven en `TrendChartsRow.test.tsx`, movidos aquí):
 
-```tsx
-import { useMemo } from 'react'
-import { Bar } from 'react-chartjs-2'
-import type { TooltipItem } from 'chart.js'
-import '../../constants/chartTheme'
-import { ChartAiInsight } from './ChartAiInsight'
-import { getTopCausasAiInsight } from '../../utils/aiChartInsights'
+```ts
+import { describe, it, expect } from 'vitest'
+import { wrapLabel, calculateChartHeight } from './causasChartLabels'
 
-export interface TopCausasChartData {
-  labels: string[]
-  values: number[]
-  colors: string[]
-}
+describe('wrapLabel', () => {
+  it('devuelve el texto tal cual si es corto', () => {
+    expect(wrapLabel('Eclampsia')).toBe('Eclampsia')
+  })
 
-export interface TrendChartsRowProps {
-  topCausasMortalidad: TopCausasChartData
-  topCausasMorbilidad: TopCausasChartData
-}
+  it('envuelve texto largo en varias líneas sin truncar ni agregar "..."', () => {
+    const texto =
+      'O14.9 Preeclampsia no especificada con complicaciones hepáticas y renales graves durante el tercer trimestre'
+    const resultado = wrapLabel(texto)
+    expect(Array.isArray(resultado)).toBe(true)
+    const lineas = resultado as string[]
+    expect(lineas.length).toBeGreaterThan(2)
+    expect(lineas.some((linea) => linea.includes('...'))).toBe(false)
+    expect(lineas.join(' ')).toBe(texto)
+  })
+})
 
+describe('calculateChartHeight', () => {
+  it('devuelve el mínimo (320) cuando no hay etiquetas', () => {
+    expect(calculateChartHeight([])).toBe(320)
+  })
+
+  it('devuelve el mínimo (320) con pocas etiquetas cortas', () => {
+    expect(calculateChartHeight(['Eclampsia', 'Sepsis'])).toBe(320)
+  })
+
+  it('crece cuando las etiquetas ocupan más líneas', () => {
+    const etiquetasCortas = ['Eclampsia', 'Sepsis', 'Hemorragia']
+    const etiquetasLargas = [
+      'O14.9 Preeclampsia no especificada con complicaciones hepáticas y renales graves durante el tercer trimestre',
+      'O72.1 Hemorragia postparto inmediata secundaria a atonía uterina severa con compromiso hemodinámico',
+      'O99.4 Enfermedades del sistema circulatorio que complican el embarazo, el parto y el puerperio',
+    ]
+    expect(calculateChartHeight(etiquetasLargas)).toBeGreaterThan(calculateChartHeight(etiquetasCortas))
+  })
+})
+```
+
+Run: `cd FRONTED/maternanalytics && pnpm exec vitest run src/utils/causasChartLabels.test.ts`
+Expected: FAIL — `src/utils/causasChartLabels.ts` no existe todavía (error de módulo no encontrado).
+
+- [ ] **Step 3: Crear el módulo de utilidades**
+
+Crea `FRONTED/maternanalytics/src/utils/causasChartLabels.ts` con este contenido (idéntico a la lógica que hoy vive en `TrendChartsRow.tsx`, solo movida de archivo):
+
+```ts
 const LINE_HEIGHT = 28
 const MIN_BAR_HEIGHT = 32
 const AXIS_PADDING = 60
@@ -262,6 +296,34 @@ export const calculateChartHeight = (labels: string[]): number => {
     return sum + MIN_BAR_HEIGHT + lineCount * LINE_HEIGHT
   }, 0)
   return Math.max(MIN_CHART_HEIGHT, AXIS_PADDING + totalBarsHeight)
+}
+```
+
+Run: `cd FRONTED/maternanalytics && pnpm exec vitest run src/utils/causasChartLabels.test.ts`
+Expected: PASS (5 tests).
+
+- [ ] **Step 4: Reescribir `TrendChartsRow.tsx` como archivo de componente puro, con `CausasBarChart` y el tooltip completo**
+
+Reemplaza **todo el contenido** de `FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.tsx` por:
+
+```tsx
+import { useMemo } from 'react'
+import { Bar } from 'react-chartjs-2'
+import type { TooltipItem } from 'chart.js'
+import '../../constants/chartTheme'
+import { ChartAiInsight } from './ChartAiInsight'
+import { getTopCausasAiInsight } from '../../utils/aiChartInsights'
+import { wrapLabel, calculateChartHeight } from '../../utils/causasChartLabels'
+
+export interface TopCausasChartData {
+  labels: string[]
+  values: number[]
+  colors: string[]
+}
+
+export interface TrendChartsRowProps {
+  topCausasMortalidad: TopCausasChartData
+  topCausasMorbilidad: TopCausasChartData
 }
 
 interface CausasBarChartProps {
@@ -355,27 +417,61 @@ export function TrendChartsRow({ topCausasMortalidad, topCausasMorbilidad }: Tre
 }
 ```
 
-- [ ] **Step 3: Correr los tests y verificar que todo sigue en verde**
+- [ ] **Step 5: Reescribir `TrendChartsRow.test.tsx` de vuelta a solo los 2 tests de renderizado**
 
-Run: `cd FRONTED/maternanalytics && pnpm exec vitest run src/components/dashboard/TrendChartsRow.test.tsx`
-Expected: PASS (los mismos 7 tests que al final del Task 2 — el refactor no cambió comportamiento observable).
+`wrapLabel` y `calculateChartHeight` ya no viven en `TrendChartsRow.tsx`, así que sus tests (movidos al Step 2) salen de este archivo. Reemplaza **todo el contenido** de `FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.test.tsx` por:
 
-- [ ] **Step 4: Verificar tipos, lint y la suite completa de tests**
+```tsx
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { TrendChartsRow } from './TrendChartsRow'
+
+const sampleProps = {
+  topCausasMortalidad: { labels: ['Preeclampsia Severa'], values: [5], colors: ['#c0392b'] },
+  topCausasMorbilidad: { labels: ['Eclampsia'], values: [3], colors: ['#2ca02c'] },
+}
+
+const emptyProps = {
+  topCausasMortalidad: { labels: [], values: [], colors: [] },
+  topCausasMorbilidad: { labels: [], values: [], colors: [] },
+}
+
+describe('TrendChartsRow', () => {
+  it('renderiza los gráficos sin lanzar excepciones cuando hay datos', () => {
+    render(<TrendChartsRow {...sampleProps} />)
+    expect(screen.getByText('Top 10 Causas de Mortalidad')).toBeInTheDocument()
+    expect(screen.getByText('Top 10 Causas de Morbilidad')).toBeInTheDocument()
+  })
+
+  it('muestra los mensajes de estado vacío cuando no hay datos', () => {
+    render(<TrendChartsRow {...emptyProps} />)
+    expect(screen.getByText('Sin registros de causas de mortalidad')).toBeInTheDocument()
+    expect(screen.getByText('Sin registros de causas de morbilidad')).toBeInTheDocument()
+  })
+})
+```
+
+(Esto es exactamente el contenido original del archivo, antes de los Tasks 1 y 2 — vuelve a su forma original porque las funciones que probaba se mudaron de archivo.)
+
+- [ ] **Step 6: Correr toda la suite, tipos y lint**
+
+Run: `cd FRONTED/maternanalytics && pnpm exec vitest run src/components/dashboard/TrendChartsRow.test.tsx src/utils/causasChartLabels.test.ts`
+Expected: PASS — 2 tests en `TrendChartsRow.test.tsx` + 5 tests en `causasChartLabels.test.ts` = 7 en total (el mismo conteo que al final del Task 2, ahora repartido en dos archivos).
 
 Run: `cd FRONTED/maternanalytics && pnpm exec tsc -b`
 Expected: sin errores.
 
 Run: `cd FRONTED/maternanalytics && pnpm run lint`
-Expected: sin errores.
+Expected: sin errores — en particular, ya NO deben aparecer los errores `react-refresh/only-export-components` que existían en `TrendChartsRow.tsx` antes de este task.
 
 Run: `cd FRONTED/maternanalytics && pnpm run test`
-Expected: PASS — toda la suite (no solo `TrendChartsRow.test.tsx`), confirmando que el refactor no rompió otros componentes que puedan importar algo de este archivo.
+Expected: PASS — toda la suite (no solo estos archivos), confirmando que el refactor no rompió otros componentes.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.tsx
-git commit -m "refactor: extraer CausasBarChart y mostrar nombre completo en el tooltip"
+git add FRONTED/maternanalytics/src/utils/causasChartLabels.ts FRONTED/maternanalytics/src/utils/causasChartLabels.test.ts FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.tsx FRONTED/maternanalytics/src/components/dashboard/TrendChartsRow.test.tsx
+git commit -m "refactor: mover wrapLabel/calculateChartHeight a utils y extraer CausasBarChart con tooltip completo"
 ```
 
 ---
