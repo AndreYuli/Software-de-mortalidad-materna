@@ -188,7 +188,7 @@ def _fase2_upsert_pacientes(
     """
     for index in non_dup_indices:
         ident = pass1_data[index].ident
-        cache_key = (ident["tipo_obj"].id, ident["numero_id"])
+        cache_key = ident["numero_id"]
         if cache_key not in caches.paciente_cache:
             p = Paciente(
                 id_tipo_id=ident["tipo_obj"].id,
@@ -202,6 +202,8 @@ def _fase2_upsert_pacientes(
             resumen["pacientes_nuevos"] += 1
         else:
             p = caches.paciente_cache[cache_key]
+            if p.id_tipo_id != ident["tipo_obj"].id:
+                p.id_tipo_id = ident["tipo_obj"].id
             if p.nombres_apellidos != ident["nombres"]:
                 p.nombres_apellidos = ident["nombres"]
             if ident.get("fecha_nacimiento") and p.fecha_nacimiento != ident["fecha_nacimiento"]:
@@ -235,7 +237,7 @@ def _fase3_upsert_casos(
     for index in non_dup_indices:
         pdata = pass1_data[index]
         ident = pdata.ident
-        paciente = caches.paciente_cache[(ident["tipo_obj"].id, ident["numero_id"])]
+        paciente = caches.paciente_cache[ident["numero_id"]]
         importacion = caches.import_cache.get(pdata.event_hash)
         caso = caches.caso_by_id.get(importacion.caso_id) if importacion else None
 

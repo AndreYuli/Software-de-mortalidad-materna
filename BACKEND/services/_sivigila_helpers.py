@@ -34,7 +34,7 @@ _CHUNK_SIZE: int = 1000
 class SivigilaCaches:
     """Cachés precargadas para la persistencia masiva de registros SIVIGILA."""
 
-    paciente_cache: dict[tuple[Any, str], Paciente]
+    paciente_cache: dict[str, Paciente]
     import_cache: dict[str, SivigilaImportacion]
     caso_by_id: dict[int, Any]
     caso_by_paciente_fecha: dict[tuple[int, Any], Any]
@@ -151,12 +151,12 @@ def _precargar_caches_sivigila(
     Returns:
         SivigilaCaches con todos los cachés precargados.
     """
-    paciente_cache: dict[tuple[Any, str], Paciente] = {}
+    paciente_cache: dict[str, Paciente] = {}
     if numeros_id:
         for i in range(0, len(numeros_id), _CHUNK_SIZE):
             chunk: list[str] = list(numeros_id)[i : i + _CHUNK_SIZE]
             for p in db.query(Paciente).filter(Paciente.numero_id.in_(chunk)).all():
-                paciente_cache[(p.id_tipo_id, p.numero_id)] = p
+                paciente_cache[p.numero_id] = p
 
     import_cache: dict[str, SivigilaImportacion] = {}
     if event_hashes:

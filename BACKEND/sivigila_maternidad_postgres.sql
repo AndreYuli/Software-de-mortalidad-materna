@@ -200,7 +200,7 @@ CREATE TABLE paciente (
     numero_id          VARCHAR(30)   NOT NULL,
     fecha_nacimiento   DATE          NULL,
     creado_en          TIMESTAMP     DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT uq_paciente UNIQUE (id_tipo_id, numero_id),
+    CONSTRAINT uq_paciente_numero_id UNIQUE (numero_id),
     CONSTRAINT fk_paciente_tipo_id
         FOREIGN KEY (id_tipo_id) REFERENCES cat_tipo_id(id)
 );
