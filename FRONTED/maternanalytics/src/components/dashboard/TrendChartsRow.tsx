@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
-import type { TooltipItem } from 'chart.js'
+import type { Scale, TooltipItem } from 'chart.js'
 import '../../constants/chartTheme'
 import { ChartAiInsight } from './ChartAiInsight'
 import { getTopCausasAiInsight } from '../../utils/aiChartInsights'
@@ -16,6 +16,14 @@ export interface TrendChartsRowProps {
   topCausasMortalidad: TopCausasChartData
   topCausasMorbilidad: TopCausasChartData
 }
+
+// Chart.js mide el ancho del eje Y con la fuente aún no completamente
+// asentada en el layout inicial, y subestima el ancho real que necesitan
+// las etiquetas largas envueltas en varias líneas — recortando el borde
+// izquierdo del texto. Se agrega un margen de seguridad fijo tras el
+// cálculo automático para evitar el recorte (técnica estándar de Chart.js
+// para este problema conocido con etiquetas largas en barras horizontales).
+const Y_AXIS_WIDTH_SAFETY_MARGIN = 70
 
 interface CausasBarChartProps {
   title: string
@@ -61,7 +69,12 @@ function CausasBarChart({ title, data, emptyMessage, insight }: CausasBarChartPr
               },
               scales: {
                 x: { title: { display: true, text: 'Casos' }, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
-                y: { grid: { display: false } },
+                y: {
+                  grid: { display: false },
+                  afterFit: (scale: Scale) => {
+                    scale.width += Y_AXIS_WIDTH_SAFETY_MARGIN
+                  },
+                },
               },
             }}
           />
