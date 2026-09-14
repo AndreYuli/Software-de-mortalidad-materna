@@ -175,11 +175,13 @@ export const calculateChartHeight = (labels: string[]): number => {
   const totalBarsHeight = labels.reduce((sum, label) => {
     const wrapped = wrapLabel(label)
     const lineCount = Array.isArray(wrapped) ? wrapped.length : 1
-    return sum + Math.max(MIN_BAR_HEIGHT, lineCount * LINE_HEIGHT)
+    return sum + MIN_BAR_HEIGHT + lineCount * LINE_HEIGHT
   }, 0)
   return Math.max(MIN_CHART_HEIGHT, AXIS_PADDING + totalBarsHeight)
 }
 ```
+
+**Nota (corregido durante la implementación):** la fórmula por etiqueta es aditiva (`MIN_BAR_HEIGHT + lineCount * LINE_HEIGHT`), no `Math.max(MIN_BAR_HEIGHT, lineCount * LINE_HEIGHT)` — con `Math.max` las etiquetas cortas y las largas de 3 líneas redondean ambas al mismo mínimo (320) con los datos del test de abajo, así que el test `toBeGreaterThan` nunca pasaría. La forma aditiva sí coincide con la redacción del spec ("28px por línea de texto + espacio mínimo por barra") y hace que el alto crezca de forma monótona con más líneas.
 
 - [ ] **Step 4: Correr el test y verificar que pasa**
 
@@ -257,7 +259,7 @@ export const calculateChartHeight = (labels: string[]): number => {
   const totalBarsHeight = labels.reduce((sum, label) => {
     const wrapped = wrapLabel(label)
     const lineCount = Array.isArray(wrapped) ? wrapped.length : 1
-    return sum + Math.max(MIN_BAR_HEIGHT, lineCount * LINE_HEIGHT)
+    return sum + MIN_BAR_HEIGHT + lineCount * LINE_HEIGHT
   }, 0)
   return Math.max(MIN_CHART_HEIGHT, AXIS_PADDING + totalBarsHeight)
 }
