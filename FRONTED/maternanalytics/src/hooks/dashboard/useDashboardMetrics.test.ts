@@ -8,7 +8,7 @@ function fixture(totalCasos: number): AnalisisCompleto {
 }
 
 describe('useDashboardMetrics', () => {
-  it('calcula la tasa de letalidad como mortalidad sobre morbilidad, no sobre el total combinado', () => {
+  it('calcula la tasa de letalidad como mortalidad sobre el total de casos combinados', () => {
     const { result } = renderHook(() =>
       useDashboardMetrics({
         segmento: 'ambos',
@@ -18,14 +18,14 @@ describe('useDashboardMetrics', () => {
         filterMonth: '',
       }),
     )
-    expect(result.current.tasaLetalidad).toBe('300')
+    expect(result.current.tasaLetalidad).toBe('75.0')
   })
 
-  it('retorna "0" cuando no hay casos de morbilidad, para evitar division por cero', () => {
+  it('retorna "0" cuando no hay casos totales, para evitar division por cero', () => {
     const { result } = renderHook(() =>
       useDashboardMetrics({
         segmento: 'ambos',
-        mortalidadData: fixture(30),
+        mortalidadData: null,
         morbilidadData: null,
         filterYear: '',
         filterMonth: '',
