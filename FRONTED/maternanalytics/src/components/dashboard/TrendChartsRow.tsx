@@ -15,7 +15,7 @@ export interface TrendChartsRowProps {
   topCausasMorbilidad: TopCausasChartData
 }
 
-const wrapLabel = (text: string, maxLen: number = 45): string | string[] => {
+export const wrapLabel = (text: string, maxLen: number = 45): string | string[] => {
   if (text.length <= maxLen) return text
   const words = text.split(' ')
   const lines: string[] = []
@@ -29,7 +29,6 @@ const wrapLabel = (text: string, maxLen: number = 45): string | string[] => {
     }
   }
   if (currentLine) lines.push(currentLine.trim())
-  if (lines.length > 2) return [lines[0], lines[1] + '...']
   return lines
 }
 
