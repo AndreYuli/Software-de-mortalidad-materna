@@ -17,12 +17,14 @@ export interface TrendChartsRowProps {
   topCausasMorbilidad: TopCausasChartData
 }
 
-// Chart.js mide el ancho del eje Y con la fuente aún no completamente
-// asentada en el layout inicial, y subestima el ancho real que necesitan
-// las etiquetas largas envueltas en varias líneas — recortando el borde
-// izquierdo del texto. Se agrega un margen de seguridad fijo tras el
-// cálculo automático para evitar el recorte (técnica estándar de Chart.js
-// para este problema conocido con etiquetas largas en barras horizontales).
+// Empíricamente, el ancho automático que Chart.js calcula para el eje Y
+// queda corto para etiquetas largas envueltas en varias líneas y recorta
+// el borde izquierdo del texto (verificado visualmente con datos reales;
+// no es una causa raíz confirmada en el código fuente de Chart.js). Se
+// agrega un margen fijo tras el cálculo automático como workaround.
+// Verificado sin recorte a 1600px y 1920px (anchos de escritorio
+// habituales); a ~1280px puede seguir quedando un recorte residual menor
+// — pendiente si se necesita soportar pantallas más angostas.
 const Y_AXIS_WIDTH_SAFETY_MARGIN = 70
 
 interface CausasBarChartProps {
