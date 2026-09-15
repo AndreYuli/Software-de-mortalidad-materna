@@ -38,6 +38,13 @@ _MORBILIDAD_DB_MAPPING = {
     "dias_estancia_uci": "Días estancia UCI",
     "tiempo_remision_h": "Tiempo remisión (h)",
     "institucion_ref_1": "Institución referencia 1",
+    "falla_hepatica": "falla_hepatica",
+    "falla_renal": "falla_renal",
+    "falla_coagulacion": "falla_coagulacion",
+    "zona_residencia": "Zona de residencia",
+    "poblacion_vulnerable": "Población vulnerable",
+    "etnia": "Etnia",
+    "tipo_afiliacion": "Tipo de afiliación",
 }
 
 _MORTALIDAD_DB_MAPPING = {
@@ -69,6 +76,10 @@ _MORTALIDAD_DB_MAPPING = {
     "demora_2": "10.3.2 Demora 2",
     "demora_3": "10.3.3 Demora 3",
     "demora_4": "10.3.4 Demora 4",
+    "zona_residencia": "Zona de residencia",
+    "poblacion_vulnerable": "Población vulnerable",
+    "etnia": "Etnia",
+    "tipo_afiliacion": "Tipo de afiliación",
 }
 
 

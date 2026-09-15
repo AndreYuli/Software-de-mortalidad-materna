@@ -231,6 +231,58 @@ class CatTipoParto(Base):
     descripcion = Column(String(20), nullable=False)
 
 
+class CatZonaResidencia(Base):
+    """Catálogo de zona de residencia."""
+
+    __tablename__ = "cat_zona_residencia"
+
+    id = Column(Integer, primary_key=True)
+    descripcion = Column(String(10), nullable=False)
+
+
+class CatPoblacionVulnerable(Base):
+    """Catálogo de población vulnerable."""
+
+    __tablename__ = "cat_poblacion_vulnerable"
+
+    id = Column(Integer, primary_key=True)
+    descripcion = Column(String(30), nullable=False)
+
+
+class CatEtnia(Base):
+    """Catálogo de etnia."""
+
+    __tablename__ = "cat_etnia"
+
+    id = Column(Integer, primary_key=True)
+    descripcion = Column(String(20), nullable=False)
+
+
+class CatTipoAfiliacion(Base):
+    """Catálogo de tipo de afiliación en salud."""
+
+    __tablename__ = "cat_tipo_afiliacion"
+
+    id = Column(Integer, primary_key=True)
+    descripcion = Column(String(20), nullable=False)
+
+
+class DatosSociodemograficos(Base):
+    """Datos sociodemográficos compartidos entre morbilidad y mortalidad."""
+
+    __tablename__ = "datos_sociodemograficos"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    caso_morbilidad_id = Column(Integer, ForeignKey("caso_morbilidad.id_caso"), nullable=True)
+    caso_mortalidad_id = Column(Integer, ForeignKey("caso_mortalidad.id_caso"), nullable=True)
+    id_zona_residencia = Column(Integer, ForeignKey("cat_zona_residencia.id"), nullable=True)
+    id_poblacion_vulnerable = Column(
+        Integer, ForeignKey("cat_poblacion_vulnerable.id"), nullable=True
+    )
+    id_etnia = Column(Integer, ForeignKey("cat_etnia.id"), nullable=True)
+    id_tipo_afiliacion = Column(Integer, ForeignKey("cat_tipo_afiliacion.id"), nullable=True)
+
+
 # --- Tablas de paciente y casos ---
 
 
@@ -572,6 +624,10 @@ class VMorbilidadCompleta(Base):
     unidades_transfundidas = Column(Integer, nullable=True)
     causa_principal_cie10 = Column(String(10), nullable=True)
     grupo_causa = Column(String(60), nullable=True)
+    zona_residencia = Column(String(10), nullable=True)
+    poblacion_vulnerable = Column(String(30), nullable=True)
+    etnia = Column(String(20), nullable=True)
+    tipo_afiliacion = Column(String(20), nullable=True)
 
 
 class VMortalidadCompleta(Base):
@@ -629,3 +685,7 @@ class VMortalidadCompleta(Base):
     demora_2 = Column(Integer, nullable=True)
     demora_3 = Column(Integer, nullable=True)
     demora_4 = Column(Integer, nullable=True)
+    zona_residencia = Column(String(10), nullable=True)
+    poblacion_vulnerable = Column(String(30), nullable=True)
+    etnia = Column(String(20), nullable=True)
+    tipo_afiliacion = Column(String(20), nullable=True)

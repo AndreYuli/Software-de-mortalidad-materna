@@ -182,3 +182,32 @@ class ProcesadorBase:
             "valores": valores,
             "total": int(len(semanas)),
         }
+
+    def analizar_distribucion_sociodemografica(self) -> dict[str, Any]:
+        """Calcula distribuciones de las 4 variables sociodemográficas nuevas.
+
+        Returns:
+            Dict con claves 'zona_residencia', 'poblacion_vulnerable',
+            'etnia', 'tipo_afiliacion', cada una con {'labels', 'valores', 'total'}.
+        """
+        variables = [
+            ("Zona de residencia", "zona_residencia"),
+            ("Población vulnerable", "poblacion_vulnerable"),
+            ("Etnia", "etnia"),
+            ("Tipo de afiliación", "tipo_afiliacion"),
+        ]
+        resultado: dict[str, Any] = {}
+        for col, key in variables:
+            if col not in self.df.columns:
+                continue
+            serie = self.df[col].dropna().astype(str).str.strip()
+            serie = serie[~serie.str.lower().isin({"", "nan", "none", "null"})]
+            if serie.empty:
+                continue
+            conteos = serie.value_counts()
+            resultado[key] = {
+                "labels": conteos.index.tolist(),
+                "valores": [int(v) for v in conteos.values],
+                "total": int(len(serie)),
+            }
+        return resultado

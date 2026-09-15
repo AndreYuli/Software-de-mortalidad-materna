@@ -16,6 +16,7 @@ from services import sivigila_service
 # Re-exportar para que el router acceda vía analisis_service.*
 from services._analisis_calculo import (  # noqa: F401
     calcular_completo,
+    calcular_cruce,
     calcular_extra_columna,
     calcular_heatmap,
     ejecutar_clustering,
@@ -157,3 +158,29 @@ def listar_unicos(db: Session) -> list[Analisis]:
         .order_by(Analisis.fecha_carga.desc())
         .all()
     )
+
+
+def listar_historial(
+    db: Session,
+    page: int = 1,
+    per_page: int = 20,
+) -> tuple[list[Analisis], int]:
+    """Devuelve todo el historial de análisis paginado.
+
+    Args:
+        db: Sesión de base de datos.
+        page: Número de página (1-indexed).
+        per_page: Registros por página.
+
+    Returns:
+        Tupla (lista de análisis ordenados por fecha_carga desc, total de registros).
+    """
+    total = db.query(func.count(Analisis.id)).scalar() or 0
+    analyses = (
+        db.query(Analisis)
+        .order_by(Analisis.fecha_carga.desc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+    return analyses, total

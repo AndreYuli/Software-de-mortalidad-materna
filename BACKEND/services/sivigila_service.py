@@ -84,9 +84,23 @@ def _fase1_validar_filas(
         if tipo == "morbilidad":
             ident = _resolver_identificacion(
                 db=db,
-                nombres_col="Nombres y apellidos",
-                tipo_id_col="Tipo de ID",
-                numero_id_col="N° identificación",
+                nombres_cols=[
+                    "Nombres y apellidos",
+                    "A. Nombres y apellidos del paciente",
+                    "A. Nombres y apellidos",
+                ],
+                tipo_id_cols=[
+                    "Tipo de ID",
+                    "Tipo de identificación",
+                    "B. Tipo ID",
+                    "B. Tipo de ID",
+                ],
+                numero_id_cols=[
+                    "N° identificación",
+                    "Número de identificación",
+                    "C. Número ID",
+                    "C. Número de identificación",
+                ],
                 row=row,
                 numero_fila=numero_fila,
                 catalog_cache=catalog_cache,
@@ -120,9 +134,13 @@ def _fase1_validar_filas(
         else:
             ident = _resolver_identificacion(
                 db=db,
-                nombres_col="A. Nombres y Apellidos",
-                tipo_id_col="B. Tipo ID",
-                numero_id_col="C. Número ID",
+                nombres_cols=[
+                    "A. Nombres y Apellidos",
+                    "A. Nombres y apellidos del paciente",
+                    "Nombres y apellidos",
+                ],
+                tipo_id_cols=["B. Tipo ID", "Tipo de ID", "Tipo de identificación"],
+                numero_id_cols=["C. Número ID", "N° identificación", "Número de identificación"],
                 row=row,
                 numero_fila=numero_fila,
                 catalog_cache=catalog_cache,

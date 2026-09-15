@@ -90,6 +90,44 @@ def listar_analisis(db: Session = Depends(get_db)) -> list[AnalisisResponse]:
     return lista_analisis
 
 
+@router.get("/analisis/historial/")
+def historial_analisis(
+    page: int = Query(default=1, ge=1),
+    per_page: int = Query(default=20, ge=1, le=100),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Lista todo el historial de cargas paginado.
+
+    Args:
+        page: Número de página (1-indexed).
+        per_page: Registros por página.
+        db: Sesión de base de datos inyectada.
+
+    Returns:
+        Dict con 'items' (lista de análisis), 'total', 'page', 'per_page', 'total_pages'.
+    """
+    items, total = analisis_service.listar_historial(db=db, page=page, per_page=per_page)
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 0
+    return {
+        "items": [
+            {
+                "id": a.id,
+                "tipo": a.tipo,
+                "nombre_archivo": a.nombre_archivo,
+                "archivo": a.archivo,
+                "fecha_carga": a.fecha_carga.isoformat(),
+                "total_registros": a.total_registros,
+                "resumen": a.resumen,
+            }
+            for a in items
+        ],
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "total_pages": total_pages,
+    }
+
+
 @router.get("/analisis/{pk}/", response_model=AnalisisResponse)
 def detalle_analisis(pk: int, db: Session = Depends(get_db)) -> AnalisisResponse:
     """Devuelve los metadatos de un análisis específico.
@@ -227,6 +265,44 @@ def extra_columna(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
         )
     with _errores_servicio():
         resultado = analisis_service.calcular_extra_columna(analisis=analisis, columna_idx=0, db=db)
+    return resultado
+
+
+@router.get("/analisis/{pk}/cruce/")
+def cruce_variables(
+    pk: int,
+    var_socio: str = Query(
+        ...,
+        description="Variable sociodemográfica: zona_residencia, poblacion_vulnerable, etnia, "
+        "tipo_afiliacion",
+    ),
+    var_clinica: str = Query(..., description="Variable clínica (depende del tipo de análisis)"),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Cruza una variable sociodemográfica con una clínica, devolviendo conteos.
+
+    Args:
+        pk: ID del análisis.
+        var_socio: Clave de la variable sociodemográfica.
+        var_clinica: Clave de la variable clínica.
+        db: Sesión de base de datos inyectada.
+
+    Returns:
+        Dict con categorias_socio, categorias_clinica, matriz de conteos, total.
+
+    Raises:
+        HTTPException: 404 si el análisis no existe.
+        HTTPException: 422 si las variables no son válidas.
+        HTTPException: 500 si ocurre un error al procesar.
+    """
+    analisis = _get_analisis_or_404(pk, db)
+    with _errores_servicio():
+        resultado = analisis_service.calcular_cruce(
+            analisis=analisis,
+            var_socio=var_socio,
+            var_clinica=var_clinica,
+            db=db,
+        )
     return resultado
 
 

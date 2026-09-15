@@ -37,7 +37,9 @@ INSERT INTO cat_tipo_id VALUES
     (3,'PA' ,'Pasaporte'),
     (4,'PPT','Permiso por Protección Temporal'),
     (5,'TI' ,'Tarjeta de Identidad'),
-    (6,'RC' ,'Registro Civil');
+    (6,'RC' ,'Registro Civil'),
+    (7,'MS' ,'Menor sin ID'),
+    (8,'AS' ,'Adulto sin ID');
 
 -- ---------------------------------------------------------------------
 -- 1.2 Sitio de defunción
@@ -49,10 +51,10 @@ CREATE TABLE cat_sitio_defuncion (
 
 INSERT INTO cat_sitio_defuncion VALUES
     (1,'IPS (hospital/clínica)'),
-    (2,'IPS (centro/puesto salud)'),
+    (2,'IPS (centro/puesto de salud)'),
     (3,'Lugar de trabajo'),
     (4,'Vía pública'),
-    (5,'Durante traslado'),
+    (5,'Durante el traslado'),
     (6,'Domicilio'),
     (7,'Otro');
 
@@ -88,10 +90,10 @@ CREATE TABLE cat_regulacion_fecundidad (
 );
 
 INSERT INTO cat_regulacion_fecundidad VALUES
-    (1,'No usó por desconocimiento'),
-    (2,'No usó por acceso'),
-    (3,'No usó porque no deseaba'),
-    (4,'Natural'),(5,'DIU'),(6,'Hormonal'),
+    (1,'No usó métodos por desconocimiento'),
+    (2,'No usó métodos por acceso'),
+    (3,'No usó métodos porque no deseaba'),
+    (4,'Natural'),(5,'Dispositivo intrauterino'),(6,'Hormonal'),
     (7,'Barrera'),(8,'Quirúrgico'),(9,'Otro');
 
 -- ---------------------------------------------------------------------
@@ -113,8 +115,9 @@ CREATE TABLE cat_personal_salud (
 );
 
 INSERT INTO cat_personal_salud VALUES
-    (1,'Médico general'),(2,'Médico obstetra'),(3,'Enfermera'),
-    (4,'Aux. enfermería'),(5,'Promotor'),(6,'Partera'),(7,'Otro');
+    (1,'Médico general'),(2,'Médico obstetra'),
+    (3,'Enfermera'),(4,'Aux. enfermería'),(5,'Promotor'),
+    (6,'Partera'),(7,'Otro');
 
 -- ---------------------------------------------------------------------
 -- 1.8 Momento de la muerte
@@ -125,8 +128,10 @@ CREATE TABLE cat_momento_muerte (
 );
 
 INSERT INTO cat_momento_muerte VALUES
-    (1,'Gestación'),(2,'Parto'),
-    (3,'Puerperio < 24h'),(4,'Puerperio > 24h');
+    (1,'Gestación'),
+    (2,'Parto'),
+    (3,'Puerperio < 24 horas'),
+    (4,'Puerperio > 24 horas');
 
 -- ---------------------------------------------------------------------
 -- 1.9 Tipo de parto
@@ -169,8 +174,8 @@ CREATE TABLE cat_terminacion_gestacion (
 );
 
 INSERT INTO cat_terminacion_gestacion VALUES
-    (1,'Vaginal'),(2,'Cesárea'),(3,'Aborto'),
-    (4,'Continúa embarazo'),(5,'Ignorado');
+    (1,'Aborto'),(2,'Parto'),(3,'Parto instrumentado'),
+    (4,'Cesárea'),(5,'Continúa embarazada');
 
 -- ---------------------------------------------------------------------
 -- 1.13 Grupo de causa principal (CIE-10 agrupado)
@@ -189,6 +194,52 @@ INSERT INTO cat_grupo_causa VALUES
     (6,'Enfermedades concurrentes'),
     (7,'Causas no obstétricas'),
     (8,'Otras');
+
+-- ---------------------------------------------------------------------
+-- 1.14 Zona de residencia
+-- ---------------------------------------------------------------------
+CREATE TABLE cat_zona_residencia (
+    id           SMALLINT      PRIMARY KEY,
+    descripcion  VARCHAR(10)   NOT NULL
+);
+
+INSERT INTO cat_zona_residencia VALUES
+    (1,'Urbana'),(2,'Rural');
+
+-- ---------------------------------------------------------------------
+-- 1.15 Población vulnerable
+-- ---------------------------------------------------------------------
+CREATE TABLE cat_poblacion_vulnerable (
+    id           SMALLINT      PRIMARY KEY,
+    descripcion  VARCHAR(30)   NOT NULL
+);
+
+INSERT INTO cat_poblacion_vulnerable VALUES
+    (1,'Ninguna'),(2,'Migrante'),(3,'Indígena'),(4,'Afro'),
+    (5,'Discapacidad'),(6,'Víctima de conflicto'),(7,'Desplazada');
+
+-- ---------------------------------------------------------------------
+-- 1.16 Etnia
+-- ---------------------------------------------------------------------
+CREATE TABLE cat_etnia (
+    id           SMALLINT      PRIMARY KEY,
+    descripcion  VARCHAR(20)   NOT NULL
+);
+
+INSERT INTO cat_etnia VALUES
+    (1,'Ninguna'),(2,'Indígena'),(3,'Afrocolombiana'),
+    (4,'Rrom'),(5,'Raizal'),(6,'Otra');
+
+-- ---------------------------------------------------------------------
+-- 1.17 Tipo de afiliación en salud
+-- ---------------------------------------------------------------------
+CREATE TABLE cat_tipo_afiliacion (
+    id           SMALLINT      PRIMARY KEY,
+    descripcion  VARCHAR(20)   NOT NULL
+);
+
+INSERT INTO cat_tipo_afiliacion VALUES
+    (1,'Contributivo'),(2,'Subsidiado'),(3,'No afiliada');
 
 -- =====================================================================
 -- SECCIÓN 2 · PACIENTE (ENTIDAD CENTRAL COMPARTIDA)
@@ -533,10 +584,44 @@ CREATE TABLE causa_muerte (
     demora_4            BOOLEAN      NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_cmu_caso    FOREIGN KEY (id_caso)         REFERENCES caso_mortalidad(id_caso),
     CONSTRAINT fk_cmu_fuente  FOREIGN KEY (id_fuente_causa) REFERENCES cat_fuente_causa_muerte(id),
-    CONSTRAINT chk_causa_cie10_no_P CHECK (causa_basica_cie10 NOT LIKE 'P%')
+    CONSTRAINT chk_causa_cie10_valida CHECK (causa_basica_cie10 NOT LIKE 'P%' AND causa_basica_cie10 NOT IN ('8888', '9999'))
 );
 
 CREATE INDEX idx_causa_cie10_mort ON causa_muerte(causa_basica_cie10);
+
+-- =====================================================================
+-- SECCIÓN 4B · DATOS SOCIODEMOGRÁFICOS (compartido morb/mort)
+-- =====================================================================
+
+CREATE TABLE datos_sociodemograficos (
+    id                     INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    caso_morbilidad_id     INT       NULL,
+    caso_mortalidad_id     INT       NULL,
+    id_zona_residencia     SMALLINT,
+    id_poblacion_vulnerable SMALLINT,
+    id_etnia               SMALLINT,
+    id_tipo_afiliacion     SMALLINT,
+    CONSTRAINT fk_ds_morb
+        FOREIGN KEY (caso_morbilidad_id) REFERENCES caso_morbilidad(id_caso),
+    CONSTRAINT fk_ds_mort
+        FOREIGN KEY (caso_mortalidad_id) REFERENCES caso_mortalidad(id_caso),
+    CONSTRAINT fk_ds_zona
+        FOREIGN KEY (id_zona_residencia) REFERENCES cat_zona_residencia(id),
+    CONSTRAINT fk_ds_pobvuln
+        FOREIGN KEY (id_poblacion_vulnerable) REFERENCES cat_poblacion_vulnerable(id),
+    CONSTRAINT fk_ds_etnia
+        FOREIGN KEY (id_etnia) REFERENCES cat_etnia(id),
+    CONSTRAINT fk_ds_afiliacion
+        FOREIGN KEY (id_tipo_afiliacion) REFERENCES cat_tipo_afiliacion(id),
+    CONSTRAINT chk_ds_un_caso
+        CHECK (
+            (caso_morbilidad_id IS NOT NULL AND caso_mortalidad_id IS NULL) OR
+            (caso_morbilidad_id IS NULL AND caso_mortalidad_id IS NOT NULL)
+        )
+);
+
+CREATE INDEX idx_ds_caso_morb ON datos_sociodemograficos(caso_morbilidad_id);
+CREATE INDEX idx_ds_caso_mort ON datos_sociodemograficos(caso_mortalidad_id);
 
 -- =====================================================================
 -- SECCIÓN 5 · VISTAS CONSOLIDADAS
@@ -548,6 +633,8 @@ SELECT  c.id_caso,
         p.nombres_apellidos,
         ti.codigo            AS tipo_id,
         p.numero_id,
+        p.fecha_nacimiento,
+        EXTRACT(YEAR FROM AGE(c.fecha_defuncion, p.fecha_nacimiento))::integer AS edad,
         sd.descripcion       AS sitio_defuncion,
         c.fecha_defuncion,
         cv.descripcion       AS convivencia, am.otro_convivencia,
@@ -573,7 +660,11 @@ SELECT  c.id_caso,
         na_parto.nivel       AS nivel_atencion_parto,
         cm.causa_basica_cie10,
         fc.descripcion       AS fuente_causa_muerte,
-        cm.demora_1, cm.demora_2, cm.demora_3, cm.demora_4
+        cm.demora_1, cm.demora_2, cm.demora_3, cm.demora_4,
+        zr.descripcion       AS zona_residencia,
+        pv.descripcion       AS poblacion_vulnerable,
+        et.descripcion       AS etnia,
+        ta.descripcion       AS tipo_afiliacion
 FROM caso_mortalidad c
 LEFT JOIN paciente                    p        ON p.id_paciente = c.id_paciente
 LEFT JOIN cat_tipo_id                 ti       ON ti.id       = p.id_tipo_id
@@ -594,7 +685,12 @@ LEFT JOIN cat_tipo_parto              tp       ON tp.id       = pp.id_tipo_parto
 LEFT JOIN cat_personal_salud          ps_parto ON ps_parto.id = pp.id_atendido_por
 LEFT JOIN cat_nivel_atencion          na_parto ON na_parto.id = pp.id_nivel_atencion_parto
 LEFT JOIN causa_muerte                cm       ON cm.id_caso  = c.id_caso
-LEFT JOIN cat_fuente_causa_muerte     fc       ON fc.id       = cm.id_fuente_causa;
+LEFT JOIN cat_fuente_causa_muerte     fc       ON fc.id       = cm.id_fuente_causa
+LEFT JOIN datos_sociodemograficos     ds       ON ds.caso_mortalidad_id = c.id_caso
+LEFT JOIN cat_zona_residencia         zr       ON zr.id       = ds.id_zona_residencia
+LEFT JOIN cat_poblacion_vulnerable    pv       ON pv.id       = ds.id_poblacion_vulnerable
+LEFT JOIN cat_etnia                   et       ON et.id       = ds.id_etnia
+LEFT JOIN cat_tipo_afiliacion         ta       ON ta.id       = ds.id_tipo_afiliacion;
 
 -- 5.2 Vista completa de morbilidad materna extrema --------------------
 CREATE OR REPLACE VIEW v_morbilidad_completa AS
@@ -602,6 +698,8 @@ SELECT  c.id_caso,
         p.nombres_apellidos,
         ti.codigo  AS tipo_id,
         p.numero_id,
+        p.fecha_nacimiento,
+        EXTRACT(YEAR FROM AGE(c.fecha_egreso, p.fecha_nacimiento))::integer AS edad,
         c.fecha_egreso,
         r.remitida, r.institucion_ref_1, r.tiempo_remision_h,
         a.num_gestaciones, a.partos_vaginales, a.cesareas, a.abortos,
@@ -616,7 +714,11 @@ SELECT  c.id_caso,
         cm.total_criterios,
         mh.dias_estancia_hosp, mh.dias_estancia_uci,
         mh.unidades_transfundidas,
-        ca.causa_principal_cie10, gc.descripcion AS grupo_causa
+        ca.causa_principal_cie10, gc.descripcion AS grupo_causa,
+        zr.descripcion       AS zona_residencia,
+        pv.descripcion       AS poblacion_vulnerable,
+        et.descripcion       AS etnia,
+        ta.descripcion       AS tipo_afiliacion
 FROM caso_morbilidad c
 LEFT JOIN paciente                  p   ON p.id_paciente = c.id_paciente
 LEFT JOIN cat_tipo_id               ti  ON ti.id         = p.id_tipo_id
@@ -628,7 +730,12 @@ LEFT JOIN criterios_falla_organica  cf  ON cf.id_caso    = c.id_caso
 LEFT JOIN criterios_manejo          cm  ON cm.id_caso    = c.id_caso
 LEFT JOIN manejo_hospitalario       mh  ON mh.id_caso    = c.id_caso
 LEFT JOIN causas_morbilidad         ca  ON ca.id_caso    = c.id_caso
-LEFT JOIN cat_grupo_causa           gc  ON gc.id         = ca.id_grupo_causa;
+LEFT JOIN cat_grupo_causa           gc  ON gc.id         = ca.id_grupo_causa
+LEFT JOIN datos_sociodemograficos   ds  ON ds.caso_morbilidad_id = c.id_caso
+LEFT JOIN cat_zona_residencia       zr  ON zr.id         = ds.id_zona_residencia
+LEFT JOIN cat_poblacion_vulnerable  pv  ON pv.id         = ds.id_poblacion_vulnerable
+LEFT JOIN cat_etnia                 et  ON et.id         = ds.id_etnia
+LEFT JOIN cat_tipo_afiliacion       ta  ON ta.id         = ds.id_tipo_afiliacion;
 
 -- =====================================================================
 -- SECCIÓN 6 · DATOS FICTICIOS DE PRUEBA
