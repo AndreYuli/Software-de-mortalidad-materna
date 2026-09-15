@@ -53,13 +53,13 @@
 }
 
 .tab-okd:hover {
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.05);
+  color: #0f766e;
+  background: rgba(15, 118, 110, 0.07);
 }
 
 .tab-okd.active {
-  color: #2563eb;
-  border-bottom-color: #2563eb;
+  color: #0f766e;
+  border-bottom-color: #0f766e;
 }
 
 /* ========== CONTENT AREA ========== */
@@ -88,7 +88,7 @@
 .analysis-switch-btn {
   padding: 16px 18px;
   border-radius: 14px;
-  border: 1.5px solid rgba(37, 99, 235, 0.12);
+  border: 1.5px solid rgba(15, 118, 110, 0.14);
   background: #fff;
   text-align: left;
   cursor: pointer;
@@ -96,13 +96,13 @@
 }
 
 .analysis-switch-btn:hover {
-  border-color: rgba(37, 99, 235, 0.28);
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.08);
+  border-color: rgba(15, 118, 110, 0.32);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.08);
 }
 
 .analysis-switch-btn.active {
-  border-color: #2563eb;
-  background: linear-gradient(135deg, rgba(239, 246, 255, 0.95), rgba(248, 250, 252, 0.98));
+  border-color: #0f766e;
+  background: linear-gradient(135deg, rgba(234, 243, 242, 0.95), rgba(248, 250, 252, 0.98));
 }
 
 .analysis-switch-btn span {
@@ -140,7 +140,7 @@
   padding: 12px 20px;
   border: none;
   border-radius: 10px;
-  background: #2563eb;
+  background: #0f766e;
   color: #fff;
   font-size: 14px;
   font-weight: 600;
@@ -148,7 +148,7 @@
 }
 
 .primary-action-btn:hover {
-  background: #1d4ed8;
+  background: #0f5f58;
 }
 
 .overview-grid {
@@ -189,7 +189,7 @@
 
 .see-all-link {
   font-size: 13px;
-  color: #0066cc;
+  color: #0f766e;
   text-decoration: none;
   font-weight: 500;
 }
@@ -202,7 +202,7 @@
   padding: 4px;
   background: transparent;
   border: none;
-  color: #0066cc;
+  color: #0f766e;
   cursor: pointer;
   display: flex;
   align-items: center;

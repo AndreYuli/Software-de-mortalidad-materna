@@ -176,6 +176,14 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
     }
   }, [morbilidadData])
 
+  const sociodemograficaMortalidad = useMemo(() => {
+    return (mortalidadData as any)?.distribucion_sociodemografica ?? {}
+  }, [mortalidadData])
+
+  const sociodemograficaMorbilidad = useMemo(() => {
+    return (morbilidadData as any)?.distribucion_sociodemografica ?? {}
+  }, [morbilidadData])
+
   return {
     lineChartData,
     topCausasMortalidad,
@@ -188,5 +196,7 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
     edadRiesgoMorbilidad,
     severidadFallasData,
     morbKpis,
+    sociodemograficaMortalidad,
+    sociodemograficaMorbilidad,
   }
 }

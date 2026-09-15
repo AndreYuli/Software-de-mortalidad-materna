@@ -23,6 +23,10 @@ export interface FiltersSidebarProps {
 }
 
 export function FiltersSidebar({
+  segmento,
+  onSegmentoChange,
+  latestMortalidad,
+  latestMorbilidad,
   filterYear,
   onYearChange,
   availableYears,
@@ -46,7 +50,7 @@ export function FiltersSidebar({
   return (
     <aside className="filters-sidebar-okd">
       <div className="sidebar-section-header">
-        <h3>Filtros de Análisis</h3>
+        <h3>Cohorte de análisis</h3>
         {hasActiveFilters && (
           <button className="btn-clear-filters" onClick={handleClearFilters} title="Limpiar todos los filtros">
             Limpiar
@@ -55,6 +59,27 @@ export function FiltersSidebar({
       </div>
 
       <div className="sidebar-filter-content">
+        {segmento && onSegmentoChange && (
+          <div className="filter-field-group">
+            <label className="field-label" htmlFor="filter-segmento">Evento</label>
+            <div className="custom-select-wrapper">
+              <select
+                id="filter-segmento"
+                value={segmento}
+                onChange={(e) => onSegmentoChange(e.target.value as Segmento)}
+                className="sidebar-select"
+              >
+                <option value="ambos">549 + 550 integrados</option>
+                {latestMortalidad && <option value="mortalidad">Solo mortalidad 550</option>}
+                {latestMorbilidad && <option value="morbilidad">Solo morbilidad 549</option>}
+              </select>
+            </div>
+            <small className="field-helper">Define el universo analítico para indicadores y gráficas.</small>
+          </div>
+        )}
+
+        <div className="sidebar-divider" />
+
         {/* Year Filter */}
         <div className="filter-field-group">
           <label className="field-label" htmlFor="filter-year">Año de Reporte</label>

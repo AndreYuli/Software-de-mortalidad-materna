@@ -46,9 +46,9 @@
 }
 
 .filter-select-okd:focus {
-  border-color: #0066cc;
+  border-color: #0f766e;
   background: #fff;
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.08);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.10);
 }
 
 .filter-clear-okd {
@@ -95,7 +95,7 @@
 .filter-check-okd input[type="checkbox"] {
   width: 15px;
   height: 15px;
-  accent-color: #0066cc;
+  accent-color: #0f766e;
   cursor: pointer;
 }
 

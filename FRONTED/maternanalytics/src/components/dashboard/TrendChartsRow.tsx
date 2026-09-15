@@ -29,17 +29,21 @@ const Y_AXIS_WIDTH_SAFETY_MARGIN = 70
 
 interface CausasBarChartProps {
   title: string
+  eyebrow: string
   data: TopCausasChartData
   emptyMessage: string
   insight: string | null
 }
 
-function CausasBarChart({ title, data, emptyMessage, insight }: CausasBarChartProps) {
+function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasBarChartProps) {
   const chartHeight = useMemo(() => calculateChartHeight(data.labels), [data.labels])
 
   return (
-    <div className="chart-card-col-6">
-      <h3 className="chart-card-title">{title}</h3>
+    <article className="chart-card-col-12 epidemiology-chart-card">
+      <div className="chart-card-heading">
+        <span className="chart-card-eyebrow">{eyebrow}</span>
+        <h3 className="chart-card-title">{title}</h3>
+      </div>
       <div style={{ height: `${chartHeight}px` }}>
         {data.values.length > 0 ? (
           <Bar
@@ -64,7 +68,7 @@ function CausasBarChart({ title, data, emptyMessage, insight }: CausasBarChartPr
                   callbacks: {
                     title: (items: TooltipItem<'bar'>[]) => {
                       const idx = items[0]?.dataIndex
-                      return idx !== undefined ? data.labels[idx] : ''
+                      return idx !== undefined ? wrapLabel(data.labels[idx]) : ''
                     },
                   },
                 },
@@ -87,7 +91,7 @@ function CausasBarChart({ title, data, emptyMessage, insight }: CausasBarChartPr
         )}
       </div>
       <ChartAiInsight insight={insight} />
-    </div>
+    </article>
   )
 }
 
@@ -103,21 +107,28 @@ export function TrendChartsRow({ topCausasMortalidad, topCausasMorbilidad }: Tre
   )
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <section className="causes-analysis-section" aria-label="Análisis de causas principales">
+      <div className="causes-section-header">
+        <span className="causes-section-kicker">Priorización clínica</span>
+        <h2>Causas principales notificadas</h2>
+        <p>Compare los diagnósticos líderes por evento antes de pasar a variables sociodemográficas o clínicas.</p>
+      </div>
       <div className="charts-grid-row">
         <CausasBarChart
+          eyebrow="Evento 550"
           title="Top 10 Causas de Mortalidad"
           data={topCausasMortalidad}
           emptyMessage="Sin registros de causas de mortalidad"
           insight={topCausasMortalidadInsight}
         />
         <CausasBarChart
+          eyebrow="Evento 549"
           title="Top 10 Causas de Morbilidad"
           data={topCausasMorbilidad}
           emptyMessage="Sin registros de causas de morbilidad"
           insight={topCausasMorbilidadInsight}
         />
       </div>
-    </div>
+    </section>
   )
 }

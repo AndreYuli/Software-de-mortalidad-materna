@@ -3,6 +3,7 @@ import { Bar } from 'react-chartjs-2'
 import { CHART_FONT_FAMILY, STATUS_COLORS } from '../../constants/chartTheme'
 import { ChartAiInsight } from './ChartAiInsight'
 import { getEdadGestacionalAiInsight } from '../../utils/aiChartInsights'
+import { wrapLabel } from '../../utils/causasChartLabels'
 
 export interface DistribucionEdadGestacionalData {
   labels: string[]
@@ -38,7 +39,7 @@ export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGe
       <div style={{ height: '280px' }}>
         <Bar
           data={{
-            labels: data.labels,
+            labels: data.labels.map((l) => wrapLabel(l)),
             datasets: [
               {
                 data: data.valores,
@@ -53,7 +54,13 @@ export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGe
             maintainAspectRatio: false,
             plugins: { legend: { display: false } },
             scales: {
-              x: { grid: { display: false } },
+              x: {
+                grid: { display: false },
+                ticks: {
+                  font: { family: CHART_FONT_FAMILY, size: 11 },
+                  maxRotation: 0,
+                },
+              },
               y: {
                 title: { display: true, text: 'Casos', font: { family: CHART_FONT_FAMILY } },
                 beginAtZero: true,

@@ -52,7 +52,7 @@
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  color: #60a5fa;
+  color: #5eead4;
 }
 
 .brand-title-okd {
@@ -61,7 +61,7 @@
 }
 
 .brand-title-okd span {
-  color: #93c5fd;
+  color: #99f6e4;
   font-weight: 400;
 }
 
@@ -108,8 +108,8 @@
 }
 
 .nav-item-okd.active {
-  background: rgba(99, 102, 241, 0.12);
-  border-left-color: #6366f1;
+  background: rgba(20, 184, 166, 0.14);
+  border-left-color: #14b8a6;
   color: #ffffff;
 }
 
@@ -148,7 +148,7 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0066cc, #0099ff);
+  background: linear-gradient(135deg, #0f766e, #14b8a6);
   display: flex;
   align-items: center;
   justify-content: center;

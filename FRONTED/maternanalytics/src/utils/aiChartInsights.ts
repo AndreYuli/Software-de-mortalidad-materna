@@ -400,6 +400,42 @@ export function getIndicadoresSeveridadAiInsight(
   return `En intervenciones de soporte vital: ${highlights.join(', ')}. Estas medidas reflejan el nivel de rescate obstétrico y requerimiento de recursos asistenciales.`
 }
 
+// 13b. Cruce sociodemográfico x clínico
+export function getCruceAiInsight(
+  data?: {
+    categorias_socio: string[]
+    categorias_clinica: string[]
+    matriz: number[][]
+    total: number
+  },
+  varSocioLabel?: string,
+  varClinicaLabel?: string,
+): string | null {
+  if (!data || !data.categorias_socio.length || !data.categorias_clinica.length || data.total === 0) return null
+
+  let maxVal = -1
+  let maxSocioIdx = 0
+  let maxClinicaIdx = 0
+  data.matriz.forEach((row, i) => {
+    row.forEach((val, j) => {
+      if (val > maxVal) {
+        maxVal = val
+        maxSocioIdx = i
+        maxClinicaIdx = j
+      }
+    })
+  })
+  if (maxVal <= 0) return null
+
+  const socioCat = data.categorias_socio[maxSocioIdx]
+  const clinicaCat = data.categorias_clinica[maxClinicaIdx]
+  const combPct = pct(maxVal, data.total)
+  const socioLabel = varSocioLabel ? varSocioLabel.toLowerCase() : 'la variable sociodemográfica'
+  const clinicaLabel = varClinicaLabel ? varClinicaLabel.toLowerCase() : 'la variable clínica'
+
+  return `La combinación más frecuente es ${socioLabel} "${socioCat}" con ${clinicaLabel} "${clinicaCat}": ${maxVal} casos (${combPct}% de los ${data.total} casos con ambos datos registrados). Explore si esta combinación concentra un riesgo diferencial que amerite una intervención focalizada.`
+}
+
 // 14. Modelos de Clustering (PCA)
 export function getClusteringAiInsight(clusterData?: {
   n_clusters?: number

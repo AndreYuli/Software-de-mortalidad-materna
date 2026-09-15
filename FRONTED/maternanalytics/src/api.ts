@@ -32,3 +32,54 @@ export async function obtenerNarrativa(
   const data = await response.json()
   return NarrativaResponseSchema.parse(data)
 }
+
+export interface HistorialItem {
+  id: number
+  tipo: string
+  nombre_archivo: string
+  archivo: string
+  fecha_carga: string
+  total_registros: number
+  resumen: Record<string, unknown>
+}
+
+export interface HistorialResponse {
+  items: HistorialItem[]
+  total: number
+  page: number
+  per_page: number
+  total_pages: number
+}
+
+export async function fetchHistorial(
+  page = 1,
+  perPage = 20,
+): Promise<HistorialResponse> {
+  const response = await fetch(`${API_URL}/analisis/historial/?page=${page}&per_page=${perPage}`)
+  if (!response.ok) throw new Error(`Error al obtener historial: ${response.status}`)
+  const data = await response.json()
+  return data as HistorialResponse
+}
+
+export interface CruceResponse {
+  categorias_socio: string[]
+  categorias_clinica: string[]
+  matriz: number[][]
+  total: number
+  var_socio_label: string
+  var_clinica_label: string
+}
+
+export async function fetchCruce(
+  analisisId: number,
+  varSocio: string,
+  varClinica: string,
+): Promise<CruceResponse> {
+  const params = new URLSearchParams({ var_socio: varSocio, var_clinica: varClinica })
+  const response = await fetch(`${API_URL}/analisis/${analisisId}/cruce/?${params.toString()}`)
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    throw new Error(body?.detail || `Error al calcular el cruce: ${response.status}`)
+  }
+  return (await response.json()) as CruceResponse
+}

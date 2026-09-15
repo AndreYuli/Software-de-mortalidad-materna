@@ -16,6 +16,7 @@ import {
   getObstetricoEdadAiInsight,
   getIndicadoresSeveridadAiInsight,
   getClusteringAiInsight,
+  getCruceAiInsight,
 } from './aiChartInsights'
 
 describe('aiChartInsights', () => {
@@ -82,6 +83,27 @@ describe('aiChartInsights', () => {
     const result = getDemorasAiInsight(labels, values)
     expect(result).toContain('Demora 4')
     expect(result).toContain('50%')
+  })
+
+  it('genera resumen de cruce sociodemografico x clinico con la combinacion mas frecuente', () => {
+    const data = {
+      categorias_socio: ['Urbana', 'Rural'],
+      categorias_clinica: ['Sí', 'No'],
+      matriz: [
+        [5, 20],
+        [25, 3],
+      ],
+      total: 53,
+    }
+    const result = getCruceAiInsight(data, 'Zona de residencia', 'Falla hepática')
+    expect(result).toContain('Rural')
+    expect(result).toContain('Sí')
+    expect(result).not.toMatch(/\d+\.\d+%/)
+  })
+
+  it('retorna null para cruce sin datos', () => {
+    expect(getCruceAiInsight(undefined)).toBeNull()
+    expect(getCruceAiInsight({ categorias_socio: [], categorias_clinica: [], matriz: [], total: 0 })).toBeNull()
   })
 
   it('genera resumen para Sankey', () => {

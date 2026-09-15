@@ -79,15 +79,15 @@
 .upload-drop-zone:hover,
 .upload-drop-zone:focus-visible {
   background: #f8fafc;
-  border-color: #6366f1;
-  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.1);
+  border-color: #0f766e;
+  box-shadow: 0 10px 25px -5px rgba(15, 118, 110, 0.10);
   transform: translateY(-1px);
 }
 
 .upload-drop-zone.dragging {
-  background: #f5f3ff;
-  border-color: #4f46e5;
-  box-shadow: 0 14px 35px rgba(79, 70, 229, 0.15);
+  background: #eaf3f2;
+  border-color: #0f766e;
+  box-shadow: 0 14px 35px rgba(15, 118, 110, 0.12);
   transform: scale(1.015);
 }
 
@@ -105,14 +105,14 @@
 .upload-zone-icon {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+  background: linear-gradient(135deg, #eaf3f2 0%, #f0fdfa 100%);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 14px;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.12);
+  box-shadow: 0 4px 14px rgba(15, 118, 110, 0.10);
   transition: transform 0.2s;
 }
 
@@ -124,7 +124,7 @@
 .upload-zone-icon svg {
   width: 30px;
   height: 30px;
-  stroke: #4f46e5;
+  stroke: #0f766e;
 }
 
 /* ---- Drop Zone Text ---- */
@@ -137,7 +137,7 @@
 }
 
 .upload-zone-link {
-  color: #4f46e5;
+  color: #0f766e;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -434,7 +434,7 @@
 .upload-submit-btn {
   width: 100%;
   margin-top: 20px;
-  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  background: #0f766e;
   color: #ffffff;
   font-size: 14.5px;
   font-weight: 700;
@@ -448,13 +448,14 @@
   align-items: center;
   justify-content: center;
   gap: 9px;
-  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.28);
+  box-shadow: none;
   transition: all 0.2s ease;
 }
 
 .upload-submit-btn:hover:not(.disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 26px rgba(79, 70, 229, 0.38);
+  background: #0f5f58;
+  box-shadow: none;
 }
 
 .upload-submit-btn:active:not(.disabled) {
@@ -470,7 +471,7 @@
 }
 
 .upload-submit-btn.processing {
-  background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
+  background: #0f5f58;
   cursor: default;
   pointer-events: none;
 }

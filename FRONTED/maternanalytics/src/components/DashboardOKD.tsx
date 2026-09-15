@@ -23,6 +23,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
   const activeView: ActiveView = useMemo(() => {
     if (location.pathname.includes('mortalidad')) return 'mortalidad'
     if (location.pathname.includes('morbilidad')) return 'morbilidad'
+    if (location.pathname.includes('historial')) return 'historial'
     return 'analisis'
   }, [location.pathname])
 
@@ -31,6 +32,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
       data.setActiveView(view)
       if (view === 'mortalidad') navigate('/cargar-mortalidad')
       else if (view === 'morbilidad') navigate('/cargar-morbilidad')
+      else if (view === 'historial') navigate('/historial')
       else navigate('/dashboard')
       setIsMobileNavOpen(false)
     },

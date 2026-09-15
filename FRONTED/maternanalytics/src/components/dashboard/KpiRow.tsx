@@ -1,6 +1,6 @@
 import { TrendBadge } from './TrendBadge'
 import type { CompareResult } from '../../hooks/dashboard/useDashboardMetrics'
-import { UsersIcon, BloodDropIcon, HospitalIcon, ChartBarIcon } from '../icons'
+import { BloodDropIcon, HospitalIcon } from '../icons'
 
 export interface KpiRowProps {
   totalCasos: number
@@ -23,65 +23,73 @@ export function KpiRow({
   yearCompareMort,
   yearCompareMorb,
 }: KpiRowProps) {
+  const letalidadNumerica = Number.parseFloat(tasaLetalidad)
+  const shouldReviewLetalidad = Number.isFinite(letalidadNumerica) && letalidadNumerica >= 50
+  const dominantEventLabel =
+    totalMortalidad > totalMorbilidad
+      ? 'Predomina mortalidad registrada'
+      : totalMorbilidad > totalMortalidad
+        ? 'Predomina morbilidad extrema'
+        : 'Eventos equilibrados'
+
   return (
-    <div className="kpi-row-grid">
-      <div className="kpi-dashboard-card kpi-total">
-        <div className="kpi-card-header">
-          <span className="kpi-card-title">Casos Totales (549 + 550)</span>
-          <span className="kpi-card-icon">
-            <UsersIcon style={{ width: '20px', height: '20px' }} />
+    <section className="epidemiology-summary" aria-label="Resumen epidemiológico">
+      <div className="summary-priority-panel">
+        <div className="summary-priority-header">
+          <span className="summary-priority-label">Lectura inicial de la cohorte</span>
+          <span className={`summary-quality-chip ${shouldReviewLetalidad ? 'review' : 'stable'}`}>
+            {shouldReviewLetalidad ? 'Revisar consistencia' : 'Indicador estable'}
           </span>
         </div>
-        <div className="kpi-card-value">{totalCasos}</div>
-        <div className="kpi-card-trend-container">
+        <div className="summary-priority-value">{totalCasos}</div>
+        <div className="summary-priority-copy">
+          casos analizados entre eventos 549 y 550. {dominantEventLabel}; use esta proporción como primer control
+          antes de interpretar tendencias o causas.
+        </div>
+        <div className="summary-trend-line">
           <TrendBadge compare={{ cur: curTot, prev: prevTot }} />
-          <span className="kpi-trend-period">vs mes ant.</span>
+          <span>variación contra el mes anterior</span>
         </div>
       </div>
 
-      <div className="kpi-dashboard-card kpi-mortalidad">
-        <div className="kpi-card-header">
-          <span className="kpi-card-title">Mortalidad Materna (550)</span>
-          <span className="kpi-card-icon">
-            <BloodDropIcon style={{ width: '20px', height: '20px' }} />
-          </span>
+      <div className="surveillance-register">
+        <div className="surveillance-register-header">
+          <span>Registro por evento</span>
+          <span className="register-context">SIVIGILA</span>
         </div>
-        <div className="kpi-card-value">{totalMortalidad}</div>
-        <div className="kpi-card-trend-container">
+
+        <div className="register-metric register-metric-mortalidad">
+          <span className="register-icon"><BloodDropIcon style={{ width: '18px', height: '18px' }} /></span>
+          <div>
+            <span className="register-label">Mortalidad materna 550</span>
+            <span className="register-helper">Defunciones notificadas</span>
+          </div>
+          <strong>{totalMortalidad}</strong>
           <TrendBadge compare={yearCompareMort} />
-          <span className="kpi-trend-period">vs mes ant.</span>
         </div>
-      </div>
 
-      <div className="kpi-dashboard-card kpi-morbilidad">
-        <div className="kpi-card-header">
-          <span className="kpi-card-title">Morbilidad Extrema (549)</span>
-          <span className="kpi-card-icon">
-            <HospitalIcon style={{ width: '20px', height: '20px' }} />
-          </span>
-        </div>
-        <div className="kpi-card-value">{totalMorbilidad}</div>
-        <div className="kpi-card-trend-container">
+        <div className="register-metric register-metric-morbilidad">
+          <span className="register-icon"><HospitalIcon style={{ width: '18px', height: '18px' }} /></span>
+          <div>
+            <span className="register-label">Morbilidad materna extrema 549</span>
+            <span className="register-helper">Casos no fatales / severos</span>
+          </div>
+          <strong>{totalMorbilidad}</strong>
           <TrendBadge compare={yearCompareMorb} />
-          <span className="kpi-trend-period">vs mes ant.</span>
         </div>
-      </div>
 
-      <div className="kpi-dashboard-card kpi-letalidad">
-        <div className="kpi-card-header">
-          <span className="kpi-card-title">Tasa de Letalidad</span>
-          <span className="kpi-card-icon">
-            <ChartBarIcon style={{ width: '20px', height: '20px' }} />
-          </span>
-        </div>
-        <div className="kpi-card-value">{tasaLetalidad}%</div>
-        <div className="kpi-card-trend-container">
-          <span className="trend-badge neutral" style={{ background: '#f5f0ff', color: '#6f42c1' }}>
-            Calculado
-          </span>
-          <span className="kpi-trend-period">Salud Pública</span>
+        <div className={`case-fatality-note ${shouldReviewLetalidad ? 'review' : ''}`}>
+          <span className="case-fatality-value">{tasaLetalidad}%</span>
+          <div>
+            <span className="case-fatality-label">Tasa de letalidad</span>
+            <p>
+              {shouldReviewLetalidad
+                ? 'Valor atípicamente alto: confirme denominador, mezcla de eventos y calidad de carga.'
+                : 'Cálculo sobre los eventos filtrados en la cohorte actual.'}
+            </p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

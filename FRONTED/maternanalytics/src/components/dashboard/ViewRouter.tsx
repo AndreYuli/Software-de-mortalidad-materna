@@ -2,6 +2,7 @@ import type { ActiveView } from '../../hooks/navigation/useActiveView'
 import type { DashboardData } from '../../hooks/useDashboardData'
 import { AnalysisHomeSection } from './AnalysisHomeSection'
 import { UploadSection } from './UploadSection'
+import { UploadHistorySection } from './UploadHistorySection'
 
 export interface ViewRouterProps {
   activeView: ActiveView
@@ -67,6 +68,9 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           onAnalyze={data.handleAnalyzeMorbilidad}
         />
       )
+
+    case 'historial':
+      return <UploadHistorySection />
 
     default: {
       const _exhaustiveCheck: never = activeView;

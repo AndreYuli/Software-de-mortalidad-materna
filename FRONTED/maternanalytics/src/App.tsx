@@ -92,6 +92,14 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/historial"
+            element={
+              <ProtectedRoute>
+                <DashboardOKD />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Redirección ante ruta desconocida */}
           <Route path="*" element={<Navigate to="/" replace />} />

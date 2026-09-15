@@ -34,16 +34,16 @@ export const CHART_COLORS = {
 /**
  * Colores de estado (riesgo/seguro) para gráficas que resaltan grupos de
  * mayor riesgo obstétrico (edad materna, edad gestacional). Validados con
- * `dataviz/scripts/validate_palette.js "#dc2626,#0066cc" --mode light
+ * `dataviz/scripts/validate_palette.js "#dc2626,#64748b" --mode light
  * --surface #ffffff`: todos los checks pasan (CVD ΔE 25.2 protan / 36.2
- * normal-vision). Se usa azul en vez del verde "good" de la paleta de
- * estado genérica porque verde ya significa "morbilidad" en este dashboard
- * (`CHART_COLORS.morbilidad`) — reusarlo aquí generaría una colisión
- * semántica entre "seguro" y "morbilidad".
+ * normal-vision). Se usa gris clínico en vez del verde "good" de la paleta
+ * de estado genérica porque verde ya significa "morbilidad" en este
+ * dashboard (`CHART_COLORS.morbilidad`) — reusarlo aquí generaría una
+ * colisión semántica entre "seguro" y "morbilidad".
  */
 export const STATUS_COLORS = {
   risk: '#dc2626',
-  safe: '#0066cc',
+  safe: '#64748b',
 }
 
 ChartJS.defaults.font.family = CHART_FONT_FAMILY

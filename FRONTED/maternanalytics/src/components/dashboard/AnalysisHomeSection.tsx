@@ -14,6 +14,8 @@ import { useDashboardTabs } from '../../hooks/navigation/useDashboardTabs'
 import { SubTabs } from './SubTabs'
 import { DistribucionEdadGestacional } from './DistribucionEdadGestacional'
 import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
+import { SociodemographicChartsSection } from './SociodemographicChartsSection'
+import { CruceVariablesSection } from './CruceVariablesSection'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
 export interface AnalysisHomeSectionProps {
@@ -88,7 +90,7 @@ export function AnalysisHomeSection({
     )
   }, [mortalidadData, morbilidadData])
 
-  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, demorasChartData, edadChartData, severidadFallasData, morbKpis, edadGestacionalMortalidad, edadGestacionalMorbilidad, edadRiesgoMortalidad, edadRiesgoMorbilidad } = useDashboardCharts({
+  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, demorasChartData, edadChartData, severidadFallasData, morbKpis, edadGestacionalMortalidad, edadGestacionalMorbilidad, edadRiesgoMortalidad, edadRiesgoMorbilidad, sociodemograficaMortalidad, sociodemograficaMorbilidad } = useDashboardCharts({
     segmento,
     mortalidadData,
     morbilidadData,
@@ -160,8 +162,9 @@ export function AnalysisHomeSection({
         <div className="dashboard-analysis-main">
           <div className="dashboard-analysis-header">
             <div className="dash-control-title">
-              <h1>Análisis Epidemiológico</h1>
-              <p>Panel descriptivo y de inteligencia de salud pública de VidaMaterna</p>
+              <span className="dash-control-eyebrow">Vigilancia materna SIVIGILA</span>
+              <h1>Sistema de análisis epidemiológico</h1>
+              <p>Lectura técnica de mortalidad materna 550 y morbilidad materna extrema 549</p>
               {ultimaSemanaReportada && (
                 <p className="dash-ultima-semana">
                   Última carga: Semana {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
@@ -211,11 +214,17 @@ export function AnalysisHomeSection({
               <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
               {activeSubTab === 'sociodemografico' && (
-                <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
+                <>
+                  <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
+                  <SociodemographicChartsSection data={sociodemograficaMorbilidad} evento="Morbilidad" />
+                </>
               )}
 
               {activeSubTab === 'clinico' && (
-                <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
+                <>
+                  <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
+                  <CruceVariablesSection analisisId={latestMorbilidad?.id ?? null} evento="Morbilidad" />
+                </>
               )}
             </>
           )}
@@ -225,11 +234,17 @@ export function AnalysisHomeSection({
               <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
               {activeSubTab === 'sociodemografico' && (
-                <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
+                <>
+                  <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
+                  <SociodemographicChartsSection data={sociodemograficaMortalidad} evento="Mortalidad" />
+                </>
               )}
 
               {activeSubTab === 'clinico' && (
-                <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
+                <>
+                  <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
+                  <CruceVariablesSection analisisId={latestMortalidad?.id ?? null} evento="Mortalidad" />
+                </>
               )}
             </>
           )}

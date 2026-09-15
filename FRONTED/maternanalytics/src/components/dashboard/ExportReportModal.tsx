@@ -179,8 +179,8 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               gap: '14px',
               padding: '14px 16px',
               borderRadius: '12px',
-              border: selectedFormat === 'pdf' ? '2px solid #3b82f6' : '1.5px solid #e2e8f0',
-              background: selectedFormat === 'pdf' ? '#eff6ff' : '#ffffff',
+              border: selectedFormat === 'pdf' ? '2px solid #0f766e' : '1.5px solid #e2e8f0',
+              background: selectedFormat === 'pdf' ? '#eaf3f2' : '#ffffff',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}
@@ -191,7 +191,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               value="pdf"
               checked={selectedFormat === 'pdf'}
               onChange={() => setSelectedFormat('pdf')}
-              style={{ width: '16px', height: '16px', accentColor: '#3b82f6' }}
+              style={{ width: '16px', height: '16px', accentColor: '#0f766e' }}
             />
             <div style={{ fontSize: '24px' }}>📄</div>
             <div style={{ flex: 1 }}>
@@ -212,8 +212,8 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               gap: '14px',
               padding: '14px 16px',
               borderRadius: '12px',
-              border: selectedFormat === 'csv' ? '2px solid #8b5cf6' : '1.5px solid #e2e8f0',
-              background: selectedFormat === 'csv' ? '#f5f3ff' : '#ffffff',
+              border: selectedFormat === 'csv' ? '2px solid #64748b' : '1.5px solid #e2e8f0',
+              background: selectedFormat === 'csv' ? '#f8fafc' : '#ffffff',
               cursor: 'pointer',
               transition: 'all 0.2s ease',
             }}
@@ -224,7 +224,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               value="csv"
               checked={selectedFormat === 'csv'}
               onChange={() => setSelectedFormat('csv')}
-              style={{ width: '16px', height: '16px', accentColor: '#8b5cf6' }}
+              style={{ width: '16px', height: '16px', accentColor: '#64748b' }}
             />
             <div style={{ fontSize: '24px' }}>📁</div>
             <div style={{ flex: 1 }}>
@@ -262,12 +262,12 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               padding: '10px 22px',
               borderRadius: '10px',
               border: 'none',
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              background: '#0f766e',
               color: '#ffffff',
               fontWeight: 700,
               fontSize: '13px',
               cursor: 'pointer',
-              boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.25)',
+              boxShadow: 'none',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',

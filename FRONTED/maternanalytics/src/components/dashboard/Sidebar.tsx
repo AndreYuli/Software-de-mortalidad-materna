@@ -82,6 +82,20 @@ export function Sidebar({
           status={fileStatus.morbilidad}
           onClick={() => onNavigate('morbilidad')}
         />
+
+        <h3 className="nav-section-title">Administración</h3>
+
+        <NavItem
+          icon={
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12,6 12,12 16,14" />
+            </svg>
+          }
+          label="Historial de Cargas"
+          active={activeView === 'historial'}
+          onClick={() => onNavigate('historial')}
+        />
       </nav>
 
       <div className="sidebar-footer-okd">
