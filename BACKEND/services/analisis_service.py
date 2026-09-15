@@ -94,27 +94,22 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
     # --- Fase 2: I/O de disco (fuera de la transacción) ---
     ruta, hash_, resumen, total = _guardar_df_como_excel(df_acum, archivo.filename)
 
-    # --- Fase 3: transacción mínima — solo insert/update del registro Analisis ---
+    # --- Fase 3: transacción mínima — siempre inserta una fila nueva ---
+    # Cada subida es un evento de carga distinto (ver historial de cargas);
+    # el dataset acumulado que consumen los análisis vive en las tablas
+    # SIVIGILA (paciente/caso_*), no en esta fila, así que insertar en vez
+    # de actualizar no afecta los cálculos, solo preserva el historial.
     try:
-        if analisis_existente is None:
-            analisis = Analisis(
-                tipo=tipo,
-                nombre_archivo=archivo.filename,
-                archivo_hash=hash_,
-                archivo=ruta,
-                total_registros=total,
-                resumen=resumen,
-                fecha_carga=datetime.now(timezone.utc),
-            )
-            db.add(analisis)
-        else:
-            analisis_existente.nombre_archivo = archivo.filename
-            analisis_existente.archivo_hash = hash_
-            analisis_existente.archivo = ruta
-            analisis_existente.total_registros = total
-            analisis_existente.resumen = resumen
-            analisis_existente.fecha_carga = datetime.now(timezone.utc)
-            analisis = analisis_existente
+        analisis = Analisis(
+            tipo=tipo,
+            nombre_archivo=archivo.filename,
+            archivo_hash=hash_,
+            archivo=ruta,
+            total_registros=total,
+            resumen=resumen,
+            fecha_carga=datetime.now(timezone.utc),
+        )
+        db.add(analisis)
 
         db.commit()
     except ValueError:
