@@ -127,6 +127,29 @@ Abre **http://localhost:5173** en el navegador.
 
 Si Ollama o IA-SERVICE no están corriendo, el resto de la aplicación sigue funcionando con normalidad — las tarjetas de narrativa de IA simplemente se ocultan (degradación silenciosa, por diseño).
 
+## 🌐 Acceso público (ngrok)
+
+Para compartir el proyecto con personas fuera de tu red local, se usa [ngrok](https://ngrok.com) para exponer el FRONTED (puerto 5173). El propio Vite hace de proxy interno hacia BACKEND (`/api`, `/media` → `localhost:8000`), así que **solo se expone un puerto**.
+
+Requisitos ya configurados en este equipo: ngrok instalado (`winget install Ngrok.Ngrok`), authtoken guardado (`ngrok config add-authtoken <token>`), y el túnel definido en `%LOCALAPPDATA%\ngrok\ngrok.yml`:
+
+```yaml
+tunnels:
+  frontend:
+    proto: http
+    addr: 5173
+```
+
+Para levantar el túnel (ya incluido como terminal 5 en `iniciar_servicios.bat`):
+
+```bash
+ngrok start --all
+```
+
+La URL pública aparece en la terminal de ngrok (formato `https://xxxxx.ngrok-free.dev`). La primera vez que alguien la abra, ngrok muestra una página de advertencia — deben darle click a "Visit Site" para continuar.
+
+> Solo puede haber **un túnel activo por cuenta** en el plan gratuito. Si ves el error `ERR_NGROK_334` ("endpoint already online"), significa que ya hay un `ngrok.exe` corriendo en otra terminal — ciérralo antes de volver a levantarlo.
+
 ## 🔑 Credenciales de prueba
 
 No hay usuarios por defecto en la base de datos: hay que registrarlos. Puedes crear uno desde la pantalla de registro del frontend, o por API:

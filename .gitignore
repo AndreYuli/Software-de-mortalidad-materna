@@ -136,6 +136,13 @@ dist
 
 # Vite logs files
 vite.config.js.timestamp-*
+
+# playwright-cli session state (agent tooling, not project source)
+.playwright-cli/
+
+# Playwright test output
+playwright-report/
+test-results/
 vite.config.ts.timestamp-*
 
 # venv

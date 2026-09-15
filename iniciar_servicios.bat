@@ -15,4 +15,8 @@ start "3. BACKEND (Puerto 8000)" cmd /k "cd /d %BASE_DIR%BACKEND && call venv\Sc
 :: Terminal 4: FRONTEND
 start "4. FRONTEND (Puerto 5173)" cmd /k "cd /d %BASE_DIR%FRONTED\maternanalytics && pnpm dev"
 
-echo ¡Las 4 terminales han sido lanzadas correctamente!
+:: Terminal 5: NGROK (acceso publico)
+start "5. NGROK (acceso publico)" cmd /k ""%LOCALAPPDATA%\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" start --all"
+
+echo ¡Las 5 terminales han sido lanzadas correctamente!
+echo Espera unos segundos y revisa la terminal de NGROK para ver la URL publica.
