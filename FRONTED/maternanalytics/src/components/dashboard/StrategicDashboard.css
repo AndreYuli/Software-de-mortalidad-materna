@@ -30,9 +30,9 @@
 .dash-control-title h1 {
   font-size: 22px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--brand-900);
   margin: 0;
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  background: linear-gradient(135deg, var(--brand-700) 0%, var(--brand-500) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -75,7 +75,7 @@
 }
 
 .dash-select:focus {
-  border-color: #0f766e;
+  border-color: var(--brand-700);
   background-color: #fff;
   box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
 }
@@ -87,7 +87,7 @@
   padding: 10px 16px;
   border-radius: 10px;
   border: none;
-  background: #0f766e;
+  background: var(--brand-700);
   color: #fff;
   font-size: 13.5px;
   font-weight: 600;
@@ -168,8 +168,8 @@
 
 .subtab-button.active {
   background: #eaf3f2;
-  border-color: #0f766e;
-  color: #0f766e;
+  border-color: var(--brand-700);
+  color: var(--brand-700);
 }
 
 .tab-placeholder {
@@ -183,7 +183,7 @@
 }
 
 .tab-placeholder h3 {
-  color: #0f172a;
+  color: var(--brand-900);
   margin-bottom: 12px;
   font-size: 18px;
 }
@@ -223,7 +223,7 @@
   background: #cbd5e1;
 }
 
-.kpi-dashboard-card.kpi-total::before { background: #0f766e; }
+.kpi-dashboard-card.kpi-total::before { background: var(--brand-700); }
 .kpi-dashboard-card.kpi-mortalidad::before { background: #c0392b; }
 .kpi-dashboard-card.kpi-morbilidad::before { background: #2ca02c; }
 .kpi-dashboard-card.kpi-letalidad::before { background: #6f42c1; }
@@ -251,7 +251,7 @@
 .kpi-card-value {
   font-size: 32px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--brand-900);
   line-height: 1.1;
   margin-bottom: 8px;
 }
@@ -374,7 +374,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: #0f766e;
+  background: var(--brand-700);
   color: #fff;
   padding: 6px 12px;
   border-radius: 9999px;
@@ -421,7 +421,7 @@
   padding: 12px;
   background: #fff;
   border-radius: 10px;
-  border-left: 4px solid #0f766e;
+  border-left: 4px solid var(--brand-700);
   font-size: 12.5px;
   color: #4c1d95;
   font-weight: 600;
@@ -434,6 +434,7 @@
   align-items: center;
   justify-content: center;
   min-height: calc(100vh - 180px);
+  min-height: calc(100dvh - 180px);
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   padding: 20px;
 }
@@ -463,7 +464,7 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto 28px;
-  color: #0f766e;
+  color: var(--brand-700);
   font-size: 40px;
   border: 2px dashed rgba(15, 118, 110, 0.22);
 }
@@ -471,7 +472,7 @@
 .welcome-title {
   font-size: 24px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--brand-900);
   margin: 0 0 14px 0;
 }
 
@@ -488,7 +489,7 @@
   padding: 14px 28px;
   border-radius: 12px;
   border: none;
-  background: #0f766e;
+  background: var(--brand-700);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -529,7 +530,7 @@
 }
 
 .btn-choice-upload:hover {
-  border-color: #0f766e;
+  border-color: var(--brand-700);
   background: #eaf3f2;
   transform: translateY(-2px);
   box-shadow: 0 8px 20px -4px rgba(15, 118, 110, 0.10);
@@ -542,7 +543,7 @@
 .btn-choice-upload-label {
   font-size: 13.5px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--brand-900);
 }
 
 .btn-choice-upload-sublabel {
@@ -579,7 +580,7 @@
 
 .btn-mini-toggle.active {
   background: #fff;
-  color: #0f172a;
+  color: var(--brand-900);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
@@ -622,7 +623,7 @@
   position: absolute;
   top: 0; left: 0;
   width: 4px; height: 100%;
-  background: var(--accent, #0f766e);
+  background: var(--accent, var(--brand-700));
 }
 
 .morb-kpi-card:hover {
@@ -650,7 +651,7 @@
 .morb-kpi-value {
   font-size: 28px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--brand-900);
   line-height: 1.1;
 }
 
@@ -733,7 +734,7 @@
 .morb-falla-bar {
   height: 100%;
   border-radius: 99px;
-  background: linear-gradient(90deg, #0f766e, #2ca02c);
+  background: linear-gradient(90deg, var(--brand-700), #2ca02c);
   animation: morbBarGrow 0.8s ease-out backwards;
 }
 
@@ -751,7 +752,7 @@
 .morb-falla-count {
   font-size: 14px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--brand-900);
 }
 
 .morb-falla-pct {
@@ -773,7 +774,7 @@
 
 .morb-badge-organ {
   background: #eaf3f2;
-  color: #0f766e;
+  color: var(--brand-700);
 }
 
 .morb-badge-count {
@@ -856,7 +857,7 @@
 .morb-severity-name {
   font-size: 14px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--brand-900);
   display: block;
   margin-bottom: 8px;
 }
@@ -890,7 +891,7 @@
 .morb-severity-pct {
   font-size: 12px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--brand-900);
 }
 
 /* —— Momento + Remisión Row —— */
@@ -935,7 +936,7 @@
 .morb-remision-stat-value {
   font-size: 16px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--brand-900);
 }
 
 /* —— Responsive —— */
@@ -992,7 +993,7 @@
   position: absolute;
   top: 0; left: 0;
   width: 4px; height: 100%;
-  background: var(--accent, #0f766e);
+  background: var(--accent, var(--brand-700));
 }
 
 .atencion-kpi-card:hover {
@@ -1020,7 +1021,7 @@
 .atencion-kpi-value {
   font-size: 28px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--brand-900);
   line-height: 1.1;
 }
 
@@ -1139,7 +1140,7 @@
   padding: 18px 22px 14px 22px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
-  border-left: 5px solid #0f766e;
+  border-left: 5px solid var(--brand-700);
   box-shadow: none;
   display: flex;
   flex-direction: column;
@@ -1149,7 +1150,7 @@
 .dash-control-eyebrow,
 .causes-section-kicker,
 .chart-card-eyebrow {
-  color: #0f766e;
+  color: var(--brand-700);
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1189,7 +1190,7 @@
 
 .summary-priority-panel {
   padding: 20px;
-  border-left: 5px solid #0f766e;
+  border-left: 5px solid var(--brand-700);
 }
 
 .summary-priority-header,
@@ -1398,7 +1399,7 @@
 .chart-ai-insight {
   background: #f8fafc;
   border: 1px solid #dbe4ea;
-  border-left: 4px solid #0f766e;
+  border-left: 4px solid var(--brand-700);
   border-radius: 8px;
   display: grid;
   gap: 4px;

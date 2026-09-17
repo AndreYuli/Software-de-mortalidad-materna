@@ -79,14 +79,14 @@
 .upload-drop-zone:hover,
 .upload-drop-zone:focus-visible {
   background: #f8fafc;
-  border-color: #0f766e;
+  border-color: var(--brand-700);
   box-shadow: 0 10px 25px -5px rgba(15, 118, 110, 0.10);
   transform: translateY(-1px);
 }
 
 .upload-drop-zone.dragging {
   background: #eaf3f2;
-  border-color: #0f766e;
+  border-color: var(--brand-700);
   box-shadow: 0 14px 35px rgba(15, 118, 110, 0.12);
   transform: scale(1.015);
 }
@@ -124,7 +124,7 @@
 .upload-zone-icon svg {
   width: 30px;
   height: 30px;
-  stroke: #0f766e;
+  stroke: var(--brand-700);
 }
 
 /* ---- Drop Zone Text ---- */
@@ -137,7 +137,7 @@
 }
 
 .upload-zone-link {
-  color: #0f766e;
+  color: var(--brand-700);
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -434,7 +434,7 @@
 .upload-submit-btn {
   width: 100%;
   margin-top: 20px;
-  background: #0f766e;
+  background: var(--brand-700);
   color: #ffffff;
   font-size: 14.5px;
   font-weight: 700;
@@ -481,10 +481,5 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
-  animation: spinnerRotate 0.9s linear infinite;
-}
-
-@keyframes spinnerRotate {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
+  animation: spin 0.9s linear infinite;
 }

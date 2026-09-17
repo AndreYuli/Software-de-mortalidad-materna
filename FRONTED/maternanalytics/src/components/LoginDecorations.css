@@ -1,11 +1,11 @@
+@charset "UTF-8";
 /* ============================================================
    LoginDecorations.css
    Elementos decorativos animados del panel izquierdo:
    blobs, nodos, líneas de pulso, contenido de marca y @keyframes
    ============================================================ */
-
 /* Floating blobs */
-.blob {
+.login-blob {
   position: absolute;
   border-radius: 50%;
   opacity: 0.07;
@@ -13,7 +13,7 @@
   will-change: transform, opacity;
 }
 
-.blob-1 {
+.login-blob-1 {
   width: 400px;
   height: 400px;
   background: var(--blue-400);
@@ -22,7 +22,7 @@
   animation-delay: 0s;
 }
 
-.blob-2 {
+.login-blob-2 {
   width: 300px;
   height: 300px;
   background: var(--blue-300);
@@ -32,7 +32,7 @@
   animation-duration: 25s;
 }
 
-.blob-3 {
+.login-blob-3 {
   width: 200px;
   height: 200px;
   background: #fff;
@@ -43,14 +43,21 @@
 }
 
 @keyframes drift {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25%       { transform: translate(20px, -30px) scale(1.05); }
-  50%       { transform: translate(-15px, 20px) scale(0.95); }
-  75%       { transform: translate(25px, 10px) scale(1.02); }
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  25% {
+    transform: translate(20px, -30px) scale(1.05);
+  }
+  50% {
+    transform: translate(-15px, 20px) scale(0.95);
+  }
+  75% {
+    transform: translate(25px, 10px) scale(1.02);
+  }
 }
-
 /* Data nodes */
-.node {
+.login-node {
   position: absolute;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
@@ -58,14 +65,69 @@
   will-change: transform, opacity;
 }
 
-.node:nth-child(1) { width: 6px; height: 6px; top: 20%; left: 25%; animation-delay: 0s; }
-.node:nth-child(2) { width: 8px; height: 8px; top: 35%; left: 60%; animation-delay: -1.5s; }
-.node:nth-child(3) { width: 5px; height: 5px; top: 55%; left: 40%; animation-delay: -3s; }
-.node:nth-child(4) { width: 7px; height: 7px; top: 70%; left: 70%; animation-delay: -4.2s; }
-.node:nth-child(5) { width: 4px; height: 4px; top: 15%; left: 75%; animation-delay: -2s; }
-.node:nth-child(6) { width: 6px; height: 6px; top: 80%; left: 20%; animation-delay: -5s; }
-.node:nth-child(7) { width: 9px; height: 9px; top: 45%; left: 15%; animation-delay: -3.5s; }
-.node:nth-child(8) { width: 5px; height: 5px; top: 60%; left: 85%; animation-delay: -1s; }
+.login-node:nth-child(1) {
+  width: 6px;
+  height: 6px;
+  top: 20%;
+  left: 25%;
+  animation-delay: 0s;
+}
+
+.login-node:nth-child(2) {
+  width: 8px;
+  height: 8px;
+  top: 35%;
+  left: 60%;
+  animation-delay: -1.5s;
+}
+
+.login-node:nth-child(3) {
+  width: 5px;
+  height: 5px;
+  top: 55%;
+  left: 40%;
+  animation-delay: -3s;
+}
+
+.login-node:nth-child(4) {
+  width: 7px;
+  height: 7px;
+  top: 70%;
+  left: 70%;
+  animation-delay: -4.2s;
+}
+
+.login-node:nth-child(5) {
+  width: 4px;
+  height: 4px;
+  top: 15%;
+  left: 75%;
+  animation-delay: -2s;
+}
+
+.login-node:nth-child(6) {
+  width: 6px;
+  height: 6px;
+  top: 80%;
+  left: 20%;
+  animation-delay: -5s;
+}
+
+.login-node:nth-child(7) {
+  width: 9px;
+  height: 9px;
+  top: 45%;
+  left: 15%;
+  animation-delay: -3.5s;
+}
+
+.login-node:nth-child(8) {
+  width: 5px;
+  height: 5px;
+  top: 60%;
+  left: 85%;
+  animation-delay: -1s;
+}
 
 @keyframes float {
   0%, 100% {
@@ -77,11 +139,10 @@
     opacity: 0.7;
   }
 }
-
 /* Pulse lines */
-.pulse-line {
+.login-pulse-line {
   position: absolute;
-  height: 1px;                /* px para líneas ultra delgadas */
+  height: 1px; /* px para líneas ultra delgadas */
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
   animation: pulse-move 4s ease-in-out infinite;
   will-change: transform, opacity;
@@ -92,23 +153,25 @@
   Así, @keyframes puede combinar rotate() + translateX()
   sin destruir la inclinación individual de cada línea.
 */
-.pulse-line:nth-of-type(1) {
+.login-pulse-line:nth-of-type(1) {
   --rotation: -5deg;
-  width: 12.5rem;             /* ~200px */
+  width: 12.5rem; /* ~200px */
   top: 30%;
   left: 10%;
   animation-delay: 0s;
 }
-.pulse-line:nth-of-type(2) {
+
+.login-pulse-line:nth-of-type(2) {
   --rotation: 3deg;
-  width: 9.375rem;            /* ~150px */
+  width: 9.375rem; /* ~150px */
   top: 50%;
   left: 30%;
   animation-delay: -2s;
 }
-.pulse-line:nth-of-type(3) {
+
+.login-pulse-line:nth-of-type(3) {
   --rotation: -2deg;
-  width: 11.25rem;            /* ~180px */
+  width: 11.25rem; /* ~180px */
   top: 75%;
   left: 50%;
   animation-delay: -1s;
@@ -121,12 +184,11 @@
   }
   50% {
     opacity: 1;
-    transform: rotate(var(--rotation, 0deg)) translateX(1.875rem);  /* ~30px */
+    transform: rotate(var(--rotation, 0deg)) translateX(1.875rem); /* ~30px */
   }
 }
-
 /* CONTENIDO PRINCIPAL DEL PANEL IZQUIERDO */
-.left-content {
+.login-left-content {
   position: relative;
   z-index: 2;
   display: flex;
@@ -134,66 +196,65 @@
   justify-content: center;
   align-items: center;
   height: 100%;
-  padding: 3rem;              /* ~48px */
+  padding: 3rem; /* ~48px */
   text-align: center;
 }
 
-.logo-icon {
-  width: 5.625rem;             /* ~90px */
-  height: 5.625rem;            /* ~90px */
+.login-logo-icon {
+  width: 5.625rem; /* ~90px */
+  height: 5.625rem; /* ~90px */
   color: var(--blue-400);
-  margin-bottom: 2rem;        /* ~32px */
+  margin-bottom: 2rem; /* ~32px */
   filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.15));
   animation: fadeUp 1s ease-out 0.2s both;
 }
 
-.brand-title {
-  font-family: 'DM Serif Display', serif;
-  font-size: 2.625rem;        /* ~42px */
+.login-brand-title {
+  font-family: "DM Serif Display", serif;
+  font-size: 2.625rem; /* ~42px */
   color: #fff;
   letter-spacing: -0.0625rem; /* -1px */
   line-height: 1.1;
   animation: fadeUp 1s ease-out 0.4s both;
-
-  span {
-    color: var(--blue-300);
-    font-weight: 400;
-  }
+}
+.login-brand-title span {
+  color: var(--blue-300);
+  font-weight: 400;
 }
 
-.brand-sub {
-  font-size: 0.75rem;         /* ~12px */
-  letter-spacing: 0.2188rem;  /* 3.5px */
+.login-brand-sub {
+  font-size: 0.75rem; /* ~12px */
+  letter-spacing: 0.2188rem; /* 3.5px */
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.55);
-  margin-top: 0.875rem;       /* ~14px */
+  margin-top: 0.875rem; /* ~14px */
   animation: fadeUp 1s ease-out 0.6s both;
 }
 
-.brand-desc {
-  font-size: 0.875rem;        /* ~14px */
+.login-brand-desc {
+  font-size: 0.875rem; /* ~14px */
   color: rgba(255, 255, 255, 0.4);
-  margin-top: 1.5rem;         /* ~24px */
-  max-width: 20rem;           /* ~320px */
+  margin-top: 1.5rem; /* ~24px */
+  max-width: 20rem; /* ~320px */
   line-height: 1.7;
   animation: fadeUp 1s ease-out 0.8s both;
 }
 
-.brand-tags {
+.login-brand-tags {
   display: flex;
-  gap: 0.5rem;                /* ~8px */
-  margin-top: 1.25rem;        /* ~20px */
+  gap: 0.5rem; /* ~8px */
+  margin-top: 1.25rem; /* ~20px */
   flex-wrap: wrap;
   justify-content: center;
   animation: fadeUp 1s ease-out 1s both;
 }
 
-.tag {
-  font-size: 0.6875rem;       /* ~11px */
-  padding: 0.25rem 0.75rem;   /* ~4px 12px */
+.login-tag {
+  font-size: 0.6875rem; /* ~11px */
+  padding: 0.25rem 0.75rem; /* ~4px 12px */
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 6.25rem;     /* píldora */
+  border-radius: 6.25rem; /* píldora */
   color: rgba(255, 255, 255, 0.5);
   letter-spacing: 0.5px;
 }
@@ -208,3 +269,6 @@
     transform: translateY(0);
   }
 }
+
+
+/*# sourceMappingURL=LoginDecorations.css.map */

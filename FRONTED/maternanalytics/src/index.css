@@ -16,6 +16,10 @@
   --blue-100: #f0f7ff;
 
   --pink-500: #e8829f;
+
+  --brand-900: #0f172a;
+  --brand-700: #0f766e;
+  --brand-500: #14b8a6;
 }
 
 html, body {

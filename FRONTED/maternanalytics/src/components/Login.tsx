@@ -68,43 +68,43 @@ export default function Login({ onLogin, onRegister }: LoginProps = {}) {
   }
 
   return (
-    <div className="page">
+    <div className="login-page">
 
       {/* LEFT PANEL */}
-      <div className="left">
-        <div className="blob blob-1" aria-hidden="true"></div>
-        <div className="blob blob-2" aria-hidden="true"></div>
-        <div className="blob blob-3" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="node" aria-hidden="true"></div>
-        <div className="pulse-line" aria-hidden="true"></div>
-        <div className="pulse-line" aria-hidden="true"></div>
-        <div className="pulse-line" aria-hidden="true"></div>
+      <div className="login-left">
+        <div className="login-blob login-blob-1" aria-hidden="true"></div>
+        <div className="login-blob login-blob-2" aria-hidden="true"></div>
+        <div className="login-blob login-blob-3" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-node" aria-hidden="true"></div>
+        <div className="login-pulse-line" aria-hidden="true"></div>
+        <div className="login-pulse-line" aria-hidden="true"></div>
+        <div className="login-pulse-line" aria-hidden="true"></div>
 
-        <div className="left-content">
-          <LogoIcon className="logo-icon" aria-hidden="true" />
+        <div className="login-left-content">
+          <LogoIcon className="login-logo-icon" aria-hidden="true" />
 
 
-          <h1 className="brand-title">Vida<span>Materna</span></h1>
+          <h1 className="login-brand-title">Vida<span>Materna</span></h1>
         </div>
       </div>
 
       {/* RIGHT PANEL */}
-      <main className="right">
-        <div className="form-container">
-          <div className="form-header">
+      <main className="login-right">
+        <div className="login-form-container">
+          <div className="login-form-header">
             <h2>Inicio de sesión</h2>
             <p>Ingresa tus credenciales para acceder a la plataforma de análisis.</p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="field">
+            <div className="login-field">
               <label htmlFor="login-email">Correo electrónico</label>
               <input id="login-email"
                 type="email"
@@ -112,13 +112,13 @@ export default function Login({ onLogin, onRegister }: LoginProps = {}) {
                 {...register('email')}
                 required
               />
-              {errors.email && <p className="error-msg">{errors.email.message}</p>}
-              <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {errors.email && <p className="login-error-msg">{errors.email.message}</p>}
+              <svg className="login-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="2" y="4" width="20" height="16" rx="3" /><path d="M22 4L12 13 2 4" />
               </svg>
             </div>
 
-            <div className="field">
+            <div className="login-field">
               <label htmlFor="login-password">Contraseña</label>
               <input id="login-password"
                 type="password"
@@ -126,48 +126,36 @@ export default function Login({ onLogin, onRegister }: LoginProps = {}) {
                 {...register('password')}
                 required
               />
-              {errors.password && <p className="error-msg">{errors.password.message}</p>}
-              <svg className="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              {errors.password && <p className="login-error-msg">{errors.password.message}</p>}
+              <svg className="login-field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <rect x="3" y="11" width="18" height="11" rx="3" /><path d="M7 11V7a5 5 0 0110 0v4" />
               </svg>
             </div>
 
-            {error && <p className="error-msg">{error}</p>}
+            {error && <p className="login-error-msg">{error}</p>}
             {infoMsg && (
-              <div
-                style={{
-                  background: 'rgba(59, 130, 246, 0.1)',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
-                  color: '#1d4ed8',
-                  padding: '10px 14px',
-                  borderRadius: '10px',
-                  fontSize: '12.5px',
-                  lineHeight: '1.4',
-                  margin: '8px 0 12px',
-                  textAlign: 'left',
-                }}
-              >
+              <div className="login-info-msg">
                 ℹ️ {infoMsg}
               </div>
             )}
 
-            <div className="field-row">
-              <label className="remember">
+            <div className="login-field-row">
+              <label className="login-remember">
                 <input type="checkbox" /> Recordarme
               </label>
-              <button type="button" className="btn-link forgot" onClick={handleForgotPassword}>¿Olvidaste tu contraseña?</button>
+              <button type="button" className="login-btn-link login-forgot" onClick={handleForgotPassword}>¿Olvidaste tu contraseña?</button>
             </div>
 
-            <button type="submit" className="btn-login" disabled={isLoading}>
+            <button type="submit" className="login-btn-login" disabled={isLoading}>
               {isLoading ? 'Verificando...' : 'Iniciar sesión'}
             </button>
           </form>
 
-          <p className="footer-text">
+          <p className="login-footer-text">
             ¿No tienes una cuenta?{' '}
             <button
               type="button"
-              className="btn-link"
+              className="login-btn-link"
               onClick={() => {
                 if (onRegister) onRegister()
                 else navigate('/register')

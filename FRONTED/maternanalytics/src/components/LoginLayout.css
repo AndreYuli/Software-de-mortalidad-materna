@@ -3,13 +3,6 @@
    Estructura general: reset, variables, layout y responsivo
    ============================================================ */
 
-*, *::before, *::after {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-
 :root {
   --cream:      #f4f8ff;
   --text-dark:  #1a2433;
@@ -17,29 +10,25 @@
   --text-light: #7a9bbf;
 }
 
-html, body {
-  height: 100%;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+.login-page {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
   background: var(--cream);
   color: var(--text-dark);
   overflow: hidden;
 }
 
-.page {
-  display: flex;
-  height: 100vh;
-  width: 100%;
-}
-
 /* LEFT PANEL */
-.left {
+.login-left {
   flex: 1.1;
   position: relative;
   overflow: hidden;
   background: linear-gradient(160deg, var(--blue-900) 0%, var(--blue-700) 50%, var(--blue-500) 100%);
 }
 
-.left::before {
+.login-left::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -49,7 +38,7 @@ html, body {
 }
 
 /* RIGHT PANEL */
-.right {
+.login-right {
   flex: 0.9;
   display: flex;
   flex-direction: column;
@@ -58,19 +47,19 @@ html, body {
   padding: 3rem 3.5rem;       /* ~48px 56px */
   position: relative;
   background: var(--cream);
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 3px;               /* px para grosores ultra delgados */
-    height: 100%;
-    background: linear-gradient(to bottom, transparent, var(--blue-500), var(--blue-400), transparent);
-  }
 }
 
-.bottom-bar {
+.login-right::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;               /* px para grosores ultra delgados */
+  height: 100%;
+  background: linear-gradient(to bottom, transparent, var(--blue-500), var(--blue-400), transparent);
+}
+
+.login-bottom-bar {
   position: absolute;
   bottom: 1.5rem;             /* ~24px */
   left: 0;
@@ -85,37 +74,38 @@ html, body {
    Mobile
    ============================================================ */
 @media (max-width: 900px) {
-  .page {
+  .login-page {
     flex-direction: column;
+    overflow-y: auto;
   }
-  .left {
+  .login-left {
     flex: none;
     height: 220px;
     min-height: 220px;
   }
-  .brand-title {
+  .login-brand-title {
     font-size: 1.75rem;
   }
-  .brand-desc, .brand-tags {
+  .login-brand-desc, .login-brand-tags {
     display: none;
   }
-  .right {
+  .login-right {
     flex: 1;
     padding: 2rem 1.75rem;
     justify-content: flex-start;
     padding-top: 2.25rem;
   }
-  .right::before {
+  .login-right::before {
     width: 100%;
     height: 3px;
     top: 0;
     left: 0;
     background: linear-gradient(90deg, transparent, var(--blue-400), var(--blue-300), transparent);
   }
-  .form-container {
+  .login-form-container {
     max-width: 100%;
   }
-  .bottom-bar {
+  .login-bottom-bar {
     position: static;
     margin-top: 1.5rem;
   }
