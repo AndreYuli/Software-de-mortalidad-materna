@@ -55,7 +55,7 @@ def _resolve_catalog_by_id(db: Session, model: Any, value: Any, catalog_cache: d
         if not isinstance(value, bool):
             val_id = int(float(value))
     except (ValueError, TypeError) as exc:
-        logger.warning("No se pudo convertir a ID numérico el valor %r: %s", value, exc)
+        logger.debug("No se pudo convertir a ID numérico el valor %r: %s", value, exc)
     if val_id is not None:
         cache_key = ("by_id", model)
         if cache_key not in catalog_cache:
@@ -101,10 +101,16 @@ def _resolve_catalog_by_fields(
                 break
     if resultado is None:
         slug = slugify(texto)
-        for obj in catalog_cache[cache_key]:
-            if any(slugify(v) == slug for v in _catalog_comparables(obj, code_field, extra_field)):
-                resultado = obj
-                break
+        if slug:
+            slug_norm = slug.replace(" de ", " ")
+            for obj in catalog_cache[cache_key]:
+                for v in _catalog_comparables(obj, code_field, extra_field):
+                    v_slug = slugify(v)
+                    if v_slug and (v_slug == slug or v_slug.replace(" de ", " ") == slug_norm):
+                        resultado = obj
+                        break
+                if resultado:
+                    break
     return resultado
 
 
