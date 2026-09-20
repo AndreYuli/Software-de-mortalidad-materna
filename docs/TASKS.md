@@ -273,8 +273,8 @@ Aprovechar la infraestructura local desplegada de Ollama, mostrando el texto gen
 **Impacto:** Cierra el ciclo de valor prometido por el sistema sin alterar la exploración manual de datos.
 
 **Criterios de Aceptación:**
-- [ ] Importar `<NarrativaIA />` en la vista que muestra el resumen estadístico principal (probablemente `AnalysisHomeSection.tsx`).
-- [ ] Asegurarse de que el componente reacciona asincrónicamente y no bloquea el render de los KPIs circundantes.
+- [x] Importar `<NarrativaIA />` en la vista que muestra el resumen estadístico principal (probablemente `AnalysisHomeSection.tsx`).
+- [x] Asegurarse de que el componente reacciona asincrónicamente y no bloquea el render de los KPIs circundantes.
 
 ---
 

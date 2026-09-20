@@ -16,6 +16,7 @@ import { DistribucionEdadGestacional } from './DistribucionEdadGestacional'
 import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
 import { SociodemographicChartsSection } from './SociodemographicChartsSection'
 import { CruceVariablesSection } from './CruceVariablesSection'
+import { NarrativasResumen } from './NarrativasResumen'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
 export interface AnalysisHomeSectionProps {
@@ -209,6 +210,14 @@ export function AnalysisHomeSection({
             prevTot={metrics.prevTot}
             yearCompareMort={metrics.yearCompareMort}
             yearCompareMorb={metrics.yearCompareMorb}
+          />
+
+          <NarrativasResumen
+            latestMortalidad={latestMortalidad}
+            latestMorbilidad={latestMorbilidad}
+            segmento={segmento}
+            filterYear={filterYear}
+            filterMonth={filterMonth}
           />
 
           {activeTab === 'generalidades' && (
