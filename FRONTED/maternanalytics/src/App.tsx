@@ -7,7 +7,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 const DashboardOKD = lazy(() => import('./components/DashboardOKD'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const hasSession = Boolean(localStorage.getItem('token') || localStorage.getItem('username'))
+  const hasSession = Boolean(localStorage.getItem('token'))
   if (!hasSession) {
     return <Navigate to="/login" replace />
   }
@@ -15,7 +15,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
-  const hasSession = Boolean(localStorage.getItem('token') || localStorage.getItem('username'))
+  const hasSession = Boolean(localStorage.getItem('token'))
   if (hasSession) {
     return <Navigate to="/dashboard" replace />
   }

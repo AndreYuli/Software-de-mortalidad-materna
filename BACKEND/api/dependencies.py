@@ -8,13 +8,14 @@ from core.security import decode_access_token
 from db.database import get_db
 from db.models_sqlalchemy import Usuario
 
-_bearer = HTTPBearer()
+# auto_error=False: sin header Authorization devolvemos 401 (no el 403 por defecto).
+_bearer = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    credentials: HTTPAuthorizationCredentials | None = Depends(_bearer),
     db: Session = Depends(get_db),
-) -> type[Usuario]:
+) -> Usuario:
     """Extrae y valida el token JWT del header Authorization.
 
     Args:
@@ -27,6 +28,13 @@ def get_current_user(
     Raises:
         HTTPException: 401 si el token es inválido, expirado o el usuario no existe.
     """
+    if credentials is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No autenticado.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     payload = decode_access_token(credentials.credentials)
     if payload is None:
         raise HTTPException(
@@ -34,7 +42,7 @@ def get_current_user(
             detail="Token inválido o expirado.",
         )
 
-    user_id: int | None = payload.get("sub")
+    user_id: str | None = payload.get("sub")
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

@@ -6,6 +6,7 @@ import { Sidebar, type DashboardFileStatus, type FileIndicator } from './dashboa
 import { ViewRouter } from './dashboard/ViewRouter'
 import type { ActiveView } from '../hooks/navigation/useActiveView'
 import { MenuIcon } from './icons'
+import { clearSession } from '../api'
 
 export type { DashboardFileStatus, FileIndicator }
 
@@ -40,9 +41,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
   )
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('username')
-    localStorage.removeItem('user_email')
+    clearSession()
     if (onLogout) onLogout()
     else navigate('/login')
   }, [navigate, onLogout])

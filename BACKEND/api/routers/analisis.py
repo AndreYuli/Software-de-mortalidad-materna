@@ -6,13 +6,14 @@ from typing import Any, Generator
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
+from api.dependencies import get_current_user
 from db.database import get_db
 from db.models_sqlalchemy import Analisis
 from schemas.analisis_schema import AnalisisResponse, ClusteringRequest
 from services import analisis_service, narrativa_service
 from services.ia_client import IAServiceUnavailableError
 
-router = APIRouter(prefix="/api", tags=["analisis"])
+router = APIRouter(prefix="/api", tags=["analisis"], dependencies=[Depends(get_current_user)])
 
 
 @contextmanager

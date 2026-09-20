@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import pytest
 from fastapi.testclient import TestClient
 
+from api.dependencies import get_current_user
 from db.database import get_db
 from db.models_sqlalchemy import Analisis
 from main import app
@@ -14,6 +15,7 @@ from main import app
 def client(db_session):
     """Cliente HTTP con la dependencia de BD sobreescrita por la sesión de prueba."""
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_current_user] = lambda: object()
     yield TestClient(app)
     app.dependency_overrides.clear()
 

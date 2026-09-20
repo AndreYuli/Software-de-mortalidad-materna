@@ -9,9 +9,23 @@ export const REQUEST_TIMEOUT_MS = 30_000
 /** Las cargas de Excel procesan y persisten miles de filas: se les da más margen. */
 export const UPLOAD_TIMEOUT_MS = 180_000
 
+const SESSION_KEYS = ['token', 'username', 'user_email'] as const
+
+/** Elimina del navegador todos los datos de la sesión. */
+export function clearSession(): void {
+  SESSION_KEYS.forEach((key) => localStorage.removeItem(key))
+}
+
+/** Login y registro son públicos: no llevan Bearer ni disparan la expulsión por 401. */
+function isPublicAuthUrl(url: string): boolean {
+  return url.includes('/auth/')
+}
+
 /**
  * `fetch` con límite de tiempo. Si vence, lanza un Error con name 'TimeoutError'.
  * Respeta un `signal` externo (p. ej. el AbortController de un efecto).
+ * Adjunta `Authorization: Bearer <token>` a las llamadas protegidas y, si el backend
+ * responde 401, elimina la sesión local y redirige a /login.
  */
 export async function fetchWithTimeout(
   input: string,
@@ -30,8 +44,19 @@ export async function fetchWithTimeout(
     if (external.aborted) controller.abort()
     else external.addEventListener('abort', onExternalAbort, { once: true })
   }
+  const headers = new Headers(init.headers)
+  const token = localStorage.getItem('token')
+  const isProtected = !isPublicAuthUrl(input)
+  if (token && isProtected && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`)
+  }
   try {
-    return await fetch(input, { ...init, signal: controller.signal })
+    const response = await fetch(input, { ...init, headers, signal: controller.signal })
+    if (response.status === 401 && isProtected) {
+      clearSession()
+      if (window.location.pathname !== '/login') window.location.replace('/login')
+    }
+    return response
   } catch (err) {
     if (timedOut) {
       const timeoutError = new Error('El servidor tardó demasiado en responder. Intenta de nuevo.')

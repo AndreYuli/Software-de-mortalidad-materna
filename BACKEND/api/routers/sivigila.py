@@ -5,6 +5,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from api.dependencies import get_current_user
 from db.database import get_db
 from db.models_sqlalchemy import (
     CasoMorbilidad,
@@ -18,7 +19,9 @@ from schemas.sivigila_schema import PacienteResponse, VMorbilidadResponse, VMort
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/sivigila", tags=["sivigila"])
+router = APIRouter(
+    prefix="/api/sivigila", tags=["sivigila"], dependencies=[Depends(get_current_user)]
+)
 
 _LIMITE_DEFAULT = 100
 _LIMITE_MAXIMO = 500
