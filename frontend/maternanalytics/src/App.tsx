@@ -1,7 +1,7 @@
 import React, { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './components/Login'
-import Register from './components/Register'
+import Login from './components/auth/Login'
+import Register from './components/auth/Register'
 import ErrorBoundary from './components/ErrorBoundary'
 
 const DashboardOKD = lazy(() => import('./components/DashboardOKD'))

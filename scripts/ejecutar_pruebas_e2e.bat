@@ -7,13 +7,12 @@ echo.
 echo ===================================================================
 echo.
 
-:: Navegar a la carpeta del frontend
-cd frontend\maternanalytics
+:: Navegar a la carpeta del frontend (funciona lance desde donde se lance)
+cd /d "%~dp0..\frontend\maternanalytics"
 
 echo [!] Verificando e instalando dependencias de Playwright...
 call pnpm install
-:: Esto asegura que @playwright/test esté en el package.json
-call pnpm add -D @playwright/test
+:: (@playwright/test ya está en devDependencies de package.json)
 :: Esto descarga los navegadores necesarios
 call pnpm exec playwright install chromium --with-deps
 

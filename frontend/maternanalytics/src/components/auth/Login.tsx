@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Login.css'
-import { API_URL, describeNetworkError, extractErrorMessage, fetchWithTimeout } from '../api'
+import { API_URL, describeNetworkError, extractErrorMessage, fetchWithTimeout } from '../../api'
 import { useForm } from 'react-hook-form'
 // Zod schema imported from external file
 import { zodResolver } from '@hookform/resolvers/zod'
-import LogoIcon from './LogoIcon'
-import { loginSchema } from '../validation/loginSchema'
+import { LogoIcon } from '../icons'
+import { loginSchema } from '../../validation/loginSchema'
 
 interface LoginProps {
   onLogin?: () => void

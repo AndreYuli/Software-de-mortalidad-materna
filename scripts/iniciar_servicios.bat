@@ -1,5 +1,5 @@
 @echo off
-set "BASE_DIR=%~dp0"
+set "BASE_DIR=%~dp0..\"
 
 echo Iniciando las 4 terminales para el proyecto...
 
