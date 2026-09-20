@@ -143,11 +143,11 @@ Cuando el usuario cambie la variable:
 
 ### Criterios de aceptación
 
-- [ ] Las etiquetas corresponden a la variable seleccionada.
-- [ ] Los títulos cambian correctamente.
-- [ ] Los filtros continúan funcionando.
-- [ ] No existen etiquetas contradictorias.
-- [ ] El eje indica claramente si representa número de casos, categorías o la variable seleccionada.
+- [x] Las etiquetas corresponden a la variable seleccionada.
+- [x] Los títulos cambian correctamente.
+- [x] Los filtros continúan funcionando.
+- [x] No existen etiquetas contradictorias.
+- [x] El eje indica claramente si representa número de casos, categorías o la variable seleccionada.
 
 ### Relación con decisiones
 

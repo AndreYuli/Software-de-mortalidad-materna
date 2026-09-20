@@ -5,6 +5,7 @@ import { CHART_FONT_FAMILY } from '../../constants/chartTheme'
 import { ChartAiInsight } from './ChartAiInsight'
 import { wrapLabel, calculateChartHeight } from '../../utils/causasChartLabels'
 import { getCruceAiInsight } from '../../utils/aiChartInsights'
+import { getCruceLabels } from '../../utils/cruceLabels'
 import { useCruceVariables } from '../../hooks/dashboard/useCruceVariables'
 
 const CRUCE_PALETTE = ['#6366f1', '#f472b6', '#34d399', '#fbbf24', '#38bdf8', '#fb923c', '#a78bfa', '#f87171']
@@ -56,6 +57,8 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
     () => getCruceAiInsight(data ?? undefined, varSocioLabel, varClinicaLabel),
     [data, varSocioLabel, varClinicaLabel],
   )
+
+  const labels = useMemo(() => getCruceLabels(varSocioLabel, varClinicaLabel), [varSocioLabel, varClinicaLabel])
 
   const chartHeight = useMemo(() => (data ? calculateChartHeight(data.categorias_socio) : 320), [data])
 
@@ -137,16 +140,23 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
                 maintainAspectRatio: false,
                 indexAxis: 'y' as const,
                 plugins: {
-                  legend: { display: true, position: 'bottom', labels: { font: { family: CHART_FONT_FAMILY } } },
+                  title: { display: true, text: labels.title, font: { family: CHART_FONT_FAMILY } },
+                  legend: {
+                    display: true,
+                    position: 'bottom',
+                    title: { display: true, text: labels.legend, font: { family: CHART_FONT_FAMILY } },
+                    labels: { font: { family: CHART_FONT_FAMILY } },
+                  },
                 },
                 scales: {
                   x: {
-                    title: { display: true, text: 'Casos', font: { family: CHART_FONT_FAMILY } },
+                    title: { display: true, text: labels.xAxis, font: { family: CHART_FONT_FAMILY } },
                     beginAtZero: true,
                     ticks: { precision: 0 },
                     grid: { color: 'rgba(0,0,0,0.05)' },
                   },
                   y: {
+                    title: { display: true, text: labels.yAxis, font: { family: CHART_FONT_FAMILY } },
                     grid: { display: false },
                     afterFit: (scale: Scale) => {
                       scale.width += 70
