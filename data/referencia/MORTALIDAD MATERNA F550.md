@@ -237,7 +237,7 @@ Correos: sivigila@ins.gov.co / ins.sivigila@gmail.com
 
 # MAPEO DE CAMPOS A BASE DE DATOS Y CÓDIGO PYTHON
 
-> Mapeo campo por campo del formulario F550 hacia la tabla/columna PostgreSQL (`BACKEND/sivigila_maternidad_postgres.sql`) y el código Python que lo lee/escribe (`BACKEND/services/_analisis_excel.py`, `_sivigila_escritura.py`, `_sivigila_mortalidad.py`, `sivigila_service.py`). Elaborado una por una siguiendo el orden del formulario.
+> Mapeo campo por campo del formulario F550 hacia la tabla/columna PostgreSQL (`backend/sivigila_maternidad_postgres.sql`) y el código Python que lo lee/escribe (`backend/services/_analisis_excel.py`, `_sivigila_escritura.py`, `_sivigila_mortalidad.py`, `sivigila_service.py`). Elaborado una por una siguiendo el orden del formulario.
 
 - **A.** Nombres y apellidos del paciente
   - Tabla/columna: `paciente.nombres_apellidos`
@@ -422,4 +422,4 @@ Correos: sivigila@ins.gov.co / ins.sivigila@gmail.com
 - La identificación del paciente se hace únicamente por `numero_id` (columna **C**), no por la combinación (tipo, número) — ver commit `b88e0adf` y tabla `paciente` (`UNIQUE (numero_id)`).
 - El caso de mortalidad (`caso_mortalidad`) se identifica de forma exclusiva por `id_paciente` + `fecha_defuncion`, comparando además que la causa básica CIE-10 coincida, para decidir si se actualiza un caso existente o se crea uno nuevo (`_fase3_upsert_casos` en `sivigila_service.py`).
 - Todas las columnas de catálogo (`cat_*`) se resuelven con `_resolve_catalog` / `_resolve_catalog_optional`, que aceptan tanto el texto de la ficha como variantes/alias definidas en cada lista `_MORTALIDAD_*_COLS`.
-- Las vistas consolidadas para consulta son `v_mortalidad_completa` (`sivigila_maternidad_postgres.sql`, sección 5.1) y su réplica en `BACKEND/db/database_views.py`.
+- Las vistas consolidadas para consulta son `v_mortalidad_completa` (`sivigila_maternidad_postgres.sql`, sección 5.1) y su réplica en `backend/db/database_views.py`.
