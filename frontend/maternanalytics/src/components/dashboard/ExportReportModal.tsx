@@ -148,7 +148,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
             <b>{reportData.kpis.casosTotales}</b>
           </div>
           <div>
-            <span style={{ color: '#64748b' }}>Razón: </span>
+            <span style={{ color: '#64748b' }}>Letalidad: </span>
             <b>{reportData.kpis.tasaLetalidad}</b>
           </div>
         </div>

@@ -78,9 +78,12 @@ export function useDashboardMetrics({
 
   const totalCasos = useMemo(() => totalMortalidad + totalMorbilidad, [totalMortalidad, totalMorbilidad])
 
+  // Letalidad = muertes / total de casos (mortalidad + morbilidad) × 100. Solo tiene sentido con
+  // ambos eventos en el análisis; en una cohorte única el denominador sería el propio numerador.
   const tasaLetalidad = useMemo(
-    () => (totalMorbilidad > 0 ? (totalMortalidad / totalMorbilidad * 100).toFixed(1) : '0'),
-    [totalMortalidad, totalMorbilidad],
+    () =>
+      segmento === 'ambos' && totalCasos > 0 ? ((totalMortalidad / totalCasos) * 100).toFixed(1) : '0',
+    [segmento, totalMortalidad, totalCasos],
   )
 
   const compareFor = useCallback(

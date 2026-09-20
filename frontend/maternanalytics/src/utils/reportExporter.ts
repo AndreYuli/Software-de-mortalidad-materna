@@ -58,7 +58,7 @@ export function exportReportToExcel(data: ReportExportData, filename?: string) {
     { Parámetro: 'Total Defunciones (Mortalidad)', Valor: data.kpis.totalDefunciones },
     { Parámetro: 'Total Morbilidad Materna Extrema', Valor: data.kpis.totalMorbilidad },
     { Parámetro: 'Total de Casos Evaluados', Valor: data.kpis.casosTotales },
-    { Parámetro: 'Tasa / Razón de Letalidad', Valor: data.kpis.tasaLetalidad },
+    { Parámetro: 'Tasa de Letalidad', Valor: data.kpis.tasaLetalidad },
     { Parámetro: 'Edad Promedio', Valor: data.kpis.promedioEdad },
     { Parámetro: 'Síntesis Epidemiológica IA', Valor: data.aiSummary || 'No generada' },
   ]
@@ -404,7 +404,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
       <div class="val">${data.kpis.casosTotales}</div>
     </div>
     <div class="kpi-card">
-      <div class="lbl">Razón / Letalidad</div>
+      <div class="lbl">Tasa de Letalidad</div>
       <div class="val">${data.kpis.tasaLetalidad}</div>
     </div>
   </div>

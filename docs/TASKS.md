@@ -240,9 +240,9 @@ Un cálculo estadístico fiel al concepto epidemiológico y resistente a ceros e
 **Impacto:** Recuperar la validez de la información entregada a los analistas de salud pública.
 
 **Criterios de Aceptación:**
-- [ ] Cambiar la fórmula en `useDashboardMetrics.ts` para que sea: `(totalMortalidad / (totalMortalidad + totalMorbilidad)) * 100`. (O simplemente dividir entre `totalCasos` asumiendo que `totalCasos = Mortalidad + Morbilidad`).
-- [ ] Ajustar la condicional para prevenir división por 0 cuando `totalCasos === 0`.
-- [ ] Cambiar las etiquetas correspondientes en las tarjetas UI para que se llame apropiadamente "Tasa de Letalidad" con el cálculo modificado.
+- [x] Cambiar la fórmula en `useDashboardMetrics.ts` para que sea: `(totalMortalidad / (totalMortalidad + totalMorbilidad)) * 100`. (O simplemente dividir entre `totalCasos` asumiendo que `totalCasos = Mortalidad + Morbilidad`).
+- [x] Ajustar la condicional para prevenir división por 0 cuando `totalCasos === 0`.
+- [x] Cambiar las etiquetas correspondientes en las tarjetas UI para que se llame apropiadamente "Tasa de Letalidad" con el cálculo modificado.
 
 ---
 

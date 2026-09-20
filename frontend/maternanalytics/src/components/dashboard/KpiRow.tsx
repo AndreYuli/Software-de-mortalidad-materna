@@ -85,7 +85,7 @@ export function KpiRow({
             <p>
               {shouldReviewLetalidad
                 ? 'Valor atípicamente alto: confirme denominador, mezcla de eventos y calidad de carga.'
-                : 'Cálculo sobre los eventos filtrados en la cohorte actual.'}
+                : 'Mortalidad ÷ (mortalidad + morbilidad) sobre los eventos filtrados.'}
             </p>
           </div>
         </div>
