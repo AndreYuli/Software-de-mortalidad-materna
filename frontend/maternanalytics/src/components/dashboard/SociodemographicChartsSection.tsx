@@ -147,7 +147,7 @@ export function SociodemographicChartsSection({ data, evento }: Sociodemographic
       <h3 className="chart-card-title" style={{ marginBottom: '16px' }}>
         Factores Sociodemográficos ({evento})
       </h3>
-      <div className="charts-grid-row">
+      <div className="sociodemographic-grid">
         {variables.map((v) => {
           const item = data[v.key]
           if (!item || item.total === 0) return null

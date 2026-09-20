@@ -329,6 +329,35 @@
   align-items: center;
 }
 
+/* Gráficas sociodemográficas: 1 columna y, cuando la sección tiene ancho suficiente, 2 por fila.
+   Se decide por el ancho de la sección (container query) y no por el de la ventana: con la barra
+   lateral y el panel de filtros, el contenido mide bastante menos que el viewport. */
+.sociodemographic-section {
+  container-type: inline-size;
+}
+
+.sociodemographic-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+.sociodemographic-grid > .chart-card-col-12 {
+  grid-column: auto;
+  min-width: 0; /* permite que Chart.js se redimensione dentro de la rejilla */
+}
+
+@container (min-width: 640px) {
+  .sociodemographic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* Si queda una gráfica sola en la última fila, ocupa todo el ancho */
+  .sociodemographic-grid > .chart-card-col-12:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
 /* Advanced Analysis & AI Insight Row */
 .advanced-grid-row {
   display: grid;

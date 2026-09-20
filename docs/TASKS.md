@@ -96,11 +96,11 @@ Las gráficas relacionadas no deben obligar al usuario a hacer desplazamiento ve
 
 ### Criterios de aceptación
 
-- [ ] Las gráficas relacionadas pueden aparecer en la misma fila.
-- [ ] En pantallas pequeñas se reorganizan correctamente.
-- [ ] Los filtros continúan funcionando.
-- [ ] Las gráficas continúan funcionando.
-- [ ] No se agregan dependencias visuales innecesarias.
+- [x] Las gráficas relacionadas pueden aparecer en la misma fila.
+- [x] En pantallas pequeñas se reorganizan correctamente.
+- [x] Los filtros continúan funcionando.
+- [x] Las gráficas continúan funcionando.
+- [x] No se agregan dependencias visuales innecesarias.
 
 ### Relación con tareas existentes
 
@@ -367,9 +367,9 @@ Mejorar la distribución espacial de las visualizaciones.
 
 ## Criterios de aceptación
 
-- [ ] Las gráficas relacionadas pueden aparecer lado a lado.
-- [ ] En móvil se muestran en una columna.
-- [ ] Los filtros siguen funcionando.
-- [ ] Las gráficas siguen actualizándose.
-- [ ] No aparecen errores en consola.
-- [ ] No se modificaron funcionalidades no relacionadas.
+- [x] Las gráficas relacionadas pueden aparecer lado a lado.
+- [x] En móvil se muestran en una columna.
+- [x] Los filtros siguen funcionando.
+- [x] Las gráficas siguen actualizándose.
+- [x] No aparecen errores en consola.
+- [x] No se modificaron funcionalidades no relacionadas.
