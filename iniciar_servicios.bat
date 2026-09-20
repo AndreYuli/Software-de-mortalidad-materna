@@ -7,13 +7,13 @@ echo Iniciando las 4 terminales para el proyecto...
 start "1. Ollama" cmd /k "ollama serve"
 
 :: Terminal 2: IA-SERVICE
-start "2. IA-SERVICE (Puerto 8001)" cmd /k "cd /d %BASE_DIR%IA-SERVICE && call venv\Scripts\activate && uvicorn main:app --reload --port 8001"
+start "2. IA-SERVICE (Puerto 8001)" cmd /k "cd /d %BASE_DIR%ia-service && call venv\Scripts\activate && uvicorn main:app --reload --port 8001"
 
 :: Terminal 3: BACKEND
-start "3. BACKEND (Puerto 8000)" cmd /k "cd /d %BASE_DIR%BACKEND && call venv\Scripts\activate && uvicorn main:app --reload --port 8000"
+start "3. BACKEND (Puerto 8000)" cmd /k "cd /d %BASE_DIR%backend && call venv\Scripts\activate && uvicorn main:app --reload --port 8000"
 
 :: Terminal 4: FRONTEND
-start "4. FRONTEND (Puerto 5173)" cmd /k "cd /d %BASE_DIR%FRONTED\maternanalytics && pnpm dev"
+start "4. FRONTEND (Puerto 5173)" cmd /k "cd /d %BASE_DIR%frontend\maternanalytics && pnpm dev"
 
 :: Terminal 5: NGROK (acceso publico)
 start "5. NGROK (acceso publico)" cmd /k ""%LOCALAPPDATA%\Microsoft\WinGet\Packages\Ngrok.Ngrok_Microsoft.Winget.Source_8wekyb3d8bbwe\ngrok.exe" start --all"

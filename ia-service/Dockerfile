@@ -1,4 +1,4 @@
-# Guardar como IA-SERVICE/Dockerfile
+# Guardar como ia-service/Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app

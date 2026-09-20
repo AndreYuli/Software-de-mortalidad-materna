@@ -7,7 +7,7 @@ y el frontend). Se usa para probar manualmente la carga end-to-end, incluido
 el caso de subir el archivo del evento equivocado en el slot contrario.
 
 Uso:
-    BACKEND/venv/Scripts/python.exe scripts/generar_excels_prueba.py
+    backend/venv/Scripts/python.exe scripts/generar_excels_prueba.py
 """
 
 import random

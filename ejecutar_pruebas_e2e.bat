@@ -8,7 +8,7 @@ echo ===================================================================
 echo.
 
 :: Navegar a la carpeta del frontend
-cd FRONTED\maternanalytics
+cd frontend\maternanalytics
 
 echo [!] Verificando e instalando dependencias de Playwright...
 call pnpm install
@@ -32,6 +32,6 @@ echo.
 echo ===================================================================
 echo Pruebas finalizadas. 
 echo Puedes encontrar el reporte en formato Markdown en:
-echo FRONTED\maternanalytics\playwright-report.md
+echo frontend\maternanalytics\playwright-report.md
 echo ===================================================================
 pause

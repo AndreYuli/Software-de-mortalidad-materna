@@ -7,7 +7,7 @@ ejecuta manualmente cuando la tabla de referencia se actualiza; el JSON
 generado se versiona como código fuente del frontend.
 
 Uso:
-    BACKEND/venv/Scripts/python.exe scripts/generate_cie10_reference.py
+    backend/venv/Scripts/python.exe scripts/generate_cie10_reference.py
 """
 
 import json
@@ -20,7 +20,7 @@ _EXCEL_PATH = (
 )
 _OUTPUT_PATH = (
     Path(__file__).resolve().parent.parent.parent
-    / "FRONTED"
+    / "frontend"
     / "maternanalytics"
     / "src"
     / "constants"

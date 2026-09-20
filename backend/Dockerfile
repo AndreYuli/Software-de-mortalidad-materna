@@ -1,4 +1,4 @@
-# Guardar como BACKEND/Dockerfile
+# Guardar como backend/Dockerfile
 FROM python:3.11-slim
 
 WORKDIR /app

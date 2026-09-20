@@ -149,7 +149,7 @@ vite.config.ts.timestamp-*
 venv/
 .venv/
 env/venv/ 
-BACKEND/venv/ 
+backend/venv/ 
 # Python
 __pycache__/
 *.pyc
@@ -159,10 +159,10 @@ __pycache__/
 *.sqlite3
 
 # Archivos subidos
-BACKEND/media/
+backend/media/
 
 # Entornos virtuales
-BACKEND/venv/
+backend/venv/
 venv/
 
 

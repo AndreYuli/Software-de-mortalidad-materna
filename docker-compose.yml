@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./BACKEND/sivigila_maternidad_postgres.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./backend/sivigila_maternidad_postgres.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
     # Publicado solo en localhost: nadie fuera del servidor puede conectarse directo a la BD
     ports:
       - "127.0.0.1:5432:5432"
@@ -32,7 +32,7 @@ services:
 
   ia-service:
     build:
-      context: ./IA-SERVICE
+      context: ./ia-service
     container_name: maternidad_ia_service
     restart: unless-stopped
     environment:
@@ -45,7 +45,7 @@ services:
 
   backend:
     build:
-      context: ./BACKEND
+      context: ./backend
     container_name: maternidad_backend
     restart: unless-stopped
     environment:

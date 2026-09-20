@@ -1,7 +1,7 @@
 """Generador de datos sintéticos para probar Fase 0 (columnas sociodemográficas).
 
 Uso:
-    cd BACKEND
+    cd backend
     python scripts/generar_datos_sinteticos_fase0.py
 
 Genera dos archivos Excel en ayudas/:

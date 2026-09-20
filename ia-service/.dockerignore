@@ -1,4 +1,4 @@
-# Contexto de build de la imagen de ia-service (docker-compose: context ./IA-SERVICE).
+# Contexto de build de la imagen de ia-service (docker-compose: context ./ia-service).
 
 # Secretos y configuración local
 .env
