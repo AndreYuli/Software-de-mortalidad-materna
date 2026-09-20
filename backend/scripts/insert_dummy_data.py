@@ -21,7 +21,7 @@ def generate_random_dates(num_rows, start_year, end_year):
 
 def process_and_upload(template_path: str, tipo: str, date_cols: list[str], url: str):
     """Completa una plantilla Excel con fechas aleatorias y la sube al endpoint de análisis."""
-    print(f"Generando datos para {tipo}...")
+    print(f'Generando datos para {tipo}...')
     try:
         df = pd.read_excel(template_path)
         # Duplicate rows to have enough data (e.g., 50 rows)
@@ -40,47 +40,47 @@ def process_and_upload(template_path: str, tipo: str, date_cols: list[str], url:
         buffer.seek(0)
 
         # Upload
-        print(f"Subiendo {tipo} a {url}...")
+        print(f'Subiendo {tipo} a {url}...')
         files = {
-            "archivo": (
-                f"dummy_{tipo}.xlsx",
+            'archivo': (
+                f'dummy_{tipo}.xlsx',
                 buffer,
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             )
         }
-        data = {"tipo": tipo}
+        data = {'tipo': tipo}
         response = requests.post(url, data=data, files=files)
 
         if response.status_code == 201:
             print(f"¡Éxito! {tipo} insertado. ID: {response.json().get('id')}")
         else:
-            print(f"Error al subir {tipo}: {response.status_code}")
+            print(f'Error al subir {tipo}: {response.status_code}')
             print(response.text)
 
     except Exception as e:
-        print(f"Excepción procesando {tipo}: {e}")
+        print(f'Excepción procesando {tipo}: {e}')
 
 
 def main():
     """Sube datos de prueba de morbilidad y mortalidad a la API local."""
-    base_url = "http://localhost:8000/api/analisis/"
+    base_url = 'http://localhost:8000/api/analisis/'
 
     # Morbilidad
     process_and_upload(
-        r"C:\Users\lopez\Documents\UNIVERSIDAD\PLANTILLA DATOS MORBILIDAD.xlsx",
-        "morbilidad",
-        ["Fecha de egreso", "Fecha egreso"],
+        r'C:\Users\lopez\Documents\UNIVERSIDAD\PLANTILLA DATOS MORBILIDAD.xlsx',
+        'morbilidad',
+        ['Fecha de egreso', 'Fecha egreso'],
         base_url,
     )
 
     # Mortalidad
     process_and_upload(
-        r"C:\Users\lopez\Documents\UNIVERSIDAD\PLANTILLA Mortalidad materna.xlsx",
-        "mortalidad",
-        ["5.2 Fecha de defunción", "5.2 Fecha de defuncion", "Fecha de defunción"],
+        r'C:\Users\lopez\Documents\UNIVERSIDAD\PLANTILLA Mortalidad materna.xlsx',
+        'mortalidad',
+        ['5.2 Fecha de defunción', '5.2 Fecha de defuncion', 'Fecha de defunción'],
         base_url,
     )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

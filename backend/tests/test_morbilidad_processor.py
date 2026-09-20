@@ -8,48 +8,48 @@ def test_calcular_estadisticas_basicas_con_datos_sinteticos():
     """Debe contar el total de casos del DataFrame sintético."""
     p = MorbilidadProcessor(df_morbilidad_ejemplo())
     stats = p.calcular_estadisticas_basicas()
-    assert stats["total_casos"] == 6
+    assert stats['total_casos'] == 6
 
 
 def test_analizar_tiempo_remision_calcula_boxplot():
     """Debe calcular min/max y total del tiempo de remisión."""
     p = MorbilidadProcessor(df_morbilidad_ejemplo())
     resultado = p.analizar_tiempo_remision()
-    assert resultado["total"] == 6
-    assert resultado["min"] == 0.5
-    assert resultado["max"] == 6.0
+    assert resultado['total'] == 6
+    assert resultado['min'] == 0.5
+    assert resultado['max'] == 6.0
 
 
 def test_clustering_perfiles_morbilidad_no_truena_con_datos_suficientes():
     """El clustering debe ejecutarse con 2 clusters sobre datos suficientes."""
     p = MorbilidadProcessor(df_morbilidad_ejemplo())
     resultado = p.clustering_perfiles_morbilidad(n_clusters=2)
-    assert resultado["n_clusters"] == 2
-    assert len(resultado["cluster_profiles"]) == 2
+    assert resultado['n_clusters'] == 2
+    assert len(resultado['cluster_profiles']) == 2
 
 
 def test_analizar_distribucion_edad_riesgo_agrupa_por_cortes_de_riesgo():
     """Debe agrupar en <19, 19-34 y >=35 anos usando los cortes de riesgo obstetrico."""
     p = MorbilidadProcessor(df_morbilidad_ejemplo())
     resultado = p.analizar_distribucion_edad_riesgo()
-    assert resultado["labels"] == ["<19 años", "19-34 años", "≥35 años"]
-    assert resultado["valores"] == [0, 6, 0]
-    assert resultado["total"] == 6
+    assert resultado['labels'] == ['<19 años', '19-34 años', '≥35 años']
+    assert resultado['valores'] == [0, 6, 0]
+    assert resultado['total'] == 6
 
 
 def test_analizar_distribucion_edad_gestacional_agrupa_por_categorias_clinicas():
     """Debe agrupar en <28, 28-36, 37-41 y >=42 semanas de gestacion."""
     p = MorbilidadProcessor(df_morbilidad_ejemplo())
     resultado = p.analizar_distribucion_edad_gestacional()
-    assert resultado["labels"] == ["<28 semanas", "28-36 semanas", "37-41 semanas", "≥42 semanas"]
-    assert resultado["valores"] == [1, 5, 0, 0]
-    assert resultado["total"] == 6
+    assert resultado['labels'] == ['<28 semanas', '28-36 semanas', '37-41 semanas', '≥42 semanas']
+    assert resultado['valores'] == [1, 5, 0, 0]
+    assert resultado['total'] == 6
 
 
 def test_analizar_causas_cie10_top_causas():
     """El top de causas CIE-10 de morbilidad debe respetar top_n y los conteos."""
     p = MorbilidadProcessor(df_morbilidad_ejemplo())
     resultado = p.analizar_causas_cie10(top_n=5)
-    assert resultado["total_causas_unicas"] == 3
-    top = {c["codigo"]: c["casos"] for c in resultado["top_causas"]}
-    assert top["O141"] == 3
+    assert resultado['total_causas_unicas'] == 3
+    top = {c['codigo']: c['casos'] for c in resultado['top_causas']}
+    assert top['O141'] == 3

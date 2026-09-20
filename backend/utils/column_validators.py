@@ -19,11 +19,11 @@ def _normalizar_encabezado(valor: str) -> str:
     Returns:
         Cadena normalizada apta para comparación fuzzy.
     """
-    texto = str(valor or "").strip().lower()
-    texto = unicodedata.normalize("NFKD", texto).encode("ascii", "ignore").decode("ascii")
-    texto = texto.replace("n°", "n ").replace("nº", "n ").replace("no.", "n ").replace("no ", "n ")
-    texto = re.sub(r"[^a-z0-9]+", " ", texto)
-    resultado: str = " ".join(texto.split())
+    texto = str(valor or '').strip().lower()
+    texto = unicodedata.normalize('NFKD', texto).encode('ascii', 'ignore').decode('ascii')
+    texto = texto.replace('n°', 'n ').replace('nº', 'n ').replace('no.', 'n ').replace('no ', 'n ')
+    texto = re.sub(r'[^a-z0-9]+', ' ', texto)
+    resultado: str = ' '.join(texto.split())
     return resultado
 
 
@@ -43,7 +43,7 @@ def _require_text(value: Any, nombre_campo: str, numero_fila: int) -> str:
     """
     resultado = clean_text(value)
     if resultado is None:
-        raise ValueError(f"Fila {numero_fila}: el campo {nombre_campo} es obligatorio.")
+        raise ValueError(f'Fila {numero_fila}: el campo {nombre_campo} es obligatorio.')
     return resultado
 
 

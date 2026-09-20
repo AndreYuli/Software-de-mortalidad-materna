@@ -16,31 +16,31 @@ from pathlib import Path
 import pandas as pd
 
 _EXCEL_PATH = (
-    Path(__file__).resolve().parent.parent.parent / "ayudas" / "TablaReferencia_CIE10__1.xlsx"
+    Path(__file__).resolve().parent.parent.parent / 'ayudas' / 'TablaReferencia_CIE10__1.xlsx'
 )
 _OUTPUT_PATH = (
     Path(__file__).resolve().parent.parent.parent
-    / "frontend"
-    / "maternanalytics"
-    / "src"
-    / "constants"
-    / "cie10Nombres.json"
+    / 'frontend'
+    / 'maternanalytics'
+    / 'src'
+    / 'constants'
+    / 'cie10Nombres.json'
 )
 
 
 def main() -> None:
     """Lee el Excel de referencia y escribe el JSON código -> nombre."""
-    df = pd.read_excel(_EXCEL_PATH, usecols=["Codigo", "Nombre"])
-    df = df.dropna(subset=["Codigo", "Nombre"])
+    df = pd.read_excel(_EXCEL_PATH, usecols=['Codigo', 'Nombre'])
+    df = df.dropna(subset=['Codigo', 'Nombre'])
     mapping = {
         str(codigo).strip().upper(): str(nombre).strip().title()
-        for codigo, nombre in zip(df["Codigo"], df["Nombre"])
+        for codigo, nombre in zip(df['Codigo'], df['Nombre'])
     }
     _OUTPUT_PATH.write_text(
-        json.dumps(mapping, ensure_ascii=False, sort_keys=True), encoding="utf-8"
+        json.dumps(mapping, ensure_ascii=False, sort_keys=True), encoding='utf-8'
     )
-    print(f"Escritas {len(mapping)} descripciones CIE-10 en {_OUTPUT_PATH}")
+    print(f'Escritas {len(mapping)} descripciones CIE-10 en {_OUTPUT_PATH}')
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

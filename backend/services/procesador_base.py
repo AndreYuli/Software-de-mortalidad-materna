@@ -22,10 +22,10 @@ class ProcesadorBase:
         Args:
             stats: Diccionario de estadísticas a actualizar.
         """
-        if "Edad" in self.df.columns:
-            edades = self.df["Edad"].dropna()
+        if 'Edad' in self.df.columns:
+            edades = self.df['Edad'].dropna()
             if not edades.empty:
-                stats["edad_promedio"] = float(edades.mean())
+                stats['edad_promedio'] = float(edades.mean())
 
     def _find_col(self, candidates: list[str]) -> str | None:
         """Busca la primera columna presente en el DataFrame de entre las candidatas.
@@ -48,17 +48,17 @@ class ProcesadorBase:
             Dict con histograma de variables obstétricas por grupo de edad.
         """
         grupos = [
-            {"label": "<20", "min": 0, "max": 19},
-            {"label": "20-29", "min": 20, "max": 29},
-            {"label": "30-39", "min": 30, "max": 39},
-            {"label": "≥40", "min": 40, "max": 120},
+            {'label': '<20', 'min': 0, 'max': 19},
+            {'label': '20-29', 'min': 20, 'max': 29},
+            {'label': '30-39', 'min': 30, 'max': 39},
+            {'label': '≥40', 'min': 40, 'max': 120},
         ]
-        tiene_edad = "Edad" in self.df.columns
+        tiene_edad = 'Edad' in self.df.columns
         resultado: dict[str, Any] = {}
         for col, nombre in variables:
             if col not in self.df.columns:
                 continue
-            serie_raw = pd.to_numeric(self.df[col], errors="coerce")
+            serie_raw = pd.to_numeric(self.df[col], errors='coerce')
             serie = serie_raw.dropna()
             if len(serie) < 2:
                 continue
@@ -66,21 +66,21 @@ class ProcesadorBase:
             eje: list[int] = list(range(0, max_val + 1))
             por_edad: dict[str, Any] = {}
             if tiene_edad:
-                edades = pd.to_numeric(self.df["Edad"], errors="coerce")
+                edades = pd.to_numeric(self.df['Edad'], errors='coerce')
                 for g in grupos:
                     sub = pd.to_numeric(
-                        self.df.loc[(edades >= g["min"]) & (edades <= g["max"]), col],
-                        errors="coerce",
+                        self.df.loc[(edades >= g['min']) & (edades <= g['max']), col],
+                        errors='coerce',
                     ).dropna()
                     if len(sub) > 0:
-                        por_edad[g["label"]] = [int((sub == v).sum()) for v in eje]
+                        por_edad[g['label']] = [int((sub == v).sum()) for v in eje]
             resultado[col] = {
-                "nombre": nombre,
-                "valores_eje": eje,
-                "conteos_total": [int((serie == v).sum()) for v in eje],
-                "por_edad": por_edad,
-                "promedio": float(serie.mean()),
-                "total": int(len(serie)),
+                'nombre': nombre,
+                'valores_eje': eje,
+                'conteos_total': [int((serie == v).sum()) for v in eje],
+                'por_edad': por_edad,
+                'promedio': float(serie.mean()),
+                'total': int(len(serie)),
             }
         return resultado
 
@@ -102,15 +102,15 @@ class ProcesadorBase:
         causas = self.df[columna].value_counts().head(top_n)
         top_causas: list[dict[str, Any]] = [
             {
-                "codigo": str(k),
-                "casos": int(v),
-                "porcentaje": float(v / total_casos * 100) if total_casos > 0 else 0.0,
+                'codigo': str(k),
+                'casos': int(v),
+                'porcentaje': float(v / total_casos * 100) if total_casos > 0 else 0.0,
             }
             for k, v in causas.items()
         ]
         resultado = {
-            "top_causas": top_causas,
-            "total_causas_unicas": int(self.df[columna].nunique()),
+            'top_causas': top_causas,
+            'total_causas_unicas': int(self.df[columna].nunique()),
         }
         return resultado
 
@@ -129,22 +129,22 @@ class ProcesadorBase:
             vacío si no hay columna 'Edad' o no hay datos válidos.
         """
         resultado: dict[str, Any] = {}
-        if "Edad" not in self.df.columns:
+        if 'Edad' not in self.df.columns:
             return resultado
-        edades = pd.to_numeric(self.df["Edad"], errors="coerce").dropna()
+        edades = pd.to_numeric(self.df['Edad'], errors='coerce').dropna()
         if edades.empty:
             return resultado
 
         grupos = [
-            {"label": "<19 años", "min": 0, "max": 18},
-            {"label": "19-34 años", "min": 19, "max": 34},
-            {"label": "≥35 años", "min": 35, "max": 120},
+            {'label': '<19 años', 'min': 0, 'max': 18},
+            {'label': '19-34 años', 'min': 19, 'max': 34},
+            {'label': '≥35 años', 'min': 35, 'max': 120},
         ]
-        valores = [int(((edades >= g["min"]) & (edades <= g["max"])).sum()) for g in grupos]
+        valores = [int(((edades >= g['min']) & (edades <= g['max'])).sum()) for g in grupos]
         resultado = {
-            "labels": [g["label"] for g in grupos],
-            "valores": valores,
-            "total": int(len(edades)),
+            'labels': [g['label'] for g in grupos],
+            'valores': valores,
+            'total': int(len(edades)),
         }
         return resultado
 
@@ -163,24 +163,24 @@ class ProcesadorBase:
             registradas). Dict vacío si no hay columna de semanas de
             gestación o no hay datos válidos.
         """
-        columna = self._find_col(["9.2 Semana gestación", "Edad gestacional ocurrencia (sem)"])
+        columna = self._find_col(['9.2 Semana gestación', 'Edad gestacional ocurrencia (sem)'])
         if columna is None:
             return {}
-        semanas = pd.to_numeric(self.df[columna], errors="coerce").dropna()
+        semanas = pd.to_numeric(self.df[columna], errors='coerce').dropna()
         if semanas.empty:
             return {}
 
         grupos = [
-            {"label": "<28 semanas", "min": 0, "max": 27},
-            {"label": "28-36 semanas", "min": 28, "max": 36},
-            {"label": "37-41 semanas", "min": 37, "max": 41},
-            {"label": "≥42 semanas", "min": 42, "max": 99},
+            {'label': '<28 semanas', 'min': 0, 'max': 27},
+            {'label': '28-36 semanas', 'min': 28, 'max': 36},
+            {'label': '37-41 semanas', 'min': 37, 'max': 41},
+            {'label': '≥42 semanas', 'min': 42, 'max': 99},
         ]
-        valores = [int(((semanas >= g["min"]) & (semanas <= g["max"])).sum()) for g in grupos]
+        valores = [int(((semanas >= g['min']) & (semanas <= g['max'])).sum()) for g in grupos]
         return {
-            "labels": [g["label"] for g in grupos],
-            "valores": valores,
-            "total": int(len(semanas)),
+            'labels': [g['label'] for g in grupos],
+            'valores': valores,
+            'total': int(len(semanas)),
         }
 
     def analizar_distribucion_sociodemografica(self) -> dict[str, Any]:
@@ -191,23 +191,23 @@ class ProcesadorBase:
             'etnia', 'tipo_afiliacion', cada una con {'labels', 'valores', 'total'}.
         """
         variables = [
-            ("Zona de residencia", "zona_residencia"),
-            ("Población vulnerable", "poblacion_vulnerable"),
-            ("Etnia", "etnia"),
-            ("Tipo de afiliación", "tipo_afiliacion"),
+            ('Zona de residencia', 'zona_residencia'),
+            ('Población vulnerable', 'poblacion_vulnerable'),
+            ('Etnia', 'etnia'),
+            ('Tipo de afiliación', 'tipo_afiliacion'),
         ]
         resultado: dict[str, Any] = {}
         for col, key in variables:
             if col not in self.df.columns:
                 continue
             serie = self.df[col].dropna().astype(str).str.strip()
-            serie = serie[~serie.str.lower().isin({"", "nan", "none", "null"})]
+            serie = serie[~serie.str.lower().isin({'', 'nan', 'none', 'null'})]
             if serie.empty:
                 continue
             conteos = serie.value_counts()
             resultado[key] = {
-                "labels": conteos.index.tolist(),
-                "valores": [int(v) for v in conteos.values],
-                "total": int(len(serie)),
+                'labels': conteos.index.tolist(),
+                'valores': [int(v) for v in conteos.values],
+                'total': int(len(serie)),
             }
         return resultado

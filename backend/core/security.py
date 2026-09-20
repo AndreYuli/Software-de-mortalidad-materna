@@ -11,7 +11,7 @@ from core.config import Config
 
 logger = logging.getLogger(__name__)
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+_pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
 def hash_password(plain_password: str) -> str:
@@ -52,7 +52,7 @@ def create_access_token(data: dict[str, Any]) -> str:
     """
     payload = data.copy()
     expiration = datetime.now(timezone.utc) + timedelta(minutes=Config.jwt_expiration_minutes)
-    payload["exp"] = expiration
+    payload['exp'] = expiration
     token_jwt: str = jwt.encode(payload, Config.jwt_secret, algorithm=Config.jwt_algorithm)
     return token_jwt
 
@@ -70,6 +70,6 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
     try:
         resultado = jwt.decode(token, Config.jwt_secret, algorithms=[Config.jwt_algorithm])
     except jwt.PyJWTError as exc:
-        logger.warning("Error validando token JWT: %s", exc)
+        logger.warning('Error validando token JWT: %s', exc)
         resultado = None
     return resultado

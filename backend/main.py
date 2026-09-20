@@ -28,8 +28,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=Config.cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=['*'],
+    allow_headers=['*'],
 )
 
 # ---------------------------------------------------------------------------
@@ -37,7 +37,7 @@ app.add_middleware(
 # ---------------------------------------------------------------------------
 # `media/` contiene los Excel con datos de pacientes: NO se expone como estático.
 
-Path("media").mkdir(parents=True, exist_ok=True)
+Path('media').mkdir(parents=True, exist_ok=True)
 
 # ---------------------------------------------------------------------------
 # Creación de tablas propias de la API (no gestionadas por el script SQL)
@@ -59,12 +59,12 @@ app.include_router(sivigila.router)
 # ---------------------------------------------------------------------------
 
 
-@app.get("/health", tags=["health"])
+@app.get('/health', tags=['health'])
 def health() -> dict[str, str]:
     """Verifica que el servidor está en funcionamiento.
 
     Returns:
         Diccionario con status 'ok'.
     """
-    resultado: dict[str, str] = {"status": "ok"}
+    resultado: dict[str, str] = {'status': 'ok'}
     return resultado

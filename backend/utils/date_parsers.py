@@ -8,7 +8,7 @@ import pandas as pd
 
 from utils.text_utils import is_empty
 
-_EXCEL_SERIAL_ORIGIN = pd.Timestamp("1899-12-30")
+_EXCEL_SERIAL_ORIGIN = pd.Timestamp('1899-12-30')
 
 
 def _extraer_serial_excel(value: Any) -> date | None:
@@ -53,16 +53,16 @@ def _parse_date(value: Any) -> date | None:
         resultado = None
     else:
         val_str = str(value).strip()
-        if not ("/" in val_str or "-" in val_str or len(val_str) > 8):
+        if not ('/' in val_str or '-' in val_str or len(val_str) > 8):
             serial = _extraer_serial_excel(value)
         else:
             serial = None
         if serial is not None:
             resultado = serial
         else:
-            fecha = pd.to_datetime(value, errors="coerce", dayfirst=True)
+            fecha = pd.to_datetime(value, errors='coerce', dayfirst=True)
             anio_1970 = not pd.isna(fecha) and fecha.year == 1970
-            epoch_falso = anio_1970 and "1970" not in val_str and "70" not in val_str
+            epoch_falso = anio_1970 and '1970' not in val_str and '70' not in val_str
             if pd.isna(fecha) or epoch_falso:
                 resultado = _extraer_serial_excel(value)
             else:
@@ -83,7 +83,7 @@ def _parse_time(value: Any) -> time | None:
     if is_empty(value):
         resultado = None
     else:
-        hora = pd.to_datetime(value, errors="coerce")
+        hora = pd.to_datetime(value, errors='coerce')
         if pd.isna(hora):
             resultado = None
         else:
@@ -107,7 +107,7 @@ def parse_fecha_robusta(serie: pd.Series) -> pd.Series:
     if pd.api.types.is_datetime64_any_dtype(serie):
         resultado = serie
     else:
-        s_numeric = pd.to_numeric(serie, errors="coerce")
+        s_numeric = pd.to_numeric(serie, errors='coerce')
         is_excel_serial = (s_numeric > 1000) & (s_numeric < 100_000)
 
         serie_clean = serie.copy()
@@ -115,23 +115,23 @@ def parse_fecha_robusta(serie: pd.Series) -> pd.Series:
             serie_clean = serie_clean.mask(is_excel_serial)
 
         with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=UserWarning, message=".*Parsing dates.*")
-            fechas = pd.to_datetime(serie_clean, dayfirst=True, errors="coerce")
+            warnings.filterwarnings('ignore', category=UserWarning, message='.*Parsing dates.*')
+            fechas = pd.to_datetime(serie_clean, dayfirst=True, errors='coerce')
 
         if is_excel_serial.any():
             excel_days = s_numeric[is_excel_serial].astype(int)
             fechas_excel = pd.to_datetime(
                 excel_days,
-                unit="D",
-                origin="1899-12-30",
-                errors="coerce",
+                unit='D',
+                origin='1899-12-30',
+                errors='coerce',
             )
             fechas = fechas.fillna(fechas_excel)
 
         por_vias_alternas = fechas.isna() & serie_clean.notna()
         if por_vias_alternas.any():
             fechas = fechas.fillna(
-                pd.to_datetime(serie_clean[por_vias_alternas].astype(str), errors="coerce")
+                pd.to_datetime(serie_clean[por_vias_alternas].astype(str), errors='coerce')
             )
         resultado = fechas
     return resultado

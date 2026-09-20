@@ -50,17 +50,17 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
     archivo.file.seek(0)
     columnas = _leer_columnas_excel(archivo.file, tipo)
     if columnas is None:
-        raise ValueError("No se pudo leer el archivo Excel.")
+        raise ValueError('No se pudo leer el archivo Excel.')
 
     faltantes = _obtener_columnas_faltantes(tipo, columnas)
     if faltantes:
-        raise ValueError(f"Faltan columnas requeridas: {faltantes}")
+        raise ValueError(f'Faltan columnas requeridas: {faltantes}')
 
     try:
         df = _leer_dataframe_excel(archivo.file, tipo)
     except Exception as exc:
-        logger.exception("Error leyendo el contenido del archivo Excel")
-        raise ValueError(f"No se pudo leer el contenido del archivo: {exc}") from exc
+        logger.exception('Error leyendo el contenido del archivo Excel')
+        raise ValueError(f'No se pudo leer el contenido del archivo: {exc}') from exc
 
     df_cleaned, _ = preparar_dataframe_analisis(df)
 
@@ -77,17 +77,17 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
         df_bd = _construir_df_desde_bd(db, tipo)
     except Exception as exc:
         db.rollback()
-        logger.exception("Error al procesar datos SIVIGILA")
-        raise RuntimeError(f"Error al persistir en base de datos: {exc}") from exc
+        logger.exception('Error al procesar datos SIVIGILA')
+        raise RuntimeError(f'Error al persistir en base de datos: {exc}') from exc
 
     if df_bd is not None:
         df_acum = df_bd
     else:
         dataframes = []
         if analisis_existente and analisis_existente.archivo:
-            path = Path(analisis_existente.archivo.lstrip("/"))
+            path = Path(analisis_existente.archivo.lstrip('/'))
             if path.exists():
-                dataframes.append(pd.read_excel(path, engine="openpyxl"))
+                dataframes.append(pd.read_excel(path, engine='openpyxl'))
         dataframes.append(df_cleaned)
         df_acum = pd.concat(dataframes, ignore_index=True) if len(dataframes) > 1 else dataframes[0]
 
@@ -117,18 +117,18 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
         raise
     except Exception as exc:
         db.rollback()
-        logger.exception("Error al confirmar el análisis en base de datos")
-        raise RuntimeError(f"Error al persistir en base de datos: {exc}") from exc
+        logger.exception('Error al confirmar el análisis en base de datos')
+        raise RuntimeError(f'Error al persistir en base de datos: {exc}') from exc
 
     resultado_final: dict[str, Any] = {
-        "id": analisis.id,
-        "tipo": analisis.tipo,
-        "nombre_archivo": analisis.nombre_archivo,
-        "archivo": analisis.archivo,
-        "fecha_carga": analisis.fecha_carga.isoformat(),
-        "total_registros": analisis.total_registros,
-        "resumen": analisis.resumen,
-        "sivigila": persistencia,
+        'id': analisis.id,
+        'tipo': analisis.tipo,
+        'nombre_archivo': analisis.nombre_archivo,
+        'archivo': analisis.archivo,
+        'fecha_carga': analisis.fecha_carga.isoformat(),
+        'total_registros': analisis.total_registros,
+        'resumen': analisis.resumen,
+        'sivigila': persistencia,
     }
     return resultado_final
 
@@ -143,7 +143,7 @@ def listar_unicos(db: Session) -> list[Analisis]:
         Lista de análisis únicos ordenados por fecha descendente.
     """
     subq = (
-        db.query(Analisis.tipo, func.max(Analisis.fecha_carga).label("max_fecha"))
+        db.query(Analisis.tipo, func.max(Analisis.fecha_carga).label('max_fecha'))
         .group_by(Analisis.tipo)
         .subquery()
     )

@@ -13,10 +13,10 @@ from schemas.user_schema import TokenResponse, UsuarioLogin, UsuarioRegister, Us
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix='/api/auth', tags=['auth'])
 
 
-@router.post("/register/", response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
+@router.post('/register/', response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
 def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> UsuarioResponse:
     """Registra un nuevo usuario en el sistema.
 
@@ -34,7 +34,7 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
     if db.query(Usuario).filter(Usuario.email == user_in.email).first():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya existe una cuenta con este correo electrónico.",
+            detail='Ya existe una cuenta con este correo electrónico.',
         )
 
     usuario = Usuario(
@@ -49,15 +49,15 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
         db.refresh(usuario)
     except Exception as exc:
         db.rollback()
-        logger.exception("Error inesperado al registrar usuario en la base de datos.")
+        logger.exception('Error inesperado al registrar usuario en la base de datos.')
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno al crear la cuenta.",
+            detail='Error interno al crear la cuenta.',
         ) from exc
     return usuario
 
 
-@router.post("/login/", response_model=TokenResponse)
+@router.post('/login/', response_model=TokenResponse)
 def login(credentials: UsuarioLogin, db: Session = Depends(get_db)) -> TokenResponse:
     """Autentica un usuario y devuelve un token JWT.
 
@@ -76,13 +76,13 @@ def login(credentials: UsuarioLogin, db: Session = Depends(get_db)) -> TokenResp
     if not usuario or not verify_password(credentials.password, usuario.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Correo o contraseña incorrectos.",
+            detail='Correo o contraseña incorrectos.',
         )
 
-    token = create_access_token(data={"sub": str(usuario.id)})
+    token = create_access_token(data={'sub': str(usuario.id)})
     respuesta_token = TokenResponse(
         access_token=token,
-        token_type="bearer",
+        token_type='bearer',
         id=usuario.id,
         nombre=usuario.nombre,
         email=usuario.email,

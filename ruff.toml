@@ -1,0 +1,4 @@
+# Configuración de ruff para carpetas sin pyproject propio (p. ej. ia-service).
+# backend/ usa la suya en backend/pyproject.toml.
+[format]
+quote-style = "single"

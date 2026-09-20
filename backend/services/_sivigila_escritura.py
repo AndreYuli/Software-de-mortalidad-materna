@@ -22,135 +22,135 @@ from utils.text_utils import clean_text, is_empty, slugify
 # ---------------------------------------------------------------------------
 
 _TIPO_ID_ALIASES = {
-    "p": "PA",
-    "pasaporte": "PA",
-    "passport": "PA",
-    "cc": "CC",
-    "cedula": "CC",
-    "cedula ciudadania": "CC",
-    "cedula de ciudadania": "CC",
-    "ce": "CE",
-    "cedula extranjeria": "CE",
-    "cedula de extranjeria": "CE",
-    "ppt": "PPT",
-    "permiso proteccion temporal": "PPT",
-    "permiso por proteccion temporal": "PPT",
-    "ti": "TI",
-    "tarjeta identidad": "TI",
-    "tarjeta de identidad": "TI",
-    "rc": "RC",
-    "registro civil": "RC",
-    "ms": "MS",
-    "menor sin id": "MS",
-    "menor sin identificacion": "MS",
-    "as": "AS",
-    "adulto sin id": "AS",
-    "adulto sin identificacion": "AS",
+    'p': 'PA',
+    'pasaporte': 'PA',
+    'passport': 'PA',
+    'cc': 'CC',
+    'cedula': 'CC',
+    'cedula ciudadania': 'CC',
+    'cedula de ciudadania': 'CC',
+    'ce': 'CE',
+    'cedula extranjeria': 'CE',
+    'cedula de extranjeria': 'CE',
+    'ppt': 'PPT',
+    'permiso proteccion temporal': 'PPT',
+    'permiso por proteccion temporal': 'PPT',
+    'ti': 'TI',
+    'tarjeta identidad': 'TI',
+    'tarjeta de identidad': 'TI',
+    'rc': 'RC',
+    'registro civil': 'RC',
+    'ms': 'MS',
+    'menor sin id': 'MS',
+    'menor sin identificacion': 'MS',
+    'as': 'AS',
+    'adulto sin id': 'AS',
+    'adulto sin identificacion': 'AS',
 }
 
 _MORTALIDAD_FECHA_DEFUNCION_COLS = [
-    "5.2 Fecha de defunción",
-    "5.2 Fecha de defuncion",
-    "5.2 Fecha defunción",
-    "5.2 Fecha defuncion",
-    "5.2 Fecha de defunción (dd/mm/aaaa)",
-    "5.2 Fecha de defuncion (dd/mm/aaaa)",
-    "Fecha de defunción",
-    "Fecha de defuncion",
+    '5.2 Fecha de defunción',
+    '5.2 Fecha de defuncion',
+    '5.2 Fecha defunción',
+    '5.2 Fecha defuncion',
+    '5.2 Fecha de defunción (dd/mm/aaaa)',
+    '5.2 Fecha de defuncion (dd/mm/aaaa)',
+    'Fecha de defunción',
+    'Fecha de defuncion',
 ]
 _MORTALIDAD_FUENTE_CAUSA_COLS = [
-    "10.2 Causa determinada por",
-    "10.2 Fuente de causa de muerte",
-    "10.2 Fuente causa de muerte",
-    "Fuente causa muerte",
-    "10.2 Causa de muerte determinada por",
-    "Causa de muerte determinada por",
+    '10.2 Causa determinada por',
+    '10.2 Fuente de causa de muerte',
+    '10.2 Fuente causa de muerte',
+    'Fuente causa muerte',
+    '10.2 Causa de muerte determinada por',
+    'Causa de muerte determinada por',
 ]
 _MORTALIDAD_REMISIONES_COLS = [
-    "8.5 Remisiones oportunas",
-    "8.3 Remisiones",
-    "8.4 Remisiones",
-    "Remisiones",
-    "Remisiones oportunas",
+    '8.5 Remisiones oportunas',
+    '8.3 Remisiones',
+    '8.4 Remisiones',
+    'Remisiones',
+    'Remisiones oportunas',
 ]
 _MORTALIDAD_MOMENTO_MUERTE_COLS = [
-    "9.1 Momento de la muerte",
-    "Momento de la muerte",
-    "9.1 Momento en que ocurrió la muerte materna",
-    "Momento en que ocurrió la muerte materna",
+    '9.1 Momento de la muerte',
+    'Momento de la muerte',
+    '9.1 Momento en que ocurrió la muerte materna',
+    'Momento en que ocurrió la muerte materna',
 ]
 _MORTALIDAD_FECHA_PARTO_COLS = [
-    "9.3 Fecha parto",
-    "Fecha parto",
-    "9.3 Fecha parto (dd/mm/aaaa)",
-    "9.3 Fecha y hora del parto (dd/mm/aaaa)",
-    "Fecha y hora del parto (dd/mm/aaaa)",
+    '9.3 Fecha parto',
+    'Fecha parto',
+    '9.3 Fecha parto (dd/mm/aaaa)',
+    '9.3 Fecha y hora del parto (dd/mm/aaaa)',
+    'Fecha y hora del parto (dd/mm/aaaa)',
 ]
 _MORTALIDAD_HORA_PARTO_COLS = [
-    "9.3 Hora parto",
-    "Hora parto",
-    "Hora (00:24)",
-    "Hora",
-    "9.3 Fecha y hora del parto (dd/mm/aaaa)",
-    "Fecha y hora del parto (dd/mm/aaaa)",
+    '9.3 Hora parto',
+    'Hora parto',
+    'Hora (00:24)',
+    'Hora',
+    '9.3 Fecha y hora del parto (dd/mm/aaaa)',
+    'Fecha y hora del parto (dd/mm/aaaa)',
 ]
 _MORTALIDAD_ATENDIDO_POR_COLS = [
-    "9.5 Parto atendido por",
-    "Parto atendido por",
-    "9.5 Atendido por",
-    "Atendido por",
+    '9.5 Parto atendido por',
+    'Parto atendido por',
+    '9.5 Atendido por',
+    'Atendido por',
 ]
 _MORTALIDAD_NIVEL_PARTO_COLS = [
-    "9.6 Nivel de atención",
-    "9.6 Nivel atención parto",
-    "Nivel atención parto",
-    "Nivel de atención",
-    "Nivel atencion",
+    '9.6 Nivel de atención',
+    '9.6 Nivel atención parto',
+    'Nivel atención parto',
+    'Nivel de atención',
+    'Nivel atencion',
 ]
 _MORTALIDAD_PERSONAL_CPN_COLS = [
-    "8.3 Controles realizados por",
-    "Controles realizados por",
-    "8.3 Personal CPN",
-    "Personal CPN",
+    '8.3 Controles realizados por',
+    'Controles realizados por',
+    '8.3 Personal CPN',
+    'Personal CPN',
 ]
 _MORTALIDAD_NIVEL_CPN_COLS = [
-    "8.4 Nivel atención prenatal",
-    "8.4 Nivel de atención",
-    "Nivel de atención",
-    "8.4 Nivel atención CPN",
-    "Nivel atención CPN",
-    "Nivel atencion CPN",
+    '8.4 Nivel atención prenatal',
+    '8.4 Nivel de atención',
+    'Nivel de atención',
+    '8.4 Nivel atención CPN',
+    'Nivel atención CPN',
+    'Nivel atencion CPN',
 ]
 _MORTALIDAD_COMPLICACIONES_FETO_COLS = [
-    "8.6 Compl. feto/RN CIE-10",
-    "8.6 Complicaciones del feto y RN CIE 10",
-    "Complicaciones del feto y RN",
-    "Complicaciones feto y RN",
+    '8.6 Compl. feto/RN CIE-10',
+    '8.6 Complicaciones del feto y RN CIE 10',
+    'Complicaciones del feto y RN',
+    'Complicaciones feto y RN',
 ]
 
 _MORBILIDAD_FECHA_EGRESO_COLS = [
-    "Fecha de egreso",
-    "Fecha egreso",
-    "Fecha de egreso (dd/mm/aaaa)",
-    "Fecha egreso (dd/mm/aaaa)",
+    'Fecha de egreso',
+    'Fecha egreso',
+    'Fecha de egreso (dd/mm/aaaa)',
+    'Fecha egreso (dd/mm/aaaa)',
 ]
 _MORBILIDAD_TERMINACION_COLS = [
-    "Terminación gestación",
-    "Terminacion gestacion",
-    "Terminación de la gestación",
-    "Terminacion de la gestacion",
+    'Terminación gestación',
+    'Terminacion gestacion',
+    'Terminación de la gestación',
+    'Terminacion de la gestacion',
 ]
-_MORBILIDAD_ESTADO_RN_COLS = ["Estado recién nacido", "Estado recien nacido"]
-_MORBILIDAD_PESO_RN_COLS = ["Peso RN (g)", "Peso RN gramos", "Peso RN", "Peso recién nacido"]
-_MORBILIDAD_TRANSFUNDIDAS_COLS = ["Unidades transfundidas"]
-_MORBILIDAD_GRUPO_CAUSA_COLS = ["Causa principal agrupada", "Grupo causa", "Grupo de causa"]
-_MORBILIDAD_INSTITUCION_REF_1_COLS = ["Institución referencia 1", "Institucion referencia 1"]
-_MORBILIDAD_INSTITUCION_REF_2_COLS = ["Institución referencia 2", "Institucion referencia 2"]
+_MORBILIDAD_ESTADO_RN_COLS = ['Estado recién nacido', 'Estado recien nacido']
+_MORBILIDAD_PESO_RN_COLS = ['Peso RN (g)', 'Peso RN gramos', 'Peso RN', 'Peso recién nacido']
+_MORBILIDAD_TRANSFUNDIDAS_COLS = ['Unidades transfundidas']
+_MORBILIDAD_GRUPO_CAUSA_COLS = ['Causa principal agrupada', 'Grupo causa', 'Grupo de causa']
+_MORBILIDAD_INSTITUCION_REF_1_COLS = ['Institución referencia 1', 'Institucion referencia 1']
+_MORBILIDAD_INSTITUCION_REF_2_COLS = ['Institución referencia 2', 'Institucion referencia 2']
 _MORBILIDAD_TIEMPO_REMISION_COLS = [
-    "Tiempo remisión (horas)",
-    "Tiempo remisión (h)",
-    "Tiempo remision (h)",
-    "Tiempo remisión horas",
+    'Tiempo remisión (horas)',
+    'Tiempo remisión (h)',
+    'Tiempo remision (h)',
+    'Tiempo remisión horas',
 ]
 
 # ---------------------------------------------------------------------------
@@ -221,9 +221,9 @@ def _resolve_momento_ocurrencia(value: Any) -> str | None:
     resultado: str | None = None
     if not is_empty(value):
         if isinstance(value, (int, float)):
-            resultado = {1: "Antes", 2: "Durante", 3: "Despues", 4: "Despues"}.get(int(value))
+            resultado = {1: 'Antes', 2: 'Durante', 3: 'Despues', 4: 'Despues'}.get(int(value))
         else:
-            mapa_momento = {"antes": "Antes", "durante": "Durante", "despues": "Despues"}
+            mapa_momento = {'antes': 'Antes', 'durante': 'Durante', 'despues': 'Despues'}
             resultado = mapa_momento.get(slugify(value))
     return resultado
 
@@ -240,9 +240,9 @@ def _normalize_estado_rn(value: Any) -> str | None:
     resultado: str | None = None
     if not is_empty(value):
         if isinstance(value, (int, float)):
-            resultado = {1: "Vivo", 2: "Muerto"}.get(int(value))
+            resultado = {1: 'Vivo', 2: 'Muerto'}.get(int(value))
         else:
-            resultado = {"vivo": "Vivo", "muerto": "Muerto"}.get(slugify(value))
+            resultado = {'vivo': 'Vivo', 'muerto': 'Muerto'}.get(slugify(value))
     return resultado
 
 
@@ -273,7 +273,7 @@ def _upsert_single_related(
     Returns:
         Instancia creada o actualizada del modelo relacionado.
     """
-    caso_id = lookup.get("id_caso")
+    caso_id = lookup.get('id_caso')
     exists = caso_id in related_cache.get(model, set())
 
     if caso_creado or not exists:
@@ -316,8 +316,8 @@ def _registrar_importacion(
             row_hash=row_hash,
             event_hash=event_hash,
             caso_id=caso_id,
-            numero_id=identificacion["numero_id"],
-            tipo_identificacion=identificacion["tipo_codigo"],
+            numero_id=identificacion['numero_id'],
+            tipo_identificacion=identificacion['tipo_codigo'],
             creado_en=datetime.now(timezone.utc),
         )
     )
@@ -383,7 +383,7 @@ def _resolver_identificacion(
         catalog_cache=catalog_cache,
         numero_fila=numero_fila,
         nombre_campo=tipo_id_cols[0],
-        code_field="codigo",
+        code_field='codigo',
     )
     numero_id_raw = _get_value(row, numero_id_cols)
     if isinstance(numero_id_raw, float) and numero_id_raw.is_integer():
@@ -395,17 +395,17 @@ def _resolver_identificacion(
         _get_value(
             row,
             [
-                "Fecha de Nacimiento",
-                "Fecha de nacimiento",
-                "Fecha nacimiento",
+                'Fecha de Nacimiento',
+                'Fecha de nacimiento',
+                'Fecha nacimiento',
             ],
         )
     )
     resultado_identificacion: dict[str, Any] = {
-        "nombres": nombres,
-        "tipo_obj": tipo_obj,
-        "tipo_codigo": tipo_obj.codigo,
-        "numero_id": numero_id,
-        "fecha_nacimiento": fecha_nacimiento,
+        'nombres': nombres,
+        'tipo_obj': tipo_obj,
+        'tipo_codigo': tipo_obj.codigo,
+        'numero_id': numero_id,
+        'fecha_nacimiento': fecha_nacimiento,
     }
     return resultado_identificacion

@@ -10,12 +10,12 @@ def create_database_views(db: Session):
     Args:
         db: Sesión activa de SQLAlchemy.
     """
-    edad_morbilidad = "EXTRACT(YEAR FROM AGE(c.fecha_egreso, p.fecha_nacimiento))::integer"
-    edad_mortalidad = "EXTRACT(YEAR FROM AGE(c.fecha_defuncion, p.fecha_nacimiento))::integer"
+    edad_morbilidad = 'EXTRACT(YEAR FROM AGE(c.fecha_egreso, p.fecha_nacimiento))::integer'
+    edad_mortalidad = 'EXTRACT(YEAR FROM AGE(c.fecha_defuncion, p.fecha_nacimiento))::integer'
 
     try:
-        db.execute(text("DROP VIEW IF EXISTS v_morbilidad_completa"))
-        db.execute(text("DROP VIEW IF EXISTS v_mortalidad_completa"))
+        db.execute(text('DROP VIEW IF EXISTS v_morbilidad_completa'))
+        db.execute(text('DROP VIEW IF EXISTS v_mortalidad_completa'))
         db.commit()
     except Exception:
         db.rollback()
@@ -155,7 +155,7 @@ def create_database_views(db: Session):
         db.execute(text(sql_morbilidad))
         db.execute(text(sql_mortalidad))
         db.commit()
-        print("Vistas de base de datos creadas/actualizadas correctamente.")
+        print('Vistas de base de datos creadas/actualizadas correctamente.')
     except Exception as e:
         db.rollback()
-        print(f"Advertencia: No se pudieron crear las vistas: {e}")
+        print(f'Advertencia: No se pudieron crear las vistas: {e}')

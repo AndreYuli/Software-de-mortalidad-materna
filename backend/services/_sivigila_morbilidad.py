@@ -41,14 +41,14 @@ from utils.text_utils import clean_text, is_empty, slugify
 from utils.type_parsers import _parse_bool, _parse_decimal, _parse_int
 
 _CIRUGIA_CODIGOS = {
-    "1": 1,
-    "histerectomia": 1,
-    "2": 2,
-    "laparotomia": 2,
-    "3": 3,
-    "legrado": 3,
-    "4": 4,
-    "otra": 4,
+    '1': 1,
+    'histerectomia': 1,
+    '2': 2,
+    'laparotomia': 2,
+    '3': 3,
+    'legrado': 3,
+    '4': 4,
+    'otra': 4,
 }
 
 
@@ -83,9 +83,9 @@ def _parse_multiplicidad(value) -> int | None:
         codigo = int(value)
     else:
         slug = slugify(value)
-        if slug in {"2", "multiple"}:
+        if slug in {'2', 'multiple'}:
             return 1
-        if slug in {"1", "unico"}:
+        if slug in {'1', 'unico'}:
             return 0
         return None
     if codigo == 2:
@@ -98,7 +98,7 @@ def _parse_multiplicidad(value) -> int | None:
 def _escribir_relacionados_morbilidad(
     db: Session,
     row,
-    pdata: "_DatosPasada1",
+    pdata: '_DatosPasada1',
     caso,
     caso_creado: bool,
     related_cache: dict,
@@ -115,12 +115,12 @@ def _escribir_relacionados_morbilidad(
         related_cache: Cache de IDs existentes por modelo.
         catalog_cache: Caché local de la petición para evitar consultas repetidas.
     """
-    kw = {"caso_creado": caso_creado, "related_cache": related_cache}
+    kw = {'caso_creado': caso_creado, 'related_cache': related_cache}
 
     regulacion = _resolve_catalog_optional(
         db,
         CatRegulacionFecundidad,
-        _get_value(row, ["Regulación fecundidad", "Regulacion fecundidad"]),
+        _get_value(row, ['Regulación fecundidad', 'Regulacion fecundidad']),
         catalog_cache=catalog_cache,
     )
     terminacion = _resolve_catalog_optional(
@@ -132,41 +132,41 @@ def _escribir_relacionados_morbilidad(
     _upsert_single_related(
         db,
         AntecedentesObstetricos,
-        {"id_caso": caso.id_caso},
+        {'id_caso': caso.id_caso},
         {
-            "num_gestaciones": _parse_int(_get_value(row, ["N° gestaciones"])),
-            "partos_vaginales": _parse_int(_get_value(row, ["Partos vaginales"])),
-            "cesareas": _parse_int(_get_value(row, ["Cesáreas"])),
-            "abortos": _parse_int(_get_value(row, ["Abortos"])),
-            "molas": _parse_int(_get_value(row, ["Molas"])),
-            "ectopicos": _parse_int(_get_value(row, ["Ectópicos"])),
-            "muertos": _parse_int(_get_value(row, ["Muertos"])),
-            "vivos": _parse_int(_get_value(row, ["Vivos"])),
-            "fecha_ultima_gestacion": _parse_date(
+            'num_gestaciones': _parse_int(_get_value(row, ['N° gestaciones'])),
+            'partos_vaginales': _parse_int(_get_value(row, ['Partos vaginales'])),
+            'cesareas': _parse_int(_get_value(row, ['Cesáreas'])),
+            'abortos': _parse_int(_get_value(row, ['Abortos'])),
+            'molas': _parse_int(_get_value(row, ['Molas'])),
+            'ectopicos': _parse_int(_get_value(row, ['Ectópicos'])),
+            'muertos': _parse_int(_get_value(row, ['Muertos'])),
+            'vivos': _parse_int(_get_value(row, ['Vivos'])),
+            'fecha_ultima_gestacion': _parse_date(
                 _get_value(
                     row,
                     [
-                        "Fecha última gestación (dd/mm/aaaa)",
-                        "Fecha última gestación",
-                        "Fecha ultima gestacion",
+                        'Fecha última gestación (dd/mm/aaaa)',
+                        'Fecha última gestación',
+                        'Fecha ultima gestacion',
                     ],
                 )
             ),
-            "id_regulacion_fecundidad": regulacion.id if regulacion else None,
-            "num_controles_prenatales": _parse_int(_get_value(row, ["N° controles prenatales"])),
-            "semanas_inicio_cpn": _parse_int(_get_value(row, ["Semanas inicio CPN"])),
-            "id_terminacion_gestacion": terminacion.id if terminacion else None,
-            "edad_gestacional_sem": _parse_int(
-                _get_value(row, ["Edad gestacional ocurrencia (sem)"])
+            'id_regulacion_fecundidad': regulacion.id if regulacion else None,
+            'num_controles_prenatales': _parse_int(_get_value(row, ['N° controles prenatales'])),
+            'semanas_inicio_cpn': _parse_int(_get_value(row, ['Semanas inicio CPN'])),
+            'id_terminacion_gestacion': terminacion.id if terminacion else None,
+            'edad_gestacional_sem': _parse_int(
+                _get_value(row, ['Edad gestacional ocurrencia (sem)'])
             ),
-            "momento_ocurrencia": _resolve_momento_ocurrencia(
-                _get_value(row, ["Momento ocurrencia"])
+            'momento_ocurrencia': _resolve_momento_ocurrencia(
+                _get_value(row, ['Momento ocurrencia'])
             ),
-            "estado_recien_nacido": _normalize_estado_rn(
+            'estado_recien_nacido': _normalize_estado_rn(
                 _get_value(row, _MORBILIDAD_ESTADO_RN_COLS)
             ),
-            "peso_rn_gramos": _parse_int(_get_value(row, _MORBILIDAD_PESO_RN_COLS)),
-            "multiplicidad": _parse_multiplicidad(_get_value(row, ["Multiplicidad"])),
+            'peso_rn_gramos': _parse_int(_get_value(row, _MORBILIDAD_PESO_RN_COLS)),
+            'multiplicidad': _parse_multiplicidad(_get_value(row, ['Multiplicidad'])),
         },
         **kw,
     )
@@ -174,24 +174,24 @@ def _escribir_relacionados_morbilidad(
     _upsert_single_related(
         db,
         CriteriosEnfermedad,
-        {"id_caso": caso.id_caso},
+        {'id_caso': caso.id_caso},
         {
-            "eclampsia": _parse_bool(_get_value(row, ["Eclampsia"])),
-            "sepsis_sistemica_severa": _parse_bool(_get_value(row, ["Sepsis sistémica severa"])),
-            "hemorragia_obstetrica": _parse_bool(_get_value(row, ["Hemorragia obstétrica severa"])),
-            "preeclampsia": _parse_bool(_get_value(row, ["Preeclampsia"])),
-            "ruptura_uterina": _parse_bool(_get_value(row, ["Ruptura uterina"])),
-            "aborto_septico": _parse_bool(_get_value(row, ["Aborto séptico"])),
-            "embarazo_ectopico": _parse_bool(_get_value(row, ["Embarazo ectópico"])),
-            "autoinmune": _parse_bool(_get_value(row, ["7.1.8 Autoinmune", "Autoinmune"])),
-            "hematologica": _parse_bool(_get_value(row, ["Hematológica"])),
-            "oncologica": _parse_bool(_get_value(row, ["Oncológica"])),
-            "endocrino_metabolicas": _parse_bool(_get_value(row, ["Endocrino/metabólicas"])),
-            "renales": _parse_bool(_get_value(row, ["Renales"])),
-            "gastrointestinales": _parse_bool(_get_value(row, ["Gastrointestinales"])),
-            "tromboembolicos": _parse_bool(_get_value(row, ["Eventos tromboembólicos"])),
-            "cardiocerebrovasculares": _parse_bool(_get_value(row, ["Cardiocerebrovasculares"])),
-            "otras_enfermedades": _parse_bool(_get_value(row, ["Otras"])),
+            'eclampsia': _parse_bool(_get_value(row, ['Eclampsia'])),
+            'sepsis_sistemica_severa': _parse_bool(_get_value(row, ['Sepsis sistémica severa'])),
+            'hemorragia_obstetrica': _parse_bool(_get_value(row, ['Hemorragia obstétrica severa'])),
+            'preeclampsia': _parse_bool(_get_value(row, ['Preeclampsia'])),
+            'ruptura_uterina': _parse_bool(_get_value(row, ['Ruptura uterina'])),
+            'aborto_septico': _parse_bool(_get_value(row, ['Aborto séptico'])),
+            'embarazo_ectopico': _parse_bool(_get_value(row, ['Embarazo ectópico'])),
+            'autoinmune': _parse_bool(_get_value(row, ['7.1.8 Autoinmune', 'Autoinmune'])),
+            'hematologica': _parse_bool(_get_value(row, ['Hematológica'])),
+            'oncologica': _parse_bool(_get_value(row, ['Oncológica'])),
+            'endocrino_metabolicas': _parse_bool(_get_value(row, ['Endocrino/metabólicas'])),
+            'renales': _parse_bool(_get_value(row, ['Renales'])),
+            'gastrointestinales': _parse_bool(_get_value(row, ['Gastrointestinales'])),
+            'tromboembolicos': _parse_bool(_get_value(row, ['Eventos tromboembólicos'])),
+            'cardiocerebrovasculares': _parse_bool(_get_value(row, ['Cardiocerebrovasculares'])),
+            'otras_enfermedades': _parse_bool(_get_value(row, ['Otras'])),
         },
         **kw,
     )
@@ -199,16 +199,16 @@ def _escribir_relacionados_morbilidad(
     _upsert_single_related(
         db,
         CriteriosFallaOrganica,
-        {"id_caso": caso.id_caso},
+        {'id_caso': caso.id_caso},
         {
-            "falla_cardiaca": _parse_bool(_get_value(row, ["Falla cardíaca"])),
-            "falla_vascular": _parse_bool(_get_value(row, ["Falla vascular"])),
-            "falla_renal": _parse_bool(_get_value(row, ["Falla renal"])),
-            "falla_hepatica": _parse_bool(_get_value(row, ["Falla hepática"])),
-            "falla_metabolica": _parse_bool(_get_value(row, ["Falla metabólica"])),
-            "falla_cerebral": _parse_bool(_get_value(row, ["Falla cerebral"])),
-            "falla_respiratoria": _parse_bool(_get_value(row, ["Falla respiratoria"])),
-            "falla_coagulacion": _parse_bool(_get_value(row, ["Falla coagulación"])),
+            'falla_cardiaca': _parse_bool(_get_value(row, ['Falla cardíaca'])),
+            'falla_vascular': _parse_bool(_get_value(row, ['Falla vascular'])),
+            'falla_renal': _parse_bool(_get_value(row, ['Falla renal'])),
+            'falla_hepatica': _parse_bool(_get_value(row, ['Falla hepática'])),
+            'falla_metabolica': _parse_bool(_get_value(row, ['Falla metabólica'])),
+            'falla_cerebral': _parse_bool(_get_value(row, ['Falla cerebral'])),
+            'falla_respiratoria': _parse_bool(_get_value(row, ['Falla respiratoria'])),
+            'falla_coagulacion': _parse_bool(_get_value(row, ['Falla coagulación'])),
         },
         **kw,
     )
@@ -216,18 +216,18 @@ def _escribir_relacionados_morbilidad(
     _upsert_single_related(
         db,
         CriteriosManejo,
-        {"id_caso": caso.id_caso},
+        {'id_caso': caso.id_caso},
         {
-            "ingreso_uci": _parse_bool(_get_value(row, ["Ingreso UCI"])),
-            "cirugia_adicional": _parse_bool(_get_value(row, ["Cirugía adicional"])),
-            "transfusion": _parse_bool(_get_value(row, ["Transfusión"])),
-            "total_criterios": _parse_int(_get_value(row, ["Total criterios"])),
-            "accidente": _parse_bool(_get_value(row, ["Accidente"])),
-            "intoxicacion_accidental": _parse_bool(_get_value(row, ["Intoxicación accidental"])),
-            "intento_suicida": _parse_bool(_get_value(row, ["Intento suicida"])),
-            "victima_violencia": _parse_bool(_get_value(row, ["Víctima de violencia"])),
-            "otros_eventos_sp": _parse_bool(_get_value(row, ["Otros eventos salud pública"])),
-            "cual_evento_sp": clean_text(_get_value(row, ["¿Cuál evento?"])),
+            'ingreso_uci': _parse_bool(_get_value(row, ['Ingreso UCI'])),
+            'cirugia_adicional': _parse_bool(_get_value(row, ['Cirugía adicional'])),
+            'transfusion': _parse_bool(_get_value(row, ['Transfusión'])),
+            'total_criterios': _parse_int(_get_value(row, ['Total criterios'])),
+            'accidente': _parse_bool(_get_value(row, ['Accidente'])),
+            'intoxicacion_accidental': _parse_bool(_get_value(row, ['Intoxicación accidental'])),
+            'intento_suicida': _parse_bool(_get_value(row, ['Intento suicida'])),
+            'victima_violencia': _parse_bool(_get_value(row, ['Víctima de violencia'])),
+            'otros_eventos_sp': _parse_bool(_get_value(row, ['Otros eventos salud pública'])),
+            'cual_evento_sp': clean_text(_get_value(row, ['¿Cuál evento?'])),
         },
         **kw,
     )
@@ -235,15 +235,15 @@ def _escribir_relacionados_morbilidad(
     _upsert_single_related(
         db,
         ManejoHospitalario,
-        {"id_caso": caso.id_caso},
+        {'id_caso': caso.id_caso},
         {
-            "dias_estancia_hosp": _parse_int(_get_value(row, ["Días estancia hospitalaria"])),
-            "dias_estancia_uci": _parse_int(_get_value(row, ["Días estancia UCI"])),
-            "unidades_transfundidas": _parse_int(_get_value(row, _MORBILIDAD_TRANSFUNDIDAS_COLS)),
-            "cirugia_1": _parse_cirugia_codigo(_get_value(row, ["Cirugía adicional 1"])),
-            "cirugia_1_cual": clean_text(_get_value(row, ["¿Cuál otra cirugía 1?"])),
-            "cirugia_2": _parse_cirugia_codigo(_get_value(row, ["Cirugía adicional 2"])),
-            "cirugia_2_cual": clean_text(_get_value(row, ["¿Cuál otra cirugía 2?"])),
+            'dias_estancia_hosp': _parse_int(_get_value(row, ['Días estancia hospitalaria'])),
+            'dias_estancia_uci': _parse_int(_get_value(row, ['Días estancia UCI'])),
+            'unidades_transfundidas': _parse_int(_get_value(row, _MORBILIDAD_TRANSFUNDIDAS_COLS)),
+            'cirugia_1': _parse_cirugia_codigo(_get_value(row, ['Cirugía adicional 1'])),
+            'cirugia_1_cual': clean_text(_get_value(row, ['¿Cuál otra cirugía 1?'])),
+            'cirugia_2': _parse_cirugia_codigo(_get_value(row, ['Cirugía adicional 2'])),
+            'cirugia_2_cual': clean_text(_get_value(row, ['¿Cuál otra cirugía 2?'])),
         },
         **kw,
     )
@@ -257,28 +257,28 @@ def _escribir_relacionados_morbilidad(
     _upsert_single_related(
         db,
         CausasMorbilidad,
-        {"id_caso": caso.id_caso},
+        {'id_caso': caso.id_caso},
         {
-            "causa_principal_cie10": pdata.causa,
-            "id_grupo_causa": grupo_causa.id if grupo_causa else None,
-            "causa_asociada_2": clean_text(_get_value(row, ["Causa asociada CIE-10"])),
-            "causa_asociada_3": clean_text(_get_value(row, ["Causa asociada CIE-10.1"])),
-            "causa_asociada_4": clean_text(_get_value(row, ["Causa asociada CIE-10.2"])),
+            'causa_principal_cie10': pdata.causa,
+            'id_grupo_causa': grupo_causa.id if grupo_causa else None,
+            'causa_asociada_2': clean_text(_get_value(row, ['Causa asociada CIE-10'])),
+            'causa_asociada_3': clean_text(_get_value(row, ['Causa asociada CIE-10.1'])),
+            'causa_asociada_4': clean_text(_get_value(row, ['Causa asociada CIE-10.2'])),
         },
         **kw,
     )
 
-    tiene_remitida = _has_any_value(row, ["Remitida"])
-    remitida = _parse_bool(_get_value(row, ["Remitida"])) if tiene_remitida else 0
+    tiene_remitida = _has_any_value(row, ['Remitida'])
+    remitida = _parse_bool(_get_value(row, ['Remitida'])) if tiene_remitida else 0
     _upsert_single_related(
         db,
         Referencia,
-        {"id_caso": caso.id_caso},
+        {'id_caso': caso.id_caso},
         {
-            "remitida": remitida,
-            "institucion_ref_1": clean_text(_get_value(row, _MORBILIDAD_INSTITUCION_REF_1_COLS)),
-            "institucion_ref_2": clean_text(_get_value(row, _MORBILIDAD_INSTITUCION_REF_2_COLS)),
-            "tiempo_remision_h": _parse_decimal(_get_value(row, _MORBILIDAD_TIEMPO_REMISION_COLS)),
+            'remitida': remitida,
+            'institucion_ref_1': clean_text(_get_value(row, _MORBILIDAD_INSTITUCION_REF_1_COLS)),
+            'institucion_ref_2': clean_text(_get_value(row, _MORBILIDAD_INSTITUCION_REF_2_COLS)),
+            'tiempo_remision_h': _parse_decimal(_get_value(row, _MORBILIDAD_TIEMPO_REMISION_COLS)),
         },
         **kw,
     )
@@ -286,19 +286,19 @@ def _escribir_relacionados_morbilidad(
     zona = _resolve_catalog_optional(
         db,
         CatZonaResidencia,
-        _get_value(row, ["Zona de residencia", "Zona residencia", "Zona"]),
+        _get_value(row, ['Zona de residencia', 'Zona residencia', 'Zona']),
         catalog_cache=catalog_cache,
     )
     pob_vuln = _resolve_catalog_optional(
         db,
         CatPoblacionVulnerable,
-        _get_value(row, ["Población vulnerable", "Poblacion vulnerable"]),
+        _get_value(row, ['Población vulnerable', 'Poblacion vulnerable']),
         catalog_cache=catalog_cache,
     )
     etnia = _resolve_catalog_optional(
         db,
         CatEtnia,
-        _get_value(row, ["Etnia", "Grupo étnico", "Grupo etnico"]),
+        _get_value(row, ['Etnia', 'Grupo étnico', 'Grupo etnico']),
         catalog_cache=catalog_cache,
     )
     tipo_afiliacion = _resolve_catalog_optional(
@@ -307,11 +307,11 @@ def _escribir_relacionados_morbilidad(
         _get_value(
             row,
             [
-                "Tipo de afiliación",
-                "Tipo afiliación",
-                "Tipo afiliacion",
-                "Afiliación",
-                "Afiliacion",
+                'Tipo de afiliación',
+                'Tipo afiliación',
+                'Tipo afiliacion',
+                'Afiliación',
+                'Afiliacion',
             ],
         ),
         catalog_cache=catalog_cache,

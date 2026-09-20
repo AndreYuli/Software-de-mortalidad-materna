@@ -21,7 +21,7 @@ def calcular_filtros_hash(filtros: dict[str, Any]) -> str:
         Hash SHA-256 hexadecimal de los filtros serializados de forma determinista.
     """
     filtros_serializados = json.dumps(filtros, sort_keys=True, default=str)
-    return hashlib.sha256(filtros_serializados.encode("utf-8")).hexdigest()
+    return hashlib.sha256(filtros_serializados.encode('utf-8')).hexdigest()
 
 
 def obtener_narrativa(
@@ -63,15 +63,15 @@ def obtener_narrativa(
         )
         if existente is not None:
             return {
-                "narrativa": existente.contenido,
-                "modelo": existente.modelo,
-                "generado_en": existente.generado_en,
-                "desde_cache": True,
+                'narrativa': existente.contenido,
+                'modelo': existente.modelo,
+                'generado_en': existente.generado_en,
+                'desde_cache': True,
             }
 
     resultado_ia = ia_client.generar_narrativa(tipo_narrativa, analisis.tipo, indicadores)
-    texto = resultado_ia["narrativa"]
-    modelo = resultado_ia["modelo"]
+    texto = resultado_ia['narrativa']
+    modelo = resultado_ia['modelo']
     ahora = datetime.now(timezone.utc)
 
     registro = (
@@ -99,7 +99,7 @@ def obtener_narrativa(
         db.add(registro)
     db.commit()
 
-    return {"narrativa": texto, "modelo": modelo, "generado_en": ahora, "desde_cache": False}
+    return {'narrativa': texto, 'modelo': modelo, 'generado_en': ahora, 'desde_cache': False}
 
 
 def extraer_indicadores_para_narrativa(
@@ -124,28 +124,28 @@ def extraer_indicadores_para_narrativa(
     Raises:
         ValueError: Si `tipo_narrativa` es inválido, o si falta el resultado necesario.
     """
-    if tipo_narrativa == "resumen_ejecutivo":
+    if tipo_narrativa == 'resumen_ejecutivo':
         if analisis_completo is None:
-            raise ValueError("Se requiere analisis_completo para resumen_ejecutivo")
-        claves = ["estadisticas_basicas", "causas_cie10", "criterios_inclusion"]
+            raise ValueError('Se requiere analisis_completo para resumen_ejecutivo')
+        claves = ['estadisticas_basicas', 'causas_cie10', 'criterios_inclusion']
         return {k: analisis_completo[k] for k in claves if k in analisis_completo}
 
-    if tipo_narrativa == "demoras":
+    if tipo_narrativa == 'demoras':
         if analisis_completo is None:
-            raise ValueError("Se requiere analisis_completo para demoras")
-        if "demoras" in analisis_completo:
-            return {"demoras": analisis_completo["demoras"]}
-        return {"tiempo_remision": analisis_completo.get("tiempo_remision", {})}
+            raise ValueError('Se requiere analisis_completo para demoras')
+        if 'demoras' in analisis_completo:
+            return {'demoras': analisis_completo['demoras']}
+        return {'tiempo_remision': analisis_completo.get('tiempo_remision', {})}
 
-    if tipo_narrativa == "tendencias":
+    if tipo_narrativa == 'tendencias':
         if analisis_completo is None:
-            raise ValueError("Se requiere analisis_completo para tendencias")
-        return {"distribucion_mensual": analisis_completo.get("distribucion_mensual", {})}
+            raise ValueError('Se requiere analisis_completo para tendencias')
+        return {'distribucion_mensual': analisis_completo.get('distribucion_mensual', {})}
 
-    if tipo_narrativa == "clustering":
+    if tipo_narrativa == 'clustering':
         if clustering_resultado is None:
-            raise ValueError("Se requiere clustering_resultado para clustering")
-        claves = ["n_clusters", "n_samples", "features_used", "cluster_sizes", "cluster_profiles"]
+            raise ValueError('Se requiere clustering_resultado para clustering')
+        claves = ['n_clusters', 'n_samples', 'features_used', 'cluster_sizes', 'cluster_profiles']
         return {k: clustering_resultado[k] for k in claves if k in clustering_resultado}
 
-    raise ValueError(f"tipo_narrativa inválido: {tipo_narrativa}")
+    raise ValueError(f'tipo_narrativa inválido: {tipo_narrativa}')

@@ -34,24 +34,24 @@ def generar_narrativa(
     try:
         with httpx.Client(timeout=35.0) as client:
             response = client.post(
-                f"{Config.ia_service_url}/generar-narrativa",
+                f'{Config.ia_service_url}/generar-narrativa',
                 json={
-                    "tipo_narrativa": tipo_narrativa,
-                    "tipo_analisis": tipo_analisis,
-                    "indicadores": indicadores,
+                    'tipo_narrativa': tipo_narrativa,
+                    'tipo_analisis': tipo_analisis,
+                    'indicadores': indicadores,
                 },
             )
     except httpx.TimeoutException as exc:
         raise IAServiceUnavailableError(
-            f"Timeout esperando respuesta de IA-SERVICE: {exc}"
+            f'Timeout esperando respuesta de IA-SERVICE: {exc}'
         ) from exc
     except httpx.ConnectError as exc:
-        raise IAServiceUnavailableError(f"No se pudo conectar a IA-SERVICE: {exc}") from exc
+        raise IAServiceUnavailableError(f'No se pudo conectar a IA-SERVICE: {exc}') from exc
 
     if response.status_code != 200:
         raise IAServiceUnavailableError(
-            f"IA-SERVICE devolvió status {response.status_code}: {response.text}"
+            f'IA-SERVICE devolvió status {response.status_code}: {response.text}'
         )
 
     body = response.json()
-    return {"narrativa": body["narrativa"], "modelo": body["modelo"]}
+    return {'narrativa': body['narrativa'], 'modelo': body['modelo']}

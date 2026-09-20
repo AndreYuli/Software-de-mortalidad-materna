@@ -5,10 +5,10 @@ from typing import Any, Callable
 from prompts import clustering, demoras, resumen_ejecutivo, tendencias
 
 _CONSTRUCTORES: dict[str, Callable[[dict[str, Any], str], str]] = {
-    "resumen_ejecutivo": resumen_ejecutivo.construir,
-    "demoras": demoras.construir,
-    "clustering": clustering.construir,
-    "tendencias": tendencias.construir,
+    'resumen_ejecutivo': resumen_ejecutivo.construir,
+    'demoras': demoras.construir,
+    'clustering': clustering.construir,
+    'tendencias': tendencias.construir,
 }
 
 

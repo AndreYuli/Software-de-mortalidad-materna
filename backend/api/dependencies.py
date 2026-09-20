@@ -31,29 +31,29 @@ def get_current_user(
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="No autenticado.",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail='No autenticado.',
+            headers={'WWW-Authenticate': 'Bearer'},
         )
 
     payload = decode_access_token(credentials.credentials)
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token inválido o expirado.",
+            detail='Token inválido o expirado.',
         )
 
-    user_id: str | None = payload.get("sub")
+    user_id: str | None = payload.get('sub')
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token sin identificador de usuario.",
+            detail='Token sin identificador de usuario.',
         )
 
     user = db.get(Usuario, int(user_id))
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario no encontrado.",
+            detail='Usuario no encontrado.',
         )
 
     return user

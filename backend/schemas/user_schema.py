@@ -16,13 +16,13 @@ class UsuarioRegister(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
 
-    @field_validator("nombre", mode="before")
+    @field_validator('nombre', mode='before')
     @classmethod
     def limpiar_nombre(cls, v: str) -> str:
         """Elimina espacios al inicio y al final del nombre."""
         return v.strip()
 
-    @field_validator("email", mode="before")
+    @field_validator('email', mode='before')
     @classmethod
     def normalizar_email(cls, v: str) -> str:
         """Normaliza el email a minúsculas y elimina espacios."""
@@ -40,7 +40,7 @@ class UsuarioLogin(BaseModel):
     email: EmailStr
     password: str
 
-    @field_validator("email", mode="before")
+    @field_validator('email', mode='before')
     @classmethod
     def normalizar_email(cls, v: str) -> str:
         """Normaliza el email a minúsculas y elimina espacios."""
@@ -75,7 +75,7 @@ class TokenResponse(BaseModel):
     """
 
     access_token: str
-    token_type: str = "bearer"
+    token_type: str = 'bearer'
     id: int
     nombre: str
     email: str

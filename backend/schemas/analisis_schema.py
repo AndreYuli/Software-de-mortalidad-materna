@@ -38,7 +38,7 @@ class ClusteringRequest(BaseModel):
         n_clusters: Número de clusters deseados.
     """
 
-    tipo_clustering: str = Field(default="kmeans")
+    tipo_clustering: str = Field(default='kmeans')
     n_clusters: int = Field(default=3, ge=2, le=20)
 
 

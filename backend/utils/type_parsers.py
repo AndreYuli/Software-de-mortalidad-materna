@@ -46,7 +46,7 @@ def _parse_bool(value: Any) -> int:
         except (ValueError, OverflowError):
             return 0
     val_slug = slugify(value)
-    return 1 if val_slug in {"1", "10", "si", "s", "true", "x", "yes", "y"} else 0
+    return 1 if val_slug in {'1', '10', 'si', 's', 'true', 'x', 'yes', 'y'} else 0
 
 
 def es_valor_positivo(valor: Any) -> bool:
@@ -70,4 +70,4 @@ def es_valor_positivo(valor: Any) -> bool:
         except (ValueError, OverflowError):
             return False
     val_str = str(valor).strip().lower()
-    return val_str in {"1", "1.0", "si", "sí", "s", "true", "x", "yes", "y"}
+    return val_str in {'1', '1.0', 'si', 'sí', 's', 'true', 'x', 'yes', 'y'}

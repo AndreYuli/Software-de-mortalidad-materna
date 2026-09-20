@@ -20,7 +20,7 @@ from schemas.sivigila_schema import PacienteResponse, VMorbilidadResponse, VMort
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
-    prefix="/api/sivigila", tags=["sivigila"], dependencies=[Depends(get_current_user)]
+    prefix='/api/sivigila', tags=['sivigila'], dependencies=[Depends(get_current_user)]
 )
 
 _LIMITE_DEFAULT = 100
@@ -44,7 +44,7 @@ def _obtener_limite(limit: int | None) -> int:
     return resultado
 
 
-@router.get("/resumen/")
+@router.get('/resumen/')
 def resumen(db: Session = Depends(get_db)) -> dict[str, int]:
     """Devuelve el conteo total de pacientes, casos de morbilidad y mortalidad.
 
@@ -55,14 +55,14 @@ def resumen(db: Session = Depends(get_db)) -> dict[str, int]:
         Diccionario con los tres conteos.
     """
     conteos: dict[str, int] = {
-        "pacientes": db.query(Paciente).count(),
-        "casos_morbilidad": db.query(CasoMorbilidad).count(),
-        "casos_mortalidad": db.query(CasoMortalidad).count(),
+        'pacientes': db.query(Paciente).count(),
+        'casos_morbilidad': db.query(CasoMorbilidad).count(),
+        'casos_mortalidad': db.query(CasoMortalidad).count(),
     }
     return conteos
 
 
-@router.get("/pacientes/", response_model=list[PacienteResponse])
+@router.get('/pacientes/', response_model=list[PacienteResponse])
 def listar_pacientes(
     skip: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None),
@@ -102,7 +102,7 @@ def listar_pacientes(
     return lista_pacientes
 
 
-@router.get("/morbilidad/", response_model=list[VMorbilidadResponse])
+@router.get('/morbilidad/', response_model=list[VMorbilidadResponse])
 def listar_morbilidad(
     skip: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None),
@@ -134,15 +134,15 @@ def listar_morbilidad(
             VMorbilidadResponse.model_validate(caso) for caso in casos
         ]
     except Exception as exc:
-        logger.exception("Error al consultar la vista de morbilidad completa.")
+        logger.exception('Error al consultar la vista de morbilidad completa.')
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno al consultar los registros de morbilidad.",
+            detail='Error interno al consultar los registros de morbilidad.',
         ) from exc
     return lista_morbilidad
 
 
-@router.get("/mortalidad/", response_model=list[VMortalidadResponse])
+@router.get('/mortalidad/', response_model=list[VMortalidadResponse])
 def listar_mortalidad(
     skip: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None),
@@ -174,9 +174,9 @@ def listar_mortalidad(
             VMortalidadResponse.model_validate(caso) for caso in casos
         ]
     except Exception as exc:
-        logger.exception("Error al consultar la vista de mortalidad completa.")
+        logger.exception('Error al consultar la vista de mortalidad completa.')
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error interno al consultar los registros de mortalidad.",
+            detail='Error interno al consultar los registros de mortalidad.',
         ) from exc
     return lista_mortalidad

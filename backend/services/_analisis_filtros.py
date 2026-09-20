@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from db.models_sqlalchemy import CasoMorbilidad, CasoMortalidad, Paciente
 from utils.date_parsers import parse_fecha_robusta
 
-_MESES_ABREV = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+_MESES_ABREV = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic']
 
 
 def _candidatos_fecha_col(tipo: str) -> list[str]:
@@ -20,9 +20,9 @@ def _candidatos_fecha_col(tipo: str) -> list[str]:
     Returns:
         Lista de nombres de columna candidatos, en orden de preferencia.
     """
-    candidatos: list[str] = ["Fecha de egreso", "Fecha egreso"]
-    if tipo == "mortalidad":
-        candidatos = ["5.2 Fecha de defunción", "5.2 Fecha de defuncion", "Fecha de defunción"]
+    candidatos: list[str] = ['Fecha de egreso', 'Fecha egreso']
+    if tipo == 'mortalidad':
+        candidatos = ['5.2 Fecha de defunción', '5.2 Fecha de defuncion', 'Fecha de defunción']
     return candidatos
 
 
@@ -52,14 +52,14 @@ def _detectar_col_fecha(df: pd.DataFrame, tipo: str) -> str | None:
                 columna_fecha = col
                 break
     # 3. Sin candidatos, buscamos cualquier columna con 'fecha' y datos (solo morbilidad)
-    if columna_fecha is None and tipo == "morbilidad":
+    if columna_fecha is None and tipo == 'morbilidad':
         columna_fecha = next(
-            (col for col in df.columns if "fecha" in str(col).lower() and df[col].notna().any()),
+            (col for col in df.columns if 'fecha' in str(col).lower() and df[col].notna().any()),
             None,
         )
     # 4. Fallback final: cualquier columna con 'fecha' (solo para morbilidad)
-    if columna_fecha is None and tipo == "morbilidad":
-        columna_fecha = next((col for col in df.columns if "fecha" in str(col).lower()), None)
+    if columna_fecha is None and tipo == 'morbilidad':
+        columna_fecha = next((col for col in df.columns if 'fecha' in str(col).lower()), None)
     return columna_fecha
 
 
@@ -142,7 +142,7 @@ def _ultima_semana_reportada(df: pd.DataFrame, tipo: str) -> dict[str, int] | No
         return None
     fecha_max = fechas.max()
     iso = fecha_max.isocalendar()
-    return {"anio": int(iso.year), "semana": int(iso.week)}
+    return {'anio': int(iso.year), 'semana': int(iso.week)}
 
 
 def _calcular_distribucion_mensual(df: pd.DataFrame, tipo: str) -> dict[str, Any]:
@@ -162,9 +162,9 @@ def _calcular_distribucion_mensual(df: pd.DataFrame, tipo: str) -> dict[str, Any
         fechas = parse_fecha_robusta(df[col]).dropna()
         if not fechas.empty:
             df_temp = pd.DataFrame(
-                {"year": fechas.dt.year.astype(int), "month": fechas.dt.month.astype(int)}
+                {'year': fechas.dt.year.astype(int), 'month': fechas.dt.month.astype(int)}
             )
-            grouped = df_temp.groupby(["year", "month"]).size()
+            grouped = df_temp.groupby(['year', 'month']).size()
             for (yr, mo), val in grouped.items():
                 yr_str = str(yr)
                 mo_str = str(mo)
@@ -191,14 +191,14 @@ def _enriquecer_df_con_fecha(db: Session, df: pd.DataFrame, tipo: str) -> pd.Dat
     col = _detectar_col_fecha(dataframe_enriquecido, tipo)
     fechas_ya_presentes = col is not None and dataframe_enriquecido[col].notna().any()
     if not fechas_ya_presentes:
-        if tipo == "mortalidad":
+        if tipo == 'mortalidad':
             casos = (
                 db.query(CasoMortalidad.id_caso, Paciente.numero_id, CasoMortalidad.fecha_defuncion)
                 .join(Paciente, CasoMortalidad.id_paciente == Paciente.id_paciente)
                 .all()
             )
             fechas_map = {c.numero_id: c.fecha_defuncion for c in casos if c.numero_id}
-            col_id, col_fecha_new = "C. Número ID", "5.2 Fecha de defunción"
+            col_id, col_fecha_new = 'C. Número ID', '5.2 Fecha de defunción'
         else:
             casos = (
                 db.query(CasoMorbilidad.id_caso, Paciente.numero_id, CasoMorbilidad.fecha_egreso)
@@ -206,9 +206,9 @@ def _enriquecer_df_con_fecha(db: Session, df: pd.DataFrame, tipo: str) -> pd.Dat
                 .all()
             )
             fechas_map = {c.numero_id: c.fecha_egreso for c in casos if c.numero_id}
-            col_id, col_fecha_new = "N° identificación", "Fecha de egreso"
+            col_id, col_fecha_new = 'N° identificación', 'Fecha de egreso'
         if col_id in dataframe_enriquecido.columns:
             dataframe_enriquecido[col_fecha_new] = pd.to_datetime(
-                dataframe_enriquecido[col_id].astype(str).map(fechas_map), errors="coerce"
+                dataframe_enriquecido[col_id].astype(str).map(fechas_map), errors='coerce'
             )
     return dataframe_enriquecido

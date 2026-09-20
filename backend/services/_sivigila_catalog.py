@@ -28,8 +28,8 @@ def _catalog_comparables(obj: Any, code_field: str | None, extra_field: str | No
         Lista de valores de texto presentes en el objeto.
     """
     comparables: list[Any] = []
-    if hasattr(obj, "descripcion"):
-        comparables.append(getattr(obj, "descripcion"))
+    if hasattr(obj, 'descripcion'):
+        comparables.append(getattr(obj, 'descripcion'))
     if code_field and hasattr(obj, code_field):
         comparables.append(getattr(obj, code_field))
     if extra_field and hasattr(obj, extra_field):
@@ -55,12 +55,12 @@ def _resolve_catalog_by_id(db: Session, model: Any, value: Any, catalog_cache: d
         if not isinstance(value, bool):
             val_id = int(float(value))
     except (ValueError, TypeError) as exc:
-        logger.debug("No se pudo convertir a ID numérico el valor %r: %s", value, exc)
+        logger.debug('No se pudo convertir a ID numérico el valor %r: %s', value, exc)
     if val_id is not None:
-        cache_key = ("by_id", model)
+        cache_key = ('by_id', model)
         if cache_key not in catalog_cache:
             catalog_cache[cache_key] = {
-                getattr(obj, "id_catalogo", getattr(obj, "id", None)): obj
+                getattr(obj, 'id_catalogo', getattr(obj, 'id', None)): obj
                 for obj in db.query(model).all()
             }
         resultado = catalog_cache[cache_key].get(val_id)
@@ -90,7 +90,7 @@ def _resolve_catalog_by_fields(
         Instancia del catálogo o None si no se encontró coincidencia.
     """
     resultado: Any | None = None
-    cache_key = ("by_fields", model)
+    cache_key = ('by_fields', model)
     if cache_key not in catalog_cache:
         catalog_cache[cache_key] = db.query(model).all()
     if code_field:
@@ -102,11 +102,11 @@ def _resolve_catalog_by_fields(
     if resultado is None:
         slug = slugify(texto)
         if slug:
-            slug_norm = slug.replace(" de ", " ")
+            slug_norm = slug.replace(' de ', ' ')
             for obj in catalog_cache[cache_key]:
                 for v in _catalog_comparables(obj, code_field, extra_field):
                     v_slug = slugify(v)
-                    if v_slug and (v_slug == slug or v_slug.replace(" de ", " ") == slug_norm):
+                    if v_slug and (v_slug == slug or v_slug.replace(' de ', ' ') == slug_norm):
                         resultado = obj
                         break
                 if resultado:
@@ -150,7 +150,7 @@ def _resolve_catalog(
     texto = None if vacio else clean_text(value)
     if vacio or texto is None:
         if required:
-            raise ValueError(f"Fila {numero_fila}: el campo {nombre_campo} es obligatorio.")
+            raise ValueError(f'Fila {numero_fila}: el campo {nombre_campo} es obligatorio.')
     else:
         obj = _resolve_catalog_by_id(db, model, value, catalog_cache)
         if obj is None:
@@ -165,7 +165,7 @@ def _resolve_catalog(
         resultado = obj
         if resultado is None and required:
             raise ValueError(
-                f"Fila {numero_fila}: no se encontró catálogo para {nombre_campo}={texto!r}."
+                f'Fila {numero_fila}: no se encontró catálogo para {nombre_campo}={texto!r}.'
             )
     return resultado
 

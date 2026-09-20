@@ -25,19 +25,19 @@ def generar(prompt: str) -> str:
     try:
         with httpx.Client(timeout=Config.ollama_timeout_s) as client:
             response = client.post(
-                f"{Config.ollama_host}/api/generate",
-                json={"model": Config.ollama_model, "prompt": prompt, "stream": False},
+                f'{Config.ollama_host}/api/generate',
+                json={'model': Config.ollama_model, 'prompt': prompt, 'stream': False},
             )
     except httpx.TimeoutException as exc:
         raise OllamaUnavailableError(
-            f"Timeout esperando respuesta de Ollama: {exc}"
+            f'Timeout esperando respuesta de Ollama: {exc}'
         ) from exc
     except httpx.ConnectError as exc:
-        raise OllamaUnavailableError(f"No se pudo conectar a Ollama: {exc}") from exc
+        raise OllamaUnavailableError(f'No se pudo conectar a Ollama: {exc}') from exc
 
     if response.status_code != 200:
         raise OllamaUnavailableError(
-            f"Ollama devolvió status {response.status_code}: {response.text}"
+            f'Ollama devolvió status {response.status_code}: {response.text}'
         )
 
-    return response.json()["response"]
+    return response.json()['response']

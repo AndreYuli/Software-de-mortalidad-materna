@@ -22,15 +22,15 @@ def client(db_session):
 def test_subir_archivo_devuelve_422_si_faltan_columnas(client, mocker):
     """Un ValueError del servicio debe traducirse a HTTP 422, no 500."""
     mocker.patch(
-        "api.routers.analisis.analisis_service.procesar_subida",
-        side_effect=ValueError("Faltan columnas requeridas: [...]"),
+        'api.routers.analisis.analisis_service.procesar_subida',
+        side_effect=ValueError('Faltan columnas requeridas: [...]'),
     )
 
     response = client.post(
-        "/api/analisis/",
-        data={"tipo": "mortalidad"},
-        files={"archivo": ("test.xlsx", io.BytesIO(b"contenido"), "application/vnd.ms-excel")},
+        '/api/analisis/',
+        data={'tipo': 'mortalidad'},
+        files={'archivo': ('test.xlsx', io.BytesIO(b'contenido'), 'application/vnd.ms-excel')},
     )
 
     assert response.status_code == 422
-    assert "Faltan columnas" in response.json()["detail"]
+    assert 'Faltan columnas' in response.json()['detail']

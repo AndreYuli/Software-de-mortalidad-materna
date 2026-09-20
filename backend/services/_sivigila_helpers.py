@@ -91,7 +91,7 @@ def _normalize_hash_value(value: Any) -> Any:
     elif isinstance(value, (int, float)):
         n: float = float(value)
         resultado = int(n) if n.is_integer() else n
-    elif hasattr(value, "isoformat"):
+    elif hasattr(value, 'isoformat'):
         try:
             resultado = value.isoformat()
         except TypeError:
@@ -114,7 +114,7 @@ def _row_hash(tipo: str, row: Any) -> str:
     """
     col_names: list[str] = sorted(str(c) for c in row.index.tolist())
     normalizado: dict[str, Any] = {col: _normalize_hash_value(row[col]) for col in col_names}
-    hash_generado: str = _hash_payload({"tipo": tipo, "row": normalizado})
+    hash_generado: str = _hash_payload({'tipo': tipo, 'row': normalizado})
     return hash_generado
 
 
@@ -128,9 +128,9 @@ def _hash_payload(payload: dict[str, Any]) -> str:
         Cadena hexadecimal SHA-256 de 64 caracteres.
     """
     serializado: str = json.dumps(
-        payload, sort_keys=True, ensure_ascii=True, default=str, separators=(",", ":")
+        payload, sort_keys=True, ensure_ascii=True, default=str, separators=(',', ':')
     )
-    hash_generado: str = sha256(serializado.encode("utf-8")).hexdigest()
+    hash_generado: str = sha256(serializado.encode('utf-8')).hexdigest()
     return hash_generado
 
 
@@ -170,9 +170,9 @@ def _precargar_caches_sivigila(
             ):
                 import_cache[imp.event_hash] = imp
 
-    caso_model = CasoMorbilidad if tipo == "morbilidad" else CasoMortalidad
-    causa_model = CausasMorbilidad if tipo == "morbilidad" else CausaMuerte
-    fecha_field = "fecha_egreso" if tipo == "morbilidad" else "fecha_defuncion"
+    caso_model = CasoMorbilidad if tipo == 'morbilidad' else CasoMortalidad
+    causa_model = CausasMorbilidad if tipo == 'morbilidad' else CausaMuerte
+    fecha_field = 'fecha_egreso' if tipo == 'morbilidad' else 'fecha_defuncion'
 
     caso_by_id: dict[int, Any] = {}
     caso_by_paciente_fecha: dict[tuple[int, Any], Any] = {}
@@ -210,7 +210,7 @@ def _precargar_caches_sivigila(
             AntecedentePartoPuerperio,
             CausaMuerte,
         ]
-        if tipo == "mortalidad"
+        if tipo == 'mortalidad'
         else [CausasMorbilidad, Referencia]
     )
     related_cache: dict[type, set[int]] = {m: set() for m in related_models}

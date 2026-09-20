@@ -16,217 +16,217 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 _COLUMNAS_MORTALIDAD = [
-    "A. Nombres y Apellidos",
-    "B. Tipo ID",
-    "C. Número ID",
-    "5.1 Sitio de Defunción",
-    "6.1 Convivencia",
-    "6.3 Escolaridad",
-    "6.4 Regulación Fecundidad",
-    "6.5 Gestaciones",
-    "6.6 Partos Vaginales",
-    "6.7 Cesáreas",
-    "6.8 Muertos",
-    "6.9 Vivos",
-    "6.10 Abortos",
-    "8.1 No. CPN",
-    "8.2 Semana inicio CPN",
-    "9.1 Momento de la muerte",
-    "9.2 Semana gestación",
-    "9.4 Tipo de parto",
-    "10.1 Causa básica CIE-10",
-    "10.3.1 Demora 1",
-    "10.3.2 Demora 2",
-    "10.3.3 Demora 3",
-    "10.3.4 Demora 4",
-    "Fecha de Nacimiento",
+    'A. Nombres y Apellidos',
+    'B. Tipo ID',
+    'C. Número ID',
+    '5.1 Sitio de Defunción',
+    '6.1 Convivencia',
+    '6.3 Escolaridad',
+    '6.4 Regulación Fecundidad',
+    '6.5 Gestaciones',
+    '6.6 Partos Vaginales',
+    '6.7 Cesáreas',
+    '6.8 Muertos',
+    '6.9 Vivos',
+    '6.10 Abortos',
+    '8.1 No. CPN',
+    '8.2 Semana inicio CPN',
+    '9.1 Momento de la muerte',
+    '9.2 Semana gestación',
+    '9.4 Tipo de parto',
+    '10.1 Causa básica CIE-10',
+    '10.3.1 Demora 1',
+    '10.3.2 Demora 2',
+    '10.3.3 Demora 3',
+    '10.3.4 Demora 4',
+    'Fecha de Nacimiento',
 ]
 
 _COLUMNAS_MORBILIDAD = [
-    "Nombres y apellidos",
-    "Tipo de ID",
-    "N° identificación",
-    "N° gestaciones",
-    "Partos vaginales",
-    "Cesáreas",
-    "Abortos",
-    "N° controles prenatales",
-    "Semanas inicio CPN",
-    "Edad gestacional ocurrencia (sem)",
-    "Momento ocurrencia",
-    "Eclampsia",
-    "Sepsis sistémica severa",
-    "Hemorragia obstétrica severa",
-    "Preeclampsia",
-    "Ruptura uterina",
-    "Ingreso UCI",
-    "Cirugía adicional",
-    "Transfusión",
-    "Total criterios",
-    "Causa principal CIE-10",
-    "Días estancia hospitalaria",
-    "Días estancia UCI",
-    "Fecha de Nacimiento",
-    "Fecha de egreso",
+    'Nombres y apellidos',
+    'Tipo de ID',
+    'N° identificación',
+    'N° gestaciones',
+    'Partos vaginales',
+    'Cesáreas',
+    'Abortos',
+    'N° controles prenatales',
+    'Semanas inicio CPN',
+    'Edad gestacional ocurrencia (sem)',
+    'Momento ocurrencia',
+    'Eclampsia',
+    'Sepsis sistémica severa',
+    'Hemorragia obstétrica severa',
+    'Preeclampsia',
+    'Ruptura uterina',
+    'Ingreso UCI',
+    'Cirugía adicional',
+    'Transfusión',
+    'Total criterios',
+    'Causa principal CIE-10',
+    'Días estancia hospitalaria',
+    'Días estancia UCI',
+    'Fecha de Nacimiento',
+    'Fecha de egreso',
 ]
 
 _COLUMNAS_REQUERIDAS = {
-    "mortalidad": _COLUMNAS_MORTALIDAD,
-    "morbilidad": _COLUMNAS_MORBILIDAD,
+    'mortalidad': _COLUMNAS_MORTALIDAD,
+    'morbilidad': _COLUMNAS_MORBILIDAD,
 }
 
 _ALIAS_COLUMNAS = {
-    "morbilidad": {
-        "Nombres y apellidos": ["Nombre y apellidos", "Nombres y Apellidos"],
-        "Tipo de ID": [
-            "Tipo ID",
-            "Tipo identificación",
-            "Tipo de identificación",
-            "Tipo de documento",
-            "Tipo documento",
+    'morbilidad': {
+        'Nombres y apellidos': ['Nombre y apellidos', 'Nombres y Apellidos'],
+        'Tipo de ID': [
+            'Tipo ID',
+            'Tipo identificación',
+            'Tipo de identificación',
+            'Tipo de documento',
+            'Tipo documento',
         ],
-        "N° identificación": [
-            "No identificación",
-            "Nro identificación",
-            "Nº identificación",
-            "Número identificación",
+        'N° identificación': [
+            'No identificación',
+            'Nro identificación',
+            'Nº identificación',
+            'Número identificación',
         ],
-        "N° gestaciones": ["No gestaciones", "Nro gestaciones", "Nº gestaciones"],
-        "N° controles prenatales": ["No controles prenatales", "Nro controles prenatales"],
-        "Causa principal CIE-10": ["Causa principal cie10", "Causa principal CIE10"],
-        "Días estancia hospitalaria": ["Dias estancia hospitalaria"],
-        "Días estancia UCI": ["Dias estancia UCI"],
-        "Fecha de Nacimiento": [
-            "Fecha de nacimiento",
-            "Fecha nacimiento",
-            "Fecha de nacimiento (dd/mm/aaaa)",
-            "Fecha nacimiento (dd/mm/aaaa)",
+        'N° gestaciones': ['No gestaciones', 'Nro gestaciones', 'Nº gestaciones'],
+        'N° controles prenatales': ['No controles prenatales', 'Nro controles prenatales'],
+        'Causa principal CIE-10': ['Causa principal cie10', 'Causa principal CIE10'],
+        'Días estancia hospitalaria': ['Dias estancia hospitalaria'],
+        'Días estancia UCI': ['Dias estancia UCI'],
+        'Fecha de Nacimiento': [
+            'Fecha de nacimiento',
+            'Fecha nacimiento',
+            'Fecha de nacimiento (dd/mm/aaaa)',
+            'Fecha nacimiento (dd/mm/aaaa)',
         ],
-        "Fecha de egreso": [
-            "Fecha egreso",
-            "Fecha de egreso (dd/mm/aaaa)",
-            "Fecha egreso (dd/mm/aaaa)",
+        'Fecha de egreso': [
+            'Fecha egreso',
+            'Fecha de egreso (dd/mm/aaaa)',
+            'Fecha egreso (dd/mm/aaaa)',
         ],
-        "Zona de residencia": ["Zona residencia", "Zona"],
-        "Población vulnerable": [
-            "Poblacion vulnerable",
-            "Población vulnerable",
-            "Poblacion vulnerable",
+        'Zona de residencia': ['Zona residencia', 'Zona'],
+        'Población vulnerable': [
+            'Poblacion vulnerable',
+            'Población vulnerable',
+            'Poblacion vulnerable',
         ],
-        "Etnia": ["Grupo étnico", "Grupo etnico", "Etnia"],
-        "Tipo de afiliación": [
-            "Tipo afiliación",
-            "Tipo afiliacion",
-            "Afiliación",
-            "Afiliacion",
-            "Régimen de afiliación",
-            "Regimen de afiliacion",
+        'Etnia': ['Grupo étnico', 'Grupo etnico', 'Etnia'],
+        'Tipo de afiliación': [
+            'Tipo afiliación',
+            'Tipo afiliacion',
+            'Afiliación',
+            'Afiliacion',
+            'Régimen de afiliación',
+            'Regimen de afiliacion',
         ],
     },
-    "mortalidad": {
-        "A. Nombres y Apellidos": [
-            "Nombres y Apellidos",
-            "Nombres y apellidos",
-            "Nombre y apellidos",
+    'mortalidad': {
+        'A. Nombres y Apellidos': [
+            'Nombres y Apellidos',
+            'Nombres y apellidos',
+            'Nombre y apellidos',
         ],
-        "B. Tipo ID": [
-            "B. Tipo de ID",
-            "B Tipo ID",
-            "Tipo ID",
-            "Tipo de ID",
-            "Tipo de documento",
-            "Tipo documento",
+        'B. Tipo ID': [
+            'B. Tipo de ID',
+            'B Tipo ID',
+            'Tipo ID',
+            'Tipo de ID',
+            'Tipo de documento',
+            'Tipo documento',
         ],
-        "C. Número ID": [
-            "C. Numero ID",
-            "C Número ID",
-            "Número ID",
-            "Numero ID",
-            "Numero de documento",
-            "Número de documento",
+        'C. Número ID': [
+            'C. Numero ID',
+            'C Número ID',
+            'Número ID',
+            'Numero ID',
+            'Numero de documento',
+            'Número de documento',
         ],
-        "5.1 Sitio de Defunción": [
-            "5.1 Sitio de defuncion",
-            "Sitio de Defunción",
-            "Sitio de defuncion",
+        '5.1 Sitio de Defunción': [
+            '5.1 Sitio de defuncion',
+            'Sitio de Defunción',
+            'Sitio de defuncion',
         ],
-        "5.2 Fecha de defunción": [
-            "5.2 Fecha defunción",
-            "Fecha de defunción",
-            "5.2 Fecha de defuncion (dd/mm/aaaa)",
-            "5.2 Fecha de defuncion",
-            "Fecha de defuncion",
+        '5.2 Fecha de defunción': [
+            '5.2 Fecha defunción',
+            'Fecha de defunción',
+            '5.2 Fecha de defuncion (dd/mm/aaaa)',
+            '5.2 Fecha de defuncion',
+            'Fecha de defuncion',
         ],
-        "6.1 Convivencia": ["6.1 convivencia", "Convivencia", "Convivencia paciente"],
-        "6.3 Escolaridad": ["6.3 escolaridad", "Escolaridad"],
-        "6.4 Regulación Fecundidad": [
-            "6.4 Regulacion Fecundidad",
-            "6.4 Regulación de la fecundidad",
-            "Regulación Fecundidad",
-            "Regulacion Fecundidad",
-            "Regulación de Fecundidad",
-            "Regulación de la fecundidad",
-            "Regulacion de la fecundidad",
+        '6.1 Convivencia': ['6.1 convivencia', 'Convivencia', 'Convivencia paciente'],
+        '6.3 Escolaridad': ['6.3 escolaridad', 'Escolaridad'],
+        '6.4 Regulación Fecundidad': [
+            '6.4 Regulacion Fecundidad',
+            '6.4 Regulación de la fecundidad',
+            'Regulación Fecundidad',
+            'Regulacion Fecundidad',
+            'Regulación de Fecundidad',
+            'Regulación de la fecundidad',
+            'Regulacion de la fecundidad',
         ],
-        "6.5 Gestaciones": ["6.5 gestaciones", "Gestaciones", "N° Gestaciones", "No Gestaciones"],
-        "6.6 Partos Vaginales": ["6.6 partos vaginales", "Partos Vaginales", "Partos vaginales"],
-        "6.7 Cesáreas": ["6.7 cesareas", "Cesáreas", "Cesareas"],
-        "6.8 Muertos": ["6.8 muertos", "Muertos", "Hijos Muertos", "Nacidos muertos"],
-        "6.9 Vivos": ["6.9 vivos", "Vivos", "Hijos Vivos"],
-        "6.10 Abortos": ["6.10 abortos", "Abortos"],
-        "8.1 No. CPN": [
-            "8.1 N° CPN",
-            "8.1 Nº CPN",
-            "8.1 No CPN",
-            "No. CPN",
-            "N° CPN",
-            "No CPN",
-            "Controles prenatales",
+        '6.5 Gestaciones': ['6.5 gestaciones', 'Gestaciones', 'N° Gestaciones', 'No Gestaciones'],
+        '6.6 Partos Vaginales': ['6.6 partos vaginales', 'Partos Vaginales', 'Partos vaginales'],
+        '6.7 Cesáreas': ['6.7 cesareas', 'Cesáreas', 'Cesareas'],
+        '6.8 Muertos': ['6.8 muertos', 'Muertos', 'Hijos Muertos', 'Nacidos muertos'],
+        '6.9 Vivos': ['6.9 vivos', 'Vivos', 'Hijos Vivos'],
+        '6.10 Abortos': ['6.10 abortos', 'Abortos'],
+        '8.1 No. CPN': [
+            '8.1 N° CPN',
+            '8.1 Nº CPN',
+            '8.1 No CPN',
+            'No. CPN',
+            'N° CPN',
+            'No CPN',
+            'Controles prenatales',
         ],
-        "8.2 Semana inicio CPN": [
-            "8.2 semana inicio cpn",
-            "Semana inicio CPN",
-            "Semana de inicio CPN",
+        '8.2 Semana inicio CPN': [
+            '8.2 semana inicio cpn',
+            'Semana inicio CPN',
+            'Semana de inicio CPN',
         ],
-        "9.1 Momento de la muerte": [
-            "9.1 momento de la muerte",
-            "Momento de la muerte",
-            "Momento muerte",
+        '9.1 Momento de la muerte': [
+            '9.1 momento de la muerte',
+            'Momento de la muerte',
+            'Momento muerte',
         ],
-        "9.2 Semana gestación": [
-            "9.2 semana gestacion",
-            "9.2 Semana de gestación para la mortalidad materna",
-            "Semana gestación",
-            "Semana de gestacion",
-            "Semana gestacion",
-            "Semana de gestación para la mortalidad materna",
+        '9.2 Semana gestación': [
+            '9.2 semana gestacion',
+            '9.2 Semana de gestación para la mortalidad materna',
+            'Semana gestación',
+            'Semana de gestacion',
+            'Semana gestacion',
+            'Semana de gestación para la mortalidad materna',
         ],
-        "9.4 Tipo de parto": ["9.4 Tipo parto", "Tipo de parto", "Tipo parto"],
-        "9.6 Nivel atención parto": [
-            "9.6 Nivel de atención",
-            "9.6 Nivel atencion parto",
-            "9.6 Nivel atencion",
-            "Nivel atención parto",
-            "Nivel atencion parto",
+        '9.4 Tipo de parto': ['9.4 Tipo parto', 'Tipo de parto', 'Tipo parto'],
+        '9.6 Nivel atención parto': [
+            '9.6 Nivel de atención',
+            '9.6 Nivel atencion parto',
+            '9.6 Nivel atencion',
+            'Nivel atención parto',
+            'Nivel atencion parto',
         ],
-        "10.1 Causa básica CIE-10": [
-            "10.1 causa basica cie-10",
-            "10.1 Causa de defunción",
-            "Causa de defunción",
-            "10.1 Causa basica CIE10",
-            "Causa básica CIE-10",
-            "Causa basica CIE10",
-            "Causa basica",
+        '10.1 Causa básica CIE-10': [
+            '10.1 causa basica cie-10',
+            '10.1 Causa de defunción',
+            'Causa de defunción',
+            '10.1 Causa basica CIE10',
+            'Causa básica CIE-10',
+            'Causa basica CIE10',
+            'Causa basica',
         ],
-        "10.3.1 Demora 1": ["10.3.1 demora 1", "Demora 1"],
-        "10.3.2 Demora 2": ["10.3.2 demora 2", "Demora 2"],
-        "10.3.3 Demora 3": ["10.3.3 demora 3", "Demora 3"],
-        "10.3.4 Demora 4": ["10.3.4 demora 4", "Demora 4"],
-        "Fecha de Nacimiento": [
-            "Fecha de nacimiento",
-            "Fecha nacimiento",
-            "Fecha de nacimiento (dd/mm/aaaa)",
-            "Fecha nacimiento (dd/mm/aaaa)",
+        '10.3.1 Demora 1': ['10.3.1 demora 1', 'Demora 1'],
+        '10.3.2 Demora 2': ['10.3.2 demora 2', 'Demora 2'],
+        '10.3.3 Demora 3': ['10.3.3 demora 3', 'Demora 3'],
+        '10.3.4 Demora 4': ['10.3.4 demora 4', 'Demora 4'],
+        'Fecha de Nacimiento': [
+            'Fecha de nacimiento',
+            'Fecha nacimiento',
+            'Fecha de nacimiento (dd/mm/aaaa)',
+            'Fecha nacimiento (dd/mm/aaaa)',
         ],
     },
 }
@@ -359,7 +359,7 @@ def _leer_columnas_excel(file_like: Any, tipo: str) -> list[str] | None:
         wb.close()
         resultado = mejor
     except Exception as exc:
-        logger.warning("No se pudo leer el archivo Excel con openpyxl: %s", exc)
+        logger.warning('No se pudo leer el archivo Excel con openpyxl: %s', exc)
     return resultado
 
 
@@ -395,7 +395,7 @@ def _leer_dataframe_excel(file_like: Any, tipo: str) -> pd.DataFrame:
         DataFrame con columnas canonizadas listo para procesar.
     """
     file_like.seek(0)
-    hojas = pd.read_excel(file_like, engine="openpyxl", header=None, sheet_name=None)
+    hojas = pd.read_excel(file_like, engine='openpyxl', header=None, sheet_name=None)
     mejor_hoja, mejor_idx, mejor_puntaje = None, 0, -1
     for nombre, df in hojas.items():
         idx = _detectar_indice_encabezados(df, tipo)
@@ -405,7 +405,7 @@ def _leer_dataframe_excel(file_like: Any, tipo: str) -> pd.DataFrame:
         if puntaje > mejor_puntaje:
             mejor_hoja, mejor_idx, mejor_puntaje = nombre, idx, puntaje
     file_like.seek(0)
-    df_raw = pd.read_excel(file_like, engine="openpyxl", header=mejor_idx, sheet_name=mejor_hoja)
+    df_raw = pd.read_excel(file_like, engine='openpyxl', header=mejor_idx, sheet_name=mejor_hoja)
     df_canonizado: pd.DataFrame = _canonizar_columnas_dataframe(df_raw, tipo)
     return df_canonizado
 
@@ -432,14 +432,14 @@ def preparar_dataframe_analisis(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[st
     filas_duplicadas = 0
 
     if total_original > 0:
-        birth_col = "Fecha de Nacimiento"
+        birth_col = 'Fecha de Nacimiento'
         event_col_candidates = [
-            "9.3 Fecha parto (dd/mm/aaaa)",
-            "9.3 Fecha parto",
-            "5.2 Fecha de defunción",
-            "5.2 Fecha de defuncion",
-            "Fecha de egreso",
-            "Fecha de egreso (dd/mm/aaaa)",
+            '9.3 Fecha parto (dd/mm/aaaa)',
+            '9.3 Fecha parto',
+            '5.2 Fecha de defunción',
+            '5.2 Fecha de defuncion',
+            'Fecha de egreso',
+            'Fecha de egreso (dd/mm/aaaa)',
         ]
 
         if birth_col in normalizado.columns:
@@ -453,25 +453,25 @@ def preparar_dataframe_analisis(df: pd.DataFrame) -> tuple[pd.DataFrame, dict[st
                         (evs.dt.month == nacs.dt.month) & (evs.dt.day < nacs.dt.day)
                     )
                     edades = years - before_birthday.astype(int)
-                    normalizado["Edad"] = edades.where((edades >= 0) & (edades <= 120))
+                    normalizado['Edad'] = edades.where((edades >= 0) & (edades <= 120))
                 except Exception as exc:
-                    logger.warning("No se pudo calcular la columna Edad: %s", exc)
+                    logger.warning('No se pudo calcular la columna Edad: %s', exc)
 
-        for col in normalizado.select_dtypes(include=["object"]).columns:
+        for col in normalizado.select_dtypes(include=['object']).columns:
             normalizado[col] = normalizado[col].apply(
                 lambda v: v.strip() if isinstance(v, str) else v
             )
 
-        sin_vacias = normalizado.dropna(how="all")
+        sin_vacias = normalizado.dropna(how='all')
         filas_vacias = total_original - len(sin_vacias)
         sin_duplicadas = sin_vacias.drop_duplicates().reset_index(drop=True)
         filas_duplicadas = len(sin_vacias) - len(sin_duplicadas)
         normalizado = sin_duplicadas
 
     info_limpieza: dict[str, int] = {
-        "total_original": total_original,
-        "filas_vacias_omitidas": filas_vacias,
-        "filas_duplicadas_omitidas": filas_duplicadas,
+        'total_original': total_original,
+        'filas_vacias_omitidas': filas_vacias,
+        'filas_duplicadas_omitidas': filas_duplicadas,
     }
     resultado: tuple[pd.DataFrame, dict[str, int]] = (normalizado, info_limpieza)
     return resultado

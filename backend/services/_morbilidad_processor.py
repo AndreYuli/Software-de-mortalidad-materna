@@ -10,32 +10,32 @@ from services.procesador_base import ProcesadorBase
 from utils.type_parsers import es_valor_positivo
 
 _KEYWORDS_FALLAS = (
-    "cardiaca",
-    "vascular",
-    "renal",
-    "hepatica",
-    "metabolica",
-    "cerebral",
-    "respiratoria",
-    "coagulacion",
+    'cardiaca',
+    'vascular',
+    'renal',
+    'hepatica',
+    'metabolica',
+    'cerebral',
+    'respiratoria',
+    'coagulacion',
 )
 
 _CORRECCIONES_NOMBRE = {
-    "Cardaca": "Cardiaca",
-    "Heptica": "Hepatica",
-    "Metablica": "Metabolica",
-    "Coagulacin": "Coagulacion",
+    'Cardaca': 'Cardiaca',
+    'Heptica': 'Hepatica',
+    'Metablica': 'Metabolica',
+    'Coagulacin': 'Coagulacion',
 }
 
 _COLS_SEVERIDAD = [
-    "Ingreso UCI",
-    "Cirugía adicional",
-    "Ciruga adicional",
-    "Transfusión",
-    "Transfusin",
+    'Ingreso UCI',
+    'Cirugía adicional',
+    'Ciruga adicional',
+    'Transfusión',
+    'Transfusin',
 ]
 
-_COLUMNA_CAUSA_PRINCIPAL = "Causa principal CIE-10"
+_COLUMNA_CAUSA_PRINCIPAL = 'Causa principal CIE-10'
 
 
 def _normalizar(texto: str) -> str:
@@ -47,36 +47,36 @@ def _normalizar(texto: str) -> str:
     Returns:
         Texto en minúsculas sin tildes.
     """
-    return unicodedata.normalize("NFKD", texto.lower()).encode("ascii", "ignore").decode()
+    return unicodedata.normalize('NFKD', texto.lower()).encode('ascii', 'ignore').decode()
 
 
 class MorbilidadProcessor(ProcesadorBase):
     """Procesador de datos de Morbilidad Materna Extrema (Evento SIVIGILA 549)."""
 
     MOMENTO_OCURRENCIA = {
-        1: "Durante el embarazo",
-        2: "Durante el parto",
-        3: "Puerperio inmediato (0-7 días)",
-        4: "Puerperio tardío (8-42 días)",
+        1: 'Durante el embarazo',
+        2: 'Durante el parto',
+        3: 'Puerperio inmediato (0-7 días)',
+        4: 'Puerperio tardío (8-42 días)',
     }
     CRITERIOS_INCLUSION = {
-        "Eclampsia": "Eclampsia",
-        "Sepsis sistémica severa": "Sepsis",
-        "Hemorragia obstétrica severa": "Hemorragia",
-        "Preeclampsia": "Preeclampsia severa",
-        "Ruptura uterina": "Ruptura uterina",
+        'Eclampsia': 'Eclampsia',
+        'Sepsis sistémica severa': 'Sepsis',
+        'Hemorragia obstétrica severa': 'Hemorragia',
+        'Preeclampsia': 'Preeclampsia severa',
+        'Ruptura uterina': 'Ruptura uterina',
     }
     _INST_REF_COLS = [
-        "Institución referencia 1",
-        "Institucion referencia 1",
-        "Institución de referencia 1",
-        "Institucion de referencia 1",
+        'Institución referencia 1',
+        'Institucion referencia 1',
+        'Institución de referencia 1',
+        'Institucion de referencia 1',
     ]
     _TIEMPO_REM_COLS = [
-        "Tiempo remisión (h)",
-        "Tiempo remision (h)",
-        "Tiempo remisión horas",
-        "Tiempo remision horas",
+        'Tiempo remisión (h)',
+        'Tiempo remision (h)',
+        'Tiempo remisión horas',
+        'Tiempo remision horas',
     ]
 
     def __init__(self, df: pd.DataFrame):
@@ -91,19 +91,19 @@ class MorbilidadProcessor(ProcesadorBase):
 
     def _limpiar(self) -> None:
         for col in [
-            "N° gestaciones",
-            "Partos vaginales",
-            "Cesáreas",
-            "Abortos",
-            "N° controles prenatales",
-            "Edad gestacional ocurrencia (sem)",
-            "Total criterios",
-            "Días estancia hospitalaria",
-            "Días estancia UCI",
+            'N° gestaciones',
+            'Partos vaginales',
+            'Cesáreas',
+            'Abortos',
+            'N° controles prenatales',
+            'Edad gestacional ocurrencia (sem)',
+            'Total criterios',
+            'Días estancia hospitalaria',
+            'Días estancia UCI',
         ]:
             if col in self.df.columns:
-                self.df[col] = pd.to_numeric(self.df[col], errors="coerce")
-        self.df = self.df.dropna(how="all")
+                self.df[col] = pd.to_numeric(self.df[col], errors='coerce')
+        self.df = self.df.dropna(how='all')
 
     def calcular_estadisticas_basicas(self) -> dict[str, Any]:
         """Calcula los indicadores epidemiológicos básicos del conjunto de casos.
@@ -112,18 +112,18 @@ class MorbilidadProcessor(ProcesadorBase):
             Dict con total_casos, edad_promedio, estancias y criterios promedio.
         """
         stats: dict[str, Any] = {
-            "total_casos": len(self.df),
-            "edad_promedio": None,
-            "estancia_hospitalaria_promedio": None,
-            "estancia_uci_promedio": None,
-            "criterios_promedio": None,
+            'total_casos': len(self.df),
+            'edad_promedio': None,
+            'estancia_hospitalaria_promedio': None,
+            'estancia_uci_promedio': None,
+            'criterios_promedio': None,
         }
         self._calcular_promedio_edad(stats)
 
         for key, col in [
-            ("estancia_hospitalaria_promedio", "Días estancia hospitalaria"),
-            ("estancia_uci_promedio", "Días estancia UCI"),
-            ("criterios_promedio", "Total criterios"),
+            ('estancia_hospitalaria_promedio', 'Días estancia hospitalaria'),
+            ('estancia_uci_promedio', 'Días estancia UCI'),
+            ('criterios_promedio', 'Total criterios'),
         ]:
             if col in self.df.columns:
                 stats[key] = float(self.df[col].mean())
@@ -141,9 +141,9 @@ class MorbilidadProcessor(ProcesadorBase):
                 total = self.df[col].notna().sum()
                 casos = self.df[col].apply(es_valor_positivo).sum()
                 resultado[col] = {
-                    "nombre": nombre,
-                    "casos": int(casos),
-                    "porcentaje": float(casos / total * 100) if total > 0 else 0,
+                    'nombre': nombre,
+                    'casos': int(casos),
+                    'porcentaje': float(casos / total * 100) if total > 0 else 0,
                 }
         return resultado
 
@@ -154,12 +154,12 @@ class MorbilidadProcessor(ProcesadorBase):
             Dict con distribución del momento de ocurrencia del evento.
         """
         resultado: dict[str, Any] = {}
-        if "Momento ocurrencia" in self.df.columns:
-            dist = self.df["Momento ocurrencia"].value_counts().to_dict()
+        if 'Momento ocurrencia' in self.df.columns:
+            dist = self.df['Momento ocurrencia'].value_counts().to_dict()
             distribucion: dict[str, int] = {
-                self.MOMENTO_OCURRENCIA.get(k, f"Código {k}"): int(v) for k, v in dist.items()
+                self.MOMENTO_OCURRENCIA.get(k, f'Código {k}'): int(v) for k, v in dist.items()
             }
-            resultado = {"distribucion": distribucion}
+            resultado = {'distribucion': distribucion}
         return resultado
 
     def analizar_institucion_referencia(self) -> dict[str, Any]:
@@ -172,19 +172,19 @@ class MorbilidadProcessor(ProcesadorBase):
         col = self._find_col(self._INST_REF_COLS)
         if col is not None:
             serie = self.df[col].dropna().astype(str).str.strip()
-            serie = serie[~serie.str.lower().isin({"", "nan", "none", "null", "sin dato"})]
+            serie = serie[~serie.str.lower().isin({'', 'nan', 'none', 'null', 'sin dato'})]
             if not serie.empty:
                 top = serie.value_counts().head(15)
                 instituciones: list[str] = top.index.tolist()
                 conteos: list[int] = [int(v) for v in top.values]
 
                 col_uci = next(
-                    (c for c in self.df.columns if "uci" in c.lower() and "ingreso" in c.lower()),
+                    (c for c in self.df.columns if 'uci' in c.lower() and 'ingreso' in c.lower()),
                     None,
                 )
                 if not col_uci:
-                    col_uci = next((c for c in self.df.columns if "uci" in c.lower()), None)
-                col_cirugia = next((c for c in self.df.columns if "cirug" in c.lower()), None)
+                    col_uci = next((c for c in self.df.columns if 'uci' in c.lower()), None)
+                col_cirugia = next((c for c in self.df.columns if 'cirug' in c.lower()), None)
 
                 con_uci = []
                 con_cirugia = []
@@ -203,12 +203,12 @@ class MorbilidadProcessor(ProcesadorBase):
                     con_cirugia.append(int(c_cir))
 
                 resultado = {
-                    "instituciones": instituciones,
-                    "conteos": conteos,
-                    "con_uci": con_uci,
-                    "con_cirugia": con_cirugia,
-                    "total_con_dato": int(len(serie)),
-                    "total_casos": int(len(self.df)),
+                    'instituciones': instituciones,
+                    'conteos': conteos,
+                    'con_uci': con_uci,
+                    'con_cirugia': con_cirugia,
+                    'total_con_dato': int(len(serie)),
+                    'total_casos': int(len(self.df)),
                 }
         return resultado
 
@@ -221,19 +221,19 @@ class MorbilidadProcessor(ProcesadorBase):
         resultado: dict[str, Any] = {}
         col = self._find_col(self._TIEMPO_REM_COLS)
         if col is not None:
-            serie = pd.to_numeric(self.df[col], errors="coerce").dropna()
+            serie = pd.to_numeric(self.df[col], errors='coerce').dropna()
             serie = serie[serie >= 0]
             if len(serie) >= 3:
                 valores: list[float] = serie.clip(upper=serie.quantile(0.99)).head(500).tolist()
                 resultado = {
-                    "valores": valores,
-                    "min": float(serie.min()),
-                    "q1": float(serie.quantile(0.25)),
-                    "median": float(serie.median()),
-                    "mean": float(serie.mean()),
-                    "q3": float(serie.quantile(0.75)),
-                    "max": float(serie.max()),
-                    "total": int(len(serie)),
+                    'valores': valores,
+                    'min': float(serie.min()),
+                    'q1': float(serie.quantile(0.25)),
+                    'median': float(serie.median()),
+                    'mean': float(serie.mean()),
+                    'q3': float(serie.quantile(0.75)),
+                    'max': float(serie.max()),
+                    'total': int(len(serie)),
                 }
         return resultado
 
@@ -255,10 +255,10 @@ class MorbilidadProcessor(ProcesadorBase):
             Dict con histograma de variables obstétricas por grupo de edad.
         """
         variables = [
-            ("N° gestaciones", "Gestaciones"),
-            ("Partos vaginales", "Partos vaginales"),
-            ("Cesáreas", "Cesáreas"),
-            ("Abortos", "Abortos"),
+            ('N° gestaciones', 'Gestaciones'),
+            ('Partos vaginales', 'Partos vaginales'),
+            ('Cesáreas', 'Cesáreas'),
+            ('Abortos', 'Abortos'),
         ]
         return super().analizar_obstetrico_por_edad(variables)
 
@@ -272,13 +272,13 @@ class MorbilidadProcessor(ProcesadorBase):
             Dict con clusters, PCA 2D/3D y perfiles por cluster.
         """
         cols = [
-            "N° gestaciones",
-            "Partos vaginales",
-            "Cesáreas",
-            "N° controles prenatales",
-            "Edad gestacional ocurrencia (sem)",
-            "Total criterios",
-            "Días estancia hospitalaria",
+            'N° gestaciones',
+            'Partos vaginales',
+            'Cesáreas',
+            'N° controles prenatales',
+            'Edad gestacional ocurrencia (sem)',
+            'Total criterios',
+            'Días estancia hospitalaria',
         ]
         return self._ml.clustering_kmeans(columnas=cols, n_clusters=n_clusters)
 
@@ -289,13 +289,13 @@ class MorbilidadProcessor(ProcesadorBase):
             Dict con columns y correlation_matrix para renderizar el heatmap.
         """
         keywords = [
-            "gestaciones",
-            "Partos",
-            "Cesáreas",
-            "controles",
-            "gestacional",
-            "estancia",
-            "criterios",
+            'gestaciones',
+            'Partos',
+            'Cesáreas',
+            'controles',
+            'gestacional',
+            'estancia',
+            'criterios',
         ]
         return self._ml.heatmap_correlacion(max_columns=10, keywords=keywords)
 
@@ -307,12 +307,12 @@ class MorbilidadProcessor(ProcesadorBase):
         """
         fallas_presentes = {}
         for col in self.df.columns:
-            if "falla" in col.lower() and any(k in _normalizar(col) for k in _KEYWORDS_FALLAS):
+            if 'falla' in col.lower() and any(k in _normalizar(col) for k in _KEYWORDS_FALLAS):
                 nombre_limpio = col.title()
                 for mal, bien in _CORRECCIONES_NOMBRE.items():
                     nombre_limpio = nombre_limpio.replace(mal, bien)
                 casos = self.df[col].apply(es_valor_positivo).sum()
-                fallas_presentes[col] = {"nombre": nombre_limpio, "casos": int(casos)}
+                fallas_presentes[col] = {'nombre': nombre_limpio, 'casos': int(casos)}
 
         severidad = {}
         for col in self.df.columns:
@@ -320,15 +320,15 @@ class MorbilidadProcessor(ProcesadorBase):
                 nombre_limpio = self._etiqueta_severidad(col)
                 casos = self.df[col].apply(es_valor_positivo).sum()
                 if nombre_limpio not in severidad:
-                    severidad[nombre_limpio] = {"nombre": nombre_limpio, "casos": int(casos)}
+                    severidad[nombre_limpio] = {'nombre': nombre_limpio, 'casos': int(casos)}
                 else:
-                    previos = severidad[nombre_limpio]["casos"]
-                    severidad[nombre_limpio]["casos"] = max(previos, int(casos))
+                    previos = severidad[nombre_limpio]['casos']
+                    severidad[nombre_limpio]['casos'] = max(previos, int(casos))
 
         resultado: dict[str, Any] = {
-            "fallas": list(fallas_presentes.values()),
-            "severidad": list(severidad.values()),
-            "total_casos": len(self.df),
+            'fallas': list(fallas_presentes.values()),
+            'severidad': list(severidad.values()),
+            'total_casos': len(self.df),
         }
         return resultado
 
@@ -343,8 +343,8 @@ class MorbilidadProcessor(ProcesadorBase):
             Etiqueta canónica ('Ingreso UCI', 'Cirugía Adicional' o 'Transfusión').
         """
         col_lower = col.lower()
-        if "uci" in col_lower:
-            return "Ingreso UCI"
-        if "cirug" in col_lower:
-            return "Cirugía Adicional"
-        return "Transfusión"
+        if 'uci' in col_lower:
+            return 'Ingreso UCI'
+        if 'cirug' in col_lower:
+            return 'Cirugía Adicional'
+        return 'Transfusión'
