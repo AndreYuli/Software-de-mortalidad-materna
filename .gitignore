@@ -183,3 +183,5 @@ ayudas/
 .idea/
 *.iml
 .pytest_cache/
+# Almacén local de pnpm (si se ejecuta pnpm en la raíz)
+.pnpm-store/
