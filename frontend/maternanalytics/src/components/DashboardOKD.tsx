@@ -1,9 +1,9 @@
 import './dashboard/DashboardShell.css'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useMemo, useCallback, useState } from 'react'
 import { useDashboardData } from '../hooks/useDashboardData'
 import { Sidebar, type DashboardFileStatus, type FileIndicator } from './dashboard/Sidebar'
-import { ViewRouter } from './dashboard/ViewRouter'
+import type { DashboardOutletContext } from './dashboard/DashboardViewRoute'
 import type { ActiveView } from '../hooks/navigation/useActiveView'
 import { MenuIcon } from './icons'
 import { clearSession } from '../api'
@@ -30,14 +30,13 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
 
   const handleNavigate = useCallback(
     (view: ActiveView) => {
-      data.setActiveView(view)
       if (view === 'mortalidad') navigate('/cargar-mortalidad')
       else if (view === 'morbilidad') navigate('/cargar-morbilidad')
       else if (view === 'historial') navigate('/historial')
       else navigate('/dashboard')
       setIsMobileNavOpen(false)
     },
-    [data, navigate],
+    [navigate],
   )
 
   const handleLogout = useCallback(() => {
@@ -83,11 +82,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
 
       <main className="main-content-okd">
         <div className="content-area-okd">
-          <ViewRouter
-            activeView={activeView}
-            data={data}
-            onNavigate={handleNavigate}
-          />
+          <Outlet context={{ data, onNavigate: handleNavigate } satisfies DashboardOutletContext} />
         </div>
       </main>
     </div>

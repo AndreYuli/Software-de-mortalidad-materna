@@ -149,7 +149,7 @@ pnpm test
 pnpm build
 ```
 
-**End-to-end (Playwright):** requiere backend y frontend en marcha y los Excel de `frontend/maternanalytics/e2e/fixtures/` (no se versionan). Ejecuta `scripts\ejecutar_pruebas_e2e.bat`.
+**End-to-end (Playwright):** requiere el backend en marcha (Playwright levanta Vite) y los Excel de `frontend/maternanalytics/e2e/fixtures/` (no se versionan). Usa un usuario de pruebas real (`e2e@vidamaterna.co`, se crea solo; configurable con `E2E_EMAIL`/`E2E_PASSWORD`), porque los tokens falsos dan 401. Ejecuta `scripts\ejecutar_pruebas_e2e.bat`.
 
 **Estilo Python:** `ruff` con comillas simples, configurado en `backend/pyproject.toml` y `ruff.toml`. Se aplica con pre-commit: `pip install pre-commit ruff` y `pre-commit install --config backend/.pre-commit-config.yaml`.
 

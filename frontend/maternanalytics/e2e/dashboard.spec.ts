@@ -1,13 +1,11 @@
 import { test, expect } from '@playwright/test';
+import { loginByApi } from './helpers/auth';
 
 test.describe('Flujo de Dashboard y Análisis (IA)', () => {
 
   test.beforeEach(async ({ page }) => {
-    // Truco para saltar el login en las pruebas: inyectar sesión falsa en localStorage
-    await page.addInitScript(() => {
-      localStorage.setItem('token', 'fake-token');
-      localStorage.setItem('username', 'Test User');
-    });
+    // Sesión real: el backend rechaza tokens falsos con 401 (ver helpers/auth.ts)
+    await loginByApi(page);
   });
 
   test('Debería cargar el Dashboard principal por defecto', async ({ page }) => {

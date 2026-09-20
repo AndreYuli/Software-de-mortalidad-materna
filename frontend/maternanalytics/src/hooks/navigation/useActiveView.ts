@@ -1,9 +1,2 @@
-import { useState } from 'react'
-
+// La vista activa se deriva de la URL (ver DashboardOKD); solo se comparte el tipo.
 export type ActiveView = 'analisis' | 'mortalidad' | 'morbilidad' | 'historial'
-
-export function useActiveView(initialView: ActiveView = 'analisis') {
-  const [activeView, setActiveView] = useState<ActiveView>(initialView)
-
-  return { activeView, setActiveView }
-}

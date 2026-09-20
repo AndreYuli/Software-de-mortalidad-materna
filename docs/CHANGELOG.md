@@ -6,6 +6,8 @@ Formato: fecha · agente · qué cambió y por qué. Lo más reciente arriba. Lo
 - TAREA 1 (seguridad de la API): `analisis` y `sivigila` exigen JWT; `/media` deja de servirse; el frontend envía `Authorization: Bearer` y, ante 401, borra la sesión y redirige a `/login`; `ProtectedRoute` exige `token`.
 - Reorganización (DEC-003, DEC-004): carpetas en minúscula, `data/`, `notes/`, `scripts/`, `docs/historico/`, `components/auth/`, `.dockerignore` por contexto de build, un solo `vitest.config.ts`, comillas simples en Python.
 - README reescrito según la estructura real.
+- TAREAS 3 y 5: `DashboardOKD` es layout con `<Outlet/>` y una sola `ProtectedRoute`; tras subir un archivo se navega a `/dashboard`; se elimina el estado de vista muerto (`useActiveView`); segmento y pestañas suben al layout para no perderse al cambiar de ruta. Tests de rutas en `App.test.tsx`.
+- e2e: `e2e/helpers/auth.ts` usa una sesión real (los tokens falsos dan 401 desde la TAREA 1); nuevos e2e de token inválido y de navegación tras carga (POST mockeado).
 - TAREA 2: la letalidad se calcula como muertes ÷ (mortalidad + morbilidad) × 100, con guardas ante denominador 0 y solo con ambos eventos en el análisis; etiquetas unificadas a "Tasa de Letalidad". **Pendiente:** `PRODUCT.md` exige que el equipo confirme esta definición (epidemiológicamente es un índice de mortalidad sobre casos de MME + muertes).
 
 ## 2026-09-19 · Claude Code (arquitectura/UX)

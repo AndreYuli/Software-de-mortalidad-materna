@@ -31,6 +31,9 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           onMonthChange={data.setFilterMonth}
           onWeekChange={data.setFilterWeek}
           onDayChange={data.setFilterDay}
+          segmento={data.segmento}
+          onSegmentoChange={data.setSegmento}
+          tabs={data.tabs}
         />
       )
 

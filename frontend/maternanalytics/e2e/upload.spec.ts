@@ -1,18 +1,16 @@
 import { test, expect } from '@playwright/test';
+import { loginByApi } from './helpers/auth';
 
 // NOTA: Para estas pruebas, usualmente se genera un estado de login previo 
 // o se inyecta el token en localStorage antes de cada test.
 test.describe('Flujo de Carga SIVIGILA', () => {
 
   test.beforeEach(async ({ page }) => {
-    // Truco para saltar el login en las pruebas: inyectar sesión falsa
-    await page.addInitScript(() => {
-      localStorage.setItem('token', 'fake-token');
-      localStorage.setItem('username', 'Test User');
-    });
+    // Sesión real: el backend rechaza tokens falsos con 401 (ver helpers/auth.ts)
+    await loginByApi(page);
 
-    // Mockeamos SOLO las peticiones GET (para que el frontend no nos expulse al ver un token falso).
-    // Las peticiones POST (como la subida del Excel) sí deben llegar al backend real.
+    // Se mockean SOLO los GET (lista vacía, sin depender de datos previos).
+    // Las peticiones POST (como la subida del Excel) sí llegan al backend real.
     await page.route('**/api/**', route => {
       if (route.request().method() === 'GET') {
         route.fulfill({
@@ -60,6 +58,29 @@ test.describe('Flujo de Carga SIVIGILA', () => {
     
     // El sistema deshabilita el botón de analizar automáticamente si hay error de validación
     await expect(page.getByRole('button', { name: /Iniciar análisis/i })).toBeDisabled({ timeout: 10000 });
+  });
+
+  test('Tras una carga exitosa navega al panel de análisis (POST mockeado, sin escribir en la BD)', async ({ page }) => {
+    // Solo el POST se simula: se valida el flujo del frontend, no el procesamiento del backend.
+    await page.route('**/api/analisis/', route => {
+      if (route.request().method() === 'POST') {
+        route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({ id: 1, tipo: 'mortalidad', total_registros: 1 }),
+        });
+      } else {
+        route.fallback();
+      }
+    });
+
+    await page.goto('/cargar-mortalidad');
+    await page.locator('input[type="file"]').setInputFiles('./e2e/fixtures/mortalidad-valida.xlsx');
+    await page.getByRole('button', { name: /Iniciar análisis/i }).click();
+
+    await expect(page.getByText(/Análisis guardado correctamente/i)).toBeVisible({ timeout: 15000 });
+    // Tras mostrar el éxito, la URL cambia al dashboard (antes se quedaba en el formulario)
+    await expect(page).toHaveURL(/.*\/dashboard$/, { timeout: 15000 });
   });
 
   test('Debería procesar exitosamente un archivo Excel válido', async ({ page }) => {

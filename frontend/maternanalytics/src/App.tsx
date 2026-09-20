@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './components/auth/Login'
 import Register from './components/auth/Register'
 import ErrorBoundary from './components/ErrorBoundary'
+import { DashboardViewRoute } from './components/dashboard/DashboardViewRoute'
 
 const DashboardOKD = lazy(() => import('./components/DashboardOKD'))
 
@@ -61,47 +62,20 @@ function App() {
             }
           />
 
-          {/* Rutas Protegidas del Dashboard */}
+          {/* Rutas Protegidas: DashboardOKD es el layout; las vistas son rutas hijas */}
           <Route
-            path="/"
             element={
               <ProtectedRoute>
                 <DashboardOKD />
               </ProtectedRoute>
             }
-          />
-          <Route
-            path="/dashboard"
-            element={
-              <ProtectedRoute>
-                <DashboardOKD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cargar-mortalidad"
-            element={
-              <ProtectedRoute>
-                <DashboardOKD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cargar-morbilidad"
-            element={
-              <ProtectedRoute>
-                <DashboardOKD />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/historial"
-            element={
-              <ProtectedRoute>
-                <DashboardOKD />
-              </ProtectedRoute>
-            }
-          />
+          >
+            <Route index element={<DashboardViewRoute view="analisis" />} />
+            <Route path="dashboard" element={<DashboardViewRoute view="analisis" />} />
+            <Route path="cargar-mortalidad" element={<DashboardViewRoute view="mortalidad" />} />
+            <Route path="cargar-morbilidad" element={<DashboardViewRoute view="morbilidad" />} />
+            <Route path="historial" element={<DashboardViewRoute view="historial" />} />
+          </Route>
 
           {/* Redirección ante ruta desconocida */}
           <Route path="*" element={<Navigate to="/" replace />} />

@@ -257,8 +257,8 @@ Tras una subida exitosa, la página navega físicamente hacia el panel estadíst
 **Impacto:** Evita la frustración de la usuaria, completando el flujo natural de carga -> análisis.
 
 **Criterios de Aceptación:**
-- [ ] Reemplazar `setActiveView('analisis')` por `navigate('/dashboard')` (o la ruta correspondiente al panel de control) en `useDashboardData.ts` o donde aplique el router hook.
-- [ ] Remover cualquier `useState` de vistas muertas si toda la app va a depender de las rutas (`location.pathname`).
+- [x] Reemplazar `setActiveView('analisis')` por `navigate('/dashboard')` (o la ruta correspondiente al panel de control) en `useDashboardData.ts` o donde aplique el router hook.
+- [x] Remover cualquier `useState` de vistas muertas si toda la app va a depender de las rutas (`location.pathname`).
 
 ---
 
@@ -284,9 +284,9 @@ Aprovechar la infraestructura local desplegada de Ollama, mostrando el texto gen
 **Resultado esperado:** `DashboardOKD` como layout con `<Outlet/>`; las vistas son rutas hijas. La URL sigue siendo la fuente de verdad (ARCHITECTURE §4).
 **Archivos:** `src/App.tsx`, `src/components/DashboardOKD.tsx`, `src/components/dashboard/ViewRouter.tsx`.
 **Criterios de aceptación:**
-- [ ] Una sola `ProtectedRoute` envuelve el layout.
-- [ ] Cambiar de /dashboard a /historial y volver conserva pestaña y filtros.
-- [ ] Se elimina el `setActiveView` muerto (coordinar con TAREA 3). `tsc -b` y `vitest run` en verde.
+- [x] Una sola `ProtectedRoute` envuelve el layout.
+- [x] Cambiar de /dashboard a /historial y volver conserva pestaña y filtros.
+- [x] Se elimina el `setActiveView` muerto (coordinar con TAREA 3). `tsc -b` y `vitest run` en verde.
 
 ---
 

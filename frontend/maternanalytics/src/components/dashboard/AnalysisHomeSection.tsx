@@ -10,7 +10,7 @@ import { FiltersSidebar } from './FiltersSidebar'
 import { KpiRow } from './KpiRow'
 import { TrendChartsRow } from './TrendChartsRow'
 import { ExportReportModal } from './ExportReportModal'
-import { useDashboardTabs } from '../../hooks/navigation/useDashboardTabs'
+import type { useDashboardTabs } from '../../hooks/navigation/useDashboardTabs'
 import { SubTabs } from './SubTabs'
 import { DistribucionEdadGestacional } from './DistribucionEdadGestacional'
 import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
@@ -35,6 +35,9 @@ export interface AnalysisHomeSectionProps {
   onMonthChange: (month: string) => void
   onWeekChange: (week: string) => void
   onDayChange: (day: string) => void
+  segmento: Segmento
+  onSegmentoChange: (value: Segmento) => void
+  tabs: ReturnType<typeof useDashboardTabs>
 }
 
 export function AnalysisHomeSection({
@@ -54,19 +57,12 @@ export function AnalysisHomeSection({
   onMonthChange,
   onWeekChange,
   onDayChange,
+  segmento,
+  onSegmentoChange,
+  tabs,
 }: AnalysisHomeSectionProps) {
-  const [segmento, setSegmento] = useState<Segmento>(() => {
-    if (latestMortalidad && latestMorbilidad) return 'ambos'
-    if (latestMortalidad) return 'mortalidad'
-    if (latestMorbilidad) return 'morbilidad'
-    return 'ambos'
-  })
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
-  const { activeTab, setActiveTab, activeSubTab, setActiveSubTab } = useDashboardTabs()
-
-  const handleSegmentoChange = useCallback((value: Segmento) => {
-    setSegmento(value)
-  }, [])
+  const { activeTab, setActiveTab, activeSubTab, setActiveSubTab } = tabs
 
   const handleExportReport = useCallback(() => {
     setIsExportModalOpen(true)
@@ -262,7 +258,7 @@ export function AnalysisHomeSection({
 
         <FiltersSidebar
           segmento={segmento}
-          onSegmentoChange={handleSegmentoChange}
+          onSegmentoChange={onSegmentoChange}
           latestMortalidad={latestMortalidad}
           latestMorbilidad={latestMorbilidad}
           filterYear={filterYear}

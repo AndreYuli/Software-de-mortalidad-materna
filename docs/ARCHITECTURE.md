@@ -136,7 +136,7 @@ Definidas en `frontend/maternanalytics/src/App.tsx`:
 - `/cargar-morbilidad`
 - `/historial`
 
-Las rutas protegidas montan `DashboardOKD`. La vista activa se deriva desde la URL mediante hooks de navegación. No crear un estado paralelo de vista si la URL ya define la pantalla.
+Una sola ruta protegida (`ProtectedRoute`) monta `DashboardOKD` como **layout** y las vistas son rutas hijas (`DashboardViewRoute` dentro de un `<Outlet/>`), así que el layout no se remonta al navegar. `useDashboardData` vive en el layout y conserva filtros, pestañas y segmento entre rutas. La vista activa se deriva de la URL: no crear un estado paralelo de vista. Tras una carga exitosa se navega a `/dashboard`.
 
 ### Componentes principales
 

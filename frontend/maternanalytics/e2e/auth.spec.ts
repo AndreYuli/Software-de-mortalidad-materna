@@ -40,6 +40,20 @@ test.describe('Flujo de Autenticación', () => {
     await expect(page).toHaveURL(/.*\/login/); // Sigue en el login
   });
 
+  test('Un token inválido expulsa al usuario a /login y borra la sesión', async ({ page }) => {
+    // Se siembra la sesión una sola vez (addInitScript se repetiría tras la redirección)
+    await page.goto('/login');
+    await page.evaluate(() => {
+      localStorage.setItem('token', 'token-invalido');
+      localStorage.setItem('username', 'Fantasma');
+    });
+    await page.goto('/dashboard');
+
+    // El backend responde 401 y el frontend elimina la sesión local
+    await expect(page).toHaveURL(/.*\/login/, { timeout: 30000 });
+    expect(await page.evaluate(() => localStorage.getItem('token'))).toBeNull();
+  });
+
   test('Proteger rutas privadas si no hay sesión', async ({ page }) => {
     // Intento acceder directo al dashboard sin haber iniciado sesión
     await page.goto('/dashboard');
