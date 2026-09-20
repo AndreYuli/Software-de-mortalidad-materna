@@ -1,6 +1,6 @@
 """Genera Excels de prueba realistas para probar la carga de Mortalidad y Morbilidad.
 
-Crea 4 archivos en ayudas/: uno completo y uno con columnas faltantes para
+Crea 4 archivos en data/pruebas/: uno completo y uno con columnas faltantes para
 cada evento (549 Morbilidad, 550 Mortalidad), usando exactamente las
 columnas requeridas por `_analisis_excel.py` (mismas que valida el backend
 y el frontend). Se usa para probar manualmente la carga end-to-end, incluido
@@ -18,7 +18,7 @@ import pandas as pd
 
 random.seed(42)
 
-_OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / 'ayudas'
+_OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / 'data' / 'pruebas'
 
 _CAUSAS_MORTALIDAD = [
     'O14.1',
@@ -164,7 +164,7 @@ def generar_morbilidad(n: int) -> pd.DataFrame:
 
 
 def main() -> None:
-    """Genera y escribe los 4 archivos de prueba en ayudas/."""
+    """Genera y escribe los 4 archivos de prueba en data/pruebas/."""
     df_mort = generar_mortalidad(40)
     df_morb = generar_morbilidad(50)
 

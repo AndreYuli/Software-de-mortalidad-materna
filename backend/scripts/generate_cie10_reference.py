@@ -16,7 +16,10 @@ from pathlib import Path
 import pandas as pd
 
 _EXCEL_PATH = (
-    Path(__file__).resolve().parent.parent.parent / 'ayudas' / 'TablaReferencia_CIE10__1.xlsx'
+    Path(__file__).resolve().parent.parent.parent
+    / 'data'
+    / 'referencia'
+    / 'TablaReferencia_CIE10__1.xlsx'
 )
 _OUTPUT_PATH = (
     Path(__file__).resolve().parent.parent.parent

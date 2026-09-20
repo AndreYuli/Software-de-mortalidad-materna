@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Reemplazar el ícono/favicon actual de VidaMaterna por el nuevo diseño "sello + barras + línea de tendencia" aprobado en `docs/superpowers/specs/2026-08-22-logo-vidamaterna-design.md`, sin cambiar la API de ningún componente.
+**Goal:** Reemplazar el ícono/favicon actual de VidaMaterna por el nuevo diseño "sello + barras + línea de tendencia" aprobado en `docs/historico/specs/2026-08-22-logo-vidamaterna-design.md`, sin cambiar la API de ningún componente.
 
 **Architecture:** 5 ediciones independientes y acumulativas (variable CSS → geometría del ícono → color en cada contexto de uso → favicon estático) más una verificación final. No hay lógica nueva que testear con TDD clásico (es geometría SVG y color CSS); cada tarea usa `grep` para confirmar que el contenido exacto quedó escrito, y la tarea final corre la suite completa (`tsc`/`lint`/`test`/`build`) más una verificación visual manual.
 

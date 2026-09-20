@@ -12,7 +12,7 @@
 
 ## Nota de corrección sobre la spec
 
-La spec (`docs/superpowers/specs/2026-08-20-migracion-typescript-frontend-design.md`) asume que `src/api.js` es un "fetch wrapper". Verificado en código: hoy solo exporta la constante `API_URL`; cada componente hace sus propios `fetch()`. Este plan migra `api.ts` tal cual es (una constante tipada), sin inventar una abstracción que no existe — la función `obtenerNarrativa` se agrega ahí en el plan de la spec de IA generativa, no en este.
+La spec (`docs/historico/specs/2026-08-20-migracion-typescript-frontend-design.md`) asume que `src/api.js` es un "fetch wrapper". Verificado en código: hoy solo exporta la constante `API_URL`; cada componente hace sus propios `fetch()`. Este plan migra `api.ts` tal cual es (una constante tipada), sin inventar una abstracción que no existe — la función `obtenerNarrativa` se agrega ahí en el plan de la spec de IA generativa, no en este.
 
 También se descubrió que `src/components/Dashboard.jsx` (524 líneas) no está importado por nadie (`App.jsx` solo usa `DashboardOKD.jsx`). El usuario confirmó eliminarlo — Task 2 de este plan.
 

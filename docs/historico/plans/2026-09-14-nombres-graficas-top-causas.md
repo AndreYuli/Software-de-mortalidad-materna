@@ -8,7 +8,7 @@
 
 **Tech Stack:** React + TypeScript, Chart.js v4 vía `react-chartjs-2`, Vitest + Testing Library.
 
-**Spec:** `docs/superpowers/specs/2026-09-14-nombres-graficas-top-causas-design.md`
+**Spec:** `docs/historico/specs/2026-09-14-nombres-graficas-top-causas-design.md`
 
 ---
 

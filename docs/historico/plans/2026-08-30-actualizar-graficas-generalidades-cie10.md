@@ -12,7 +12,7 @@
 
 ## Contexto y decisiones ya tomadas con el usuario
 
-- El usuario confirmó: la gráfica de "Edad Gestacional" en Factores Demográficos **reemplaza** (no complementa) la de "Edad materna" que se había construido en el plan anterior (`docs/superpowers/plans/2026-08-30-edad-riesgo-sociodemografico.md`).
+- El usuario confirmó: la gráfica de "Edad Gestacional" en Factores Demográficos **reemplaza** (no complementa) la de "Edad materna" que se había construido en el plan anterior (`docs/historico/plans/2026-08-30-edad-riesgo-sociodemografico.md`).
 - El usuario confirmó: los Top 10 de causas se hacen **actualizando** el gráfico "Top 5 Causas Principales" existente en la pestaña Generalidades, convirtiéndolo en 2 gráficos separados de Top 10 (mortalidad y morbilidad), con nombres reales del CIE-10.
 - El Excel de referencia CIE-10 (`ayudas/TablaReferencia_CIE10__1.xlsx`) tiene 12,634 filas, columnas `Codigo`/`Nombre`/`Descripcion` (entre otras). La columna `Nombre` es la descripción específica a 4 caracteres (ej. `O141` → `PREECLAMPSIA SEVERA`), que es el nivel de detalle que coincide con los códigos que ya vienen en los datos (`causas_cie10.top_causas[].codigo`). La columna `Descripcion` es una categoría más general (3 caracteres) y no se usa en este plan.
 - No se modifican `analizar_obstetrico_por_edad` (los 4 grupos `<20/20-29/30-39/≥40` que usan `ClusteringSection` y `ObstetricoEdadSection`) ni `Instituciones de Referencia`, `Tiempo de Remisión`, `Severidad de Fallas`, `Sankey`, `Heatmap de Demoras` — nada de eso cambia en este plan.

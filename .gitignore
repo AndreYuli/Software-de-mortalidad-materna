@@ -177,11 +177,17 @@ db.sqlite3
 # Superpowers brainstorming companion
 .superpowers/
 
-# Carpeta de ayudas, transcripciones, prompts y guias
-ayudas/
+# Notas locales: prompts, transcripciones de reuniones y guías antiguas
+notes/local/
 .claude/
 .idea/
 *.iml
 .pytest_cache/
 # Almacén local de pnpm (si se ejecuta pnpm en la raíz)
 .pnpm-store/
+
+# Datos: solo se versionan la referencia oficial y los Excel sintéticos (data/pruebas)
+!data/referencia/*.xlsx
+!data/pruebas/*.xlsx
+# Datos sin procedencia confirmada (posibles datos reales): nunca versionar
+data/local/

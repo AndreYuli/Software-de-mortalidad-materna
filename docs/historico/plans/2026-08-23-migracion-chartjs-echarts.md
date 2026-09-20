@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 18 + TypeScript, Vite, Vitest + Testing Library, `chart.js` + `react-chartjs-2`, `echarts` + `echarts-for-react` + `echarts-gl`. Gestor de paquetes: **pnpm** (ya usado en el proyecto — existe `pnpm-lock.yaml`).
 
-**Spec de referencia:** `docs/superpowers/specs/2026-08-23-migracion-chartjs-echarts-design.md`
+**Spec de referencia:** `docs/historico/specs/2026-08-23-migracion-chartjs-echarts-design.md`
 
 ---
 

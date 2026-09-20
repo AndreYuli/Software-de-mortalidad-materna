@@ -4,7 +4,7 @@ Uso:
     cd backend
     python scripts/generar_datos_sinteticos_fase0.py
 
-Genera dos archivos Excel en ayudas/:
+Genera dos archivos Excel en data/pruebas/:
     - prueba_mortalidad_550_con_sociodemo.xlsx
     - prueba_morbilidad_549_con_sociodemo.xlsx
 
@@ -38,7 +38,7 @@ POBLACION_VULNERABLE = [
 ETNIA = ['Ninguna', 'Indígena', 'Afrocolombiana', 'Rrom', 'Raizal', 'Otra']
 TIPO_AFILIACION = ['Contributivo', 'Subsidiado', 'No afiliada']
 
-AYUDAS_DIR = Path(__file__).resolve().parent.parent.parent / 'ayudas'
+DATOS_DIR = Path(__file__).resolve().parent.parent.parent / 'data' / 'pruebas'
 
 # -----------------------------------------------------------------------
 # Helpers
@@ -176,11 +176,11 @@ def generar_mortalidad(n: int = 15) -> pd.DataFrame:
 
 
 def main():
-    """Genera los dos Excel sintéticos de prueba en `ayudas/`."""
-    AYUDAS_DIR.mkdir(parents=True, exist_ok=True)
+    """Genera los dos Excel sintéticos de prueba en `data/pruebas/`."""
+    DATOS_DIR.mkdir(parents=True, exist_ok=True)
 
     df_morb = generar_morbilidad(n=20)
-    out_morb = AYUDAS_DIR / 'prueba_morbilidad_549_con_sociodemo.xlsx'
+    out_morb = DATOS_DIR / 'prueba_morbilidad_549_con_sociodemo.xlsx'
     df_morb.to_excel(out_morb, index=False)
     print(f'Generado: {out_morb} ({len(df_morb)} registros)')
     print(
@@ -191,7 +191,7 @@ def main():
     )
 
     df_mort = generar_mortalidad(n=15)
-    out_mort = AYUDAS_DIR / 'prueba_mortalidad_550_con_sociodemo.xlsx'
+    out_mort = DATOS_DIR / 'prueba_mortalidad_550_con_sociodemo.xlsx'
     df_mort.to_excel(out_mort, index=False)
     print(f'Generado: {out_mort} ({len(df_mort)} registros)')
     print(

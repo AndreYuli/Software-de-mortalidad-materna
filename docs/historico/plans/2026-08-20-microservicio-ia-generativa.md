@@ -8,7 +8,7 @@
 
 **Tech Stack:** FastAPI, httpx, Ollama (modelo `qwen2.5`), SQLAlchemy, pytest + pytest-mock, React + TypeScript + vitest.
 
-**Precondición:** requiere `docs/superpowers/plans/2026-08-20-migracion-typescript-frontend.md` ya ejecutado (el frontend de este plan se escribe en `.tsx`).
+**Precondición:** requiere `docs/historico/plans/2026-08-20-migracion-typescript-frontend.md` ya ejecutado (el frontend de este plan se escribe en `.tsx`).
 
 ---
 
