@@ -4,8 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel
 
-TipoNarrativa = Literal['resumen_ejecutivo', 'demoras', 'clustering', 'tendencias']
-TipoAnalisis = Literal['mortalidad', 'morbilidad']
+TipoNarrativa = Literal["resumen_ejecutivo", "demoras", "clustering", "tendencias"]
+TipoAnalisis = Literal["mortalidad", "morbilidad"]
 
 
 class NarrativaRequest(BaseModel):

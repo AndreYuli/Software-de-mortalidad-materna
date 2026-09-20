@@ -49,7 +49,8 @@ class SankeyBuilder:
 
         if not all([real_col_origen, real_col_medio, real_col_destino]):
             logger.warning(
-                "SankeyBuilder: Columnas requeridas no encontradas: origen=%s, medio=%s, destino=%s",
+                "SankeyBuilder: Columnas requeridas no encontradas: "
+                "origen=%s, medio=%s, destino=%s",
                 real_col_origen,
                 real_col_medio,
                 real_col_destino,

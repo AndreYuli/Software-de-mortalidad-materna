@@ -9,6 +9,7 @@ import requests
 
 
 def generate_random_dates(num_rows, start_year, end_year):
+    """Genera ``num_rows`` fechas aleatorias entre ``start_year`` y ``end_year``."""
     dates = []
     for _ in range(num_rows):
         year = random.randint(start_year, end_year)
@@ -19,6 +20,7 @@ def generate_random_dates(num_rows, start_year, end_year):
 
 
 def process_and_upload(template_path: str, tipo: str, date_cols: list[str], url: str):
+    """Completa una plantilla Excel con fechas aleatorias y la sube al endpoint de análisis."""
     print(f"Generando datos para {tipo}...")
     try:
         df = pd.read_excel(template_path)
@@ -60,6 +62,7 @@ def process_and_upload(template_path: str, tipo: str, date_cols: list[str], url:
 
 
 def main():
+    """Sube datos de prueba de morbilidad y mortalidad a la API local."""
     base_url = "http://localhost:8000/api/analisis/"
 
     # Morbilidad
