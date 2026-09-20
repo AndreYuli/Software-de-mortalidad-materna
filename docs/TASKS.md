@@ -50,14 +50,24 @@ El historial actual permite revisar cargas, pero puede crecer mucho con el uso s
 
 ### Criterios de aceptación
 
-- [ ] Año visible.
-- [ ] Mes visible.
-- [ ] Semana visible.
-- [ ] Buscador funcional.
-- [ ] Filtros funcionales.
-- [ ] Actualizar funciona según definición de producto.
-- [ ] Eliminar funciona con confirmación y seguridad.
-- [ ] No se rompen funcionalidades existentes.
+- [x] Año visible.
+- [x] Mes visible.
+- [x] Semana visible.
+- [x] Buscador funcional.
+- [x] Filtros funcionales.
+- [ ] Actualizar funciona según definición de producto. **Pendiente de producto** (ver «Estado»).
+- [ ] Eliminar funciona con confirmación y seguridad. **Pendiente de producto** (ver «Estado»).
+- [x] No se rompen funcionalidades existentes.
+
+### Estado
+
+**Implementado (2026-09-20):** columnas Año/Mes/Semana, buscador y filtros por evento/año/mes/semana, todo en el servidor (`GET /api/analisis/historial/` con `q`, `tipo`, `year`, `month`, `week`; `total` y paginación respetan los filtros). Año/mes/semana se calculan de `fecha_carga` en **hora de Colombia** y con **semana ISO** (la misma de los filtros del dashboard). La búsqueda cubre nombre de archivo, tipo y código del evento (549/550).
+
+**Sin implementar — requiere decisión de producto:**
+
+- **Eliminar.** Los casos consolidados (`paciente`, `caso_*`) no guardan de qué carga vinieron (el propio `analisis_service` lo indica: el dataset vive en esas tablas, no en la fila de historial). Borrar una fila del historial **no borraría los datos mal cargados**, solo el registro y su archivo (y sus narrativas, por la FK), lo que daría una falsa sensación de corrección. Opciones a decidir: (a) borrar solo el registro de historial y el archivo, dejando claro en el modal que los datos consolidados permanecen; (b) añadir a los casos una referencia a la carga (migración) y borrar en cascada lo que solo esa carga creó, cuidando los casos que otra carga actualizó después; (c) no borrar y añadir un estado «anulada» que excluya la carga de los análisis. Requiere además modal de confirmación accesible (DESIGN §4) y `DELETE /analisis/{pk}/` autenticado.
+- **Actualizar.** Definir si significa reemplazar el archivo de una semana. Hoy el sistema no edita cargas.
+
 
 ### Relación con tareas existentes
 
@@ -297,10 +307,10 @@ Aprovechar la infraestructura local desplegada de Ollama, mostrando el texto gen
 **Resultado esperado:** tabla con columnas **Año, Mes, Semana**, buscador de texto, filtros por tipo/año/mes/semana y columna **Acción**.
 **Archivos:** `UploadHistorySection.tsx/.css`, `hooks/dashboard/useUploadHistory.ts`, `backend/api/routers/analisis.py` (`/analisis/historial/` con parámetros de búsqueda/filtro).
 **Criterios de aceptación:**
-- [ ] Buscador y filtros funcionan en el servidor (paginación intacta) y hay estado vacío "sin resultados".
+- [x] Buscador y filtros funcionan en el servidor (paginación intacta) y hay estado vacío "sin resultados".
 - [ ] Acción **Eliminar**: `DELETE /analisis/{pk}/` autenticado, con modal de confirmación accesible (DESIGN §4). Debe definirse qué pasa con los pacientes/casos ya consolidados de esa carga.
 - [ ] Acción **Actualizar**: **NO implementar** hasta que producto defina si significa reemplazar el archivo de una semana. PRODUCT §4.3 hoy dice "sin edición/borrado desde la app": esta tarea lo modifica y requiere actualizar PRODUCT.md primero.
-- [ ] Tests de backend para filtro/búsqueda y borrado.
+- [x] Tests de backend para filtro/búsqueda (25 en `test_analisis_historial_filtros.py`). [ ] Borrado: pendiente junto con la acción.
 
 ---
 

@@ -1,7 +1,7 @@
 """Endpoints para carga, consulta y análisis estadístico de archivos Excel."""
 
 from contextlib import contextmanager
-from typing import Any, Generator
+from typing import Any, Generator, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
@@ -95,37 +95,57 @@ def listar_analisis(db: Session = Depends(get_db)) -> list[AnalisisResponse]:
 def historial_analisis(
     page: int = Query(default=1, ge=1),
     per_page: int = Query(default=20, ge=1, le=100),
+    q: str | None = Query(default=None, max_length=100),
+    tipo: Literal['mortalidad', 'morbilidad'] | None = Query(default=None),
+    year: int | None = Query(default=None, ge=2000, le=2100),
+    month: int | None = Query(default=None, ge=1, le=12),
+    week: int | None = Query(default=None, ge=1, le=53),
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
-    """Lista todo el historial de cargas paginado.
+    """Lista el historial de cargas paginado, con búsqueda y filtros.
 
     Args:
         page: Número de página (1-indexed).
         per_page: Registros por página.
+        q: Texto a buscar en el nombre del archivo, el tipo o el código del evento (549/550).
+        tipo: Filtra por 'mortalidad' o 'morbilidad'.
+        year: Filtra por año de la carga.
+        month: Filtra por mes de la carga (1-12).
+        week: Filtra por semana ISO de la carga.
         db: Sesión de base de datos inyectada.
 
     Returns:
-        Dict con 'items' (lista de análisis), 'total', 'page', 'per_page', 'total_pages'.
+        Dict con 'items' (cada uno con anio, mes y semana de la carga), 'total' (que cumple
+        los filtros), 'page', 'per_page', 'total_pages' y 'anios_disponibles'.
     """
-    items, total = analisis_service.listar_historial(db=db, page=page, per_page=per_page)
+    items, total = analisis_service.listar_historial(
+        db=db, page=page, per_page=per_page, q=q, tipo=tipo, year=year, month=month, week=week
+    )
     total_pages = (total + per_page - 1) // per_page if total > 0 else 0
-    return {
-        'items': [
+    respuesta_items = []
+    for a in items:
+        anio, mes, semana = analisis_service.periodo_de_carga(a.fecha_carga)
+        respuesta_items.append(
             {
                 'id': a.id,
                 'tipo': a.tipo,
                 'nombre_archivo': a.nombre_archivo,
                 'archivo': a.archivo,
                 'fecha_carga': a.fecha_carga.isoformat(),
+                'anio': anio,
+                'mes': mes,
+                'semana': semana,
                 'total_registros': a.total_registros,
                 'resumen': a.resumen,
             }
-            for a in items
-        ],
+        )
+    return {
+        'items': respuesta_items,
         'total': total,
         'page': page,
         'per_page': per_page,
         'total_pages': total_pages,
+        'anios_disponibles': analisis_service.anios_historial(db),
     }
 
 

@@ -27,6 +27,11 @@ from services._analisis_excel import (
     _obtener_columnas_faltantes,
     preparar_dataframe_analisis,
 )
+from services._analisis_historial import (  # noqa: F401
+    anios_historial,
+    buscar_historial,
+    periodo_de_carga,
+)
 from services._analisis_persistencia import _construir_df_desde_bd, _guardar_df_como_excel
 
 logger = logging.getLogger(__name__)
@@ -159,23 +164,25 @@ def listar_historial(
     db: Session,
     page: int = 1,
     per_page: int = 20,
+    q: str | None = None,
+    tipo: str | None = None,
+    year: int | None = None,
+    month: int | None = None,
+    week: int | None = None,
 ) -> tuple[list[Analisis], int]:
-    """Devuelve todo el historial de análisis paginado.
+    """Devuelve el historial de análisis paginado, con búsqueda y filtros opcionales.
 
     Args:
         db: Sesión de base de datos.
         page: Número de página (1-indexed).
         per_page: Registros por página.
+        q: Texto a buscar en el nombre del archivo, el tipo o el código del evento.
+        tipo: 'mortalidad' o 'morbilidad'.
+        year: Año de la carga.
+        month: Mes de la carga (1-12).
+        week: Semana ISO de la carga.
 
     Returns:
-        Tupla (lista de análisis ordenados por fecha_carga desc, total de registros).
+        Tupla (lista de análisis ordenados por fecha_carga desc, total que cumple los filtros).
     """
-    total = db.query(func.count(Analisis.id)).scalar() or 0
-    analyses = (
-        db.query(Analisis)
-        .order_by(Analisis.fecha_carga.desc())
-        .offset((page - 1) * per_page)
-        .limit(per_page)
-        .all()
-    )
-    return analyses, total
+    return buscar_historial(db, page, per_page, q, tipo, year, month, week)

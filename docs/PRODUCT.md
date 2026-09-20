@@ -126,6 +126,8 @@ Debe contener:
 - tipo de evento cargado: 549 morbilidad o 550 mortalidad;
 - nombre del archivo;
 - total de registros procesados;
+- año, mes y semana (ISO, hora de Colombia) de la carga;
+- buscador (archivo, tipo o evento 549/550) y filtros por evento, año, mes y semana;
 - resumen del procesamiento, incluyendo pacientes nuevos, pacientes existentes, casos creados, casos actualizados o duplicados omitidos cuando aplique;
 - paginación cuando existan muchas cargas.
 

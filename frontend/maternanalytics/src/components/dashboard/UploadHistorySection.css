@@ -17,6 +17,58 @@
   margin: 0 0 20px;
 }
 
+/* Búsqueda y filtros */
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.history-filter-field {
+  flex: 0 1 150px;
+  min-width: 120px;
+}
+
+.history-filter-search {
+  flex: 1 1 240px;
+}
+
+.history-search-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #172033;
+  background-color: #fbfcfd;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.history-search-input::placeholder {
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.history-search-input:focus {
+  border-color: var(--brand-700);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+.history-clear-btn {
+  align-self: flex-end;
+}
+
+.history-periodo {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .upload-history-loading,
 .upload-history-empty {
   display: flex;

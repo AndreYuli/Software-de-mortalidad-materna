@@ -127,6 +127,10 @@ export interface HistorialItem {
   nombre_archivo: string
   archivo: string
   fecha_carga: string
+  /** Período de la carga en hora de Colombia (semana ISO), calculado por el backend. */
+  anio: number
+  mes: number
+  semana: number
   total_registros: number
   resumen: Record<string, unknown>
 }
@@ -137,13 +141,32 @@ export interface HistorialResponse {
   page: number
   per_page: number
   total_pages: number
+  anios_disponibles: number[]
+}
+
+/** Búsqueda y filtros del historial; un valor vacío significa «sin filtro». */
+export interface HistorialFiltros {
+  q?: string
+  tipo?: string
+  year?: string
+  month?: string
+  week?: string
 }
 
 export async function fetchHistorial(
   page = 1,
   perPage = 20,
+  filtros: HistorialFiltros = {},
+  signal?: AbortSignal,
 ): Promise<HistorialResponse> {
-  const response = await fetchWithTimeout(`${API_URL}/analisis/historial/?page=${page}&per_page=${perPage}`)
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) })
+  const q = filtros.q?.trim()
+  if (q) params.append('q', q)
+  if (filtros.tipo) params.append('tipo', filtros.tipo)
+  if (filtros.year) params.append('year', filtros.year)
+  if (filtros.month) params.append('month', filtros.month)
+  if (filtros.week) params.append('week', filtros.week)
+  const response = await fetchWithTimeout(`${API_URL}/analisis/historial/?${params.toString()}`, { signal })
   if (!response.ok) throw new Error(`Error al obtener historial: ${response.status}`)
   const data = await response.json()
   return data as HistorialResponse

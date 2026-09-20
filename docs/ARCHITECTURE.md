@@ -223,7 +223,7 @@ backend/
 
 - `POST /api/analisis/`: carga y procesa archivo.
 - `GET /api/analisis/`: lista análisis recientes por tipo.
-- `GET /api/analisis/historial/`: historial paginado.
+- `GET /api/analisis/historial/`: historial paginado con año/mes/semana de cada carga y filtros `q`, `tipo`, `year`, `month`, `week`.
 - `GET /api/analisis/{pk}/`: metadatos de análisis.
 - `GET /api/analisis/{pk}/completo/`: indicadores y distribuciones con filtros.
 - `GET /api/analisis/{pk}/cruce/`: cruces sociodemográficos y clínicos.
