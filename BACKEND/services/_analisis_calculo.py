@@ -61,6 +61,9 @@ def calcular_completo(
         df = _enriquecer_df_con_fecha(db, df, analisis.tipo)
         anos = _extraer_anos_disponibles(df, analisis.tipo)
         ultima_semana = _ultima_semana_reportada(df, analisis.tipo)
+        # Se calcula ANTES de filtrar: el frontend compara contra el mes/año anterior y, con el
+        # df ya filtrado, ese periodo previo siempre llegaba vacío (comparativo siempre 0).
+        distribucion_mensual = _calcular_distribucion_mensual(df, analisis.tipo)
         df = _filtrar_por_fecha(df, analisis.tipo, year, month, week, day)
 
         meta: dict[str, Any] = {
@@ -71,7 +74,7 @@ def calcular_completo(
             "anos_disponibles": anos,
             "ultima_semana_reportada": ultima_semana,
             "filtros_activos": {"year": year, "month": month, "week": week, "day": day},
-            "distribucion_mensual": _calcular_distribucion_mensual(df, analisis.tipo),
+            "distribucion_mensual": distribucion_mensual,
         }
 
         if analisis.tipo == "mortalidad":

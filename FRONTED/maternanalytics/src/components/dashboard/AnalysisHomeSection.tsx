@@ -22,6 +22,9 @@ export interface AnalysisHomeSectionProps {
   latestMortalidad: { id: number } | null
   latestMorbilidad: { id: number } | null
   onGoToUpload: (view: 'mortalidad' | 'morbilidad') => void
+  listLoading?: boolean
+  listError?: string | null
+  onRetryList?: () => void
   filterYear: string
   filterMonth: string
   filterWeek: string
@@ -38,6 +41,9 @@ export function AnalysisHomeSection({
   latestMortalidad,
   latestMorbilidad,
   onGoToUpload,
+  listLoading = false,
+  listError = null,
+  onRetryList,
   filterYear,
   filterMonth,
   filterWeek,
@@ -152,6 +158,10 @@ export function AnalysisHomeSection({
     severidadFallasData,
   ])
 
+  // Mientras se consulta la lista de análisis no se sabe si hay datos: no mostrar «sin datos» (parpadeo)
+  // ni presentar una caída del backend como si la base estuviera vacía.
+  if (!hasData && listLoading) return <DashboardLoadingState />
+  if (!hasData && listError) return <DashboardErrorState message={listError} onRetry={onRetryList} />
   if (!hasData) return <WelcomeState onGoToUpload={onGoToUpload} />
   if (loading) return <DashboardLoadingState />
   if (error) return <DashboardErrorState message={error} />

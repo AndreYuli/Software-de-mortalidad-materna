@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { API_URL } from '../../api'
+import { API_URL, fetchWithTimeout } from '../../api'
 import type { AnalisisCompleto } from '../../types'
 
 export interface UseAnalysisHomeDataParams {
@@ -13,8 +13,9 @@ export interface UseAnalysisHomeDataParams {
 }
 
 async function fetchAnalisis(analisisId: number, suffix: string, signal: AbortSignal): Promise<AnalisisCompleto | null> {
-  const res = await fetch(`${API_URL}/analisis/${analisisId}/completo/${suffix}`, { signal })
-  if (!res.ok) return null
+  const res = await fetchWithTimeout(`${API_URL}/analisis/${analisisId}/completo/${suffix}`, { signal }, 90_000)
+  // Antes devolvía null en silencio y el panel quedaba en ceros sin explicación.
+  if (!res.ok) throw new Error(`El análisis ${analisisId} respondió con error ${res.status}.`)
   return res.json()
 }
 
@@ -78,7 +79,11 @@ export function useAnalysisHomeData({
         }
       } catch (err) {
         if ((err as Error).name !== 'AbortError' && isMounted) {
-          setError('Error al procesar la información del panel de control.')
+          setError(
+            (err as Error).name === 'TimeoutError'
+              ? (err as Error).message
+              : 'Error al procesar la información del panel de control.',
+          )
           console.error(err)
         }
       } finally {

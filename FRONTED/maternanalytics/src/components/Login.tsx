@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Login.css'
-import { API_URL } from '../api'
+import { API_URL, describeNetworkError, extractErrorMessage, fetchWithTimeout } from '../api'
 import { useForm } from 'react-hook-form'
 // Zod schema imported from external file
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -40,14 +40,19 @@ export default function Login({ onLogin, onRegister }: LoginProps = {}) {
     setInfoMsg('')
     setIsLoading(true)
     try {
-      const res = await fetch(`${API_URL}/auth/login/`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: data.email, password: data.password }),
       })
-      const responseData: LoginResponse = await res.json()
-      if (!res.ok) {
-        setError(responseData.detail || responseData.error || 'Correo o contraseña incorrectos.')
+      // Un proxy/servidor caído puede devolver HTML: no debe verse como "sin conexión".
+      const responseData: LoginResponse | null = await res.json().catch(() => null)
+      if (!res.ok || !responseData) {
+        setError(
+          res.status >= 500 || !responseData
+            ? 'El servidor no respondió correctamente. Intenta de nuevo en unos minutos.'
+            : extractErrorMessage(responseData, 'Correo o contraseña incorrectos.'),
+        )
         return
       }
       localStorage.setItem('token', responseData.access_token)
@@ -55,8 +60,8 @@ export default function Login({ onLogin, onRegister }: LoginProps = {}) {
       localStorage.setItem('user_email', responseData.email || data.email)
       if (onLogin) onLogin()
       else navigate('/dashboard')
-    } catch {
-      setError('No se pudo conectar al servidor. Verifica que el backend esté activo.')
+    } catch (err) {
+      setError(describeNetworkError(err, 'No se pudo conectar al servidor. Verifica que el backend esté activo.'))
     } finally {
       setIsLoading(false)
     }

@@ -36,7 +36,8 @@ export function UploadSection({
   eventLabel,
 }: UploadSectionProps) {
   // 2. Prevenir re-envíos si el análisis ya finalizó exitosamente (done)
-  const isDisabled = !file || Boolean(error) || validating || analyzing || done
+  const isEmptyFile = Boolean(file && !error && preview && preview.totalRows === 0)
+  const isDisabled = !file || Boolean(error) || validating || analyzing || done || isEmptyFile
 
   const handleRemove = () => {
     onFile(null)
@@ -67,7 +68,14 @@ export function UploadSection({
       {done && (
         <div className="upload-success-msg" role="status" aria-live="polite">
           <CheckIcon />
-          <span>Análisis guardado correctamente. Puedes verlo en «Análisis guardados».</span>
+          <span>Análisis guardado correctamente. Puedes verlo en «Dashboard Analítico» o en «Historial de Cargas».</span>
+        </div>
+      )}
+
+      {isEmptyFile && (
+        <div className="upload-analyze-error" role="alert">
+          <ErrorIcon />
+          <span>El archivo tiene los encabezados correctos pero no contiene registros.</span>
         </div>
       )}
 

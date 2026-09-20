@@ -18,6 +18,9 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           latestMortalidad={data.latestMortalidad}
           latestMorbilidad={data.latestMorbilidad}
           onGoToUpload={onNavigate}
+          listLoading={data.listLoading}
+          listError={data.listError}
+          onRetryList={() => data.refetchAnalisis(true)}
           filterYear={data.filterYear}
           filterMonth={data.filterMonth}
           filterWeek={data.filterWeek}

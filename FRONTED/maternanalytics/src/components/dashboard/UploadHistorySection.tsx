@@ -4,7 +4,11 @@ import { SpinnerIcon } from '../icons'
 
 function formatFecha(iso: string): string {
   try {
-    const d = new Date(iso)
+    // El backend guarda fecha_carga en UTC pero la serializa sin zona horaria;
+    // sin la 'Z' el navegador la interpretaría como hora local (desfase de horas).
+    const tieneZona = /(Z|[+-]\d{2}:?\d{2})$/.test(iso)
+    const d = new Date(tieneZona ? iso : `${iso}Z`)
+    if (Number.isNaN(d.getTime())) return iso
     return d.toLocaleDateString('es-CO', {
       day: '2-digit',
       month: 'short',
@@ -37,7 +41,7 @@ function extractResumen(resumen: Record<string, unknown>): string {
 }
 
 export function UploadHistorySection() {
-  const { items, loading, error, page, totalPages, total, setPage } = useUploadHistory()
+  const { items, loading, error, page, totalPages, total, setPage, reload } = useUploadHistory()
 
   if (loading) {
     return (
@@ -55,7 +59,12 @@ export function UploadHistorySection() {
     return (
       <div className="upload-history-section">
         <h2 className="section-title">Historial de Cargas</h2>
-        <div className="upload-history-error">{error}</div>
+        <div className="upload-history-error" role="alert">
+          {error}{' '}
+          <button className="history-page-btn" type="button" onClick={reload}>
+            Reintentar
+          </button>
+        </div>
       </div>
     )
   }

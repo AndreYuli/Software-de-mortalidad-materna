@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react'
-import { API_URL } from '../../api'
+import { useState, useCallback, useRef } from 'react'
+import { API_URL, UPLOAD_TIMEOUT_MS, describeNetworkError, extractErrorMessage, fetchWithTimeout } from '../../api'
 import { validateColumns, previewExcel, type FileValidationError, type FilePreview } from '../../utils/excelValidation'
 import { COLUMNAS_MORTALIDAD, COLUMNAS_MORBILIDAD } from '../../constants/dashboardConstants'
 
@@ -16,10 +16,15 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
   const [done, setDone] = useState(false)
   const [analyzeError, setAnalyzeError] = useState<string | null>(null)
 
+  // Descarta resultados de validaciones antiguas si el usuario cambió de archivo mientras se leía.
+  const validationRun = useRef(0)
+
   const columns = tipo === 'mortalidad' ? COLUMNAS_MORTALIDAD : COLUMNAS_MORBILIDAD
 
   const handleFile = useCallback(async (selectedFile: File | null) => {
+    const run = ++validationRun.current
     if (!selectedFile) {
+      setValidating(false)
       setFile(null)
       setError(null)
       setPreview(null)
@@ -33,9 +38,17 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
     setPreview(null)
     setDone(false)
     setAnalyzeError(null)
+
+    // El backend solo lee .xlsx; un archivo arrastrado con otra extensión no pasa por el `accept` del input.
+    if (!/\.xlsx$/i.test(selectedFile.name)) {
+      setError({ parseError: true })
+      return
+    }
+
     setValidating(true)
 
     const result = await validateColumns(selectedFile, columns, tipo)
+    if (run !== validationRun.current) return
     setValidating(false)
     if (!result.valid) {
       setError(result)
@@ -43,11 +56,12 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
     }
 
     const filePreview = await previewExcel(selectedFile, columns, tipo)
+    if (run !== validationRun.current) return
     setPreview(filePreview)
   }, [columns, tipo])
 
   const handleAnalyze = useCallback(async () => {
-    if (!file) return
+    if (!file || analyzing) return
 
     setAnalyzing(true)
     setDone(false)
@@ -58,10 +72,11 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
       formData.append('archivo', file)
       formData.append('tipo', tipo)
 
-      const res = await fetch(`${API_URL}/analisis/`, {
-        method: 'POST',
-        body: formData,
-      })
+      const res = await fetchWithTimeout(
+        `${API_URL}/analisis/`,
+        { method: 'POST', body: formData },
+        UPLOAD_TIMEOUT_MS,
+      )
 
       if (res.ok) {
         const createdAnalysis = await res.json()
@@ -70,23 +85,16 @@ export function useFileUpload(tipo: 'mortalidad' | 'morbilidad', options?: UseFi
           options.onSuccess(createdAnalysis)
         }
       } else {
-        const err = await res.json()
-        if (Array.isArray(err.columnas_faltantes) && err.columnas_faltantes.length) {
-          setAnalyzeError(
-            `Faltan columnas requeridas: ${err.columnas_faltantes.slice(0, 6).join(', ')}${
-              err.columnas_faltantes.length > 6 ? '…' : ''
-            }`,
-          )
-        } else {
-          setAnalyzeError(err.error || 'Error al procesar el archivo.')
-        }
+        const err = await res.json().catch(() => null)
+        // FastAPI devuelve { detail: string } (o una lista de errores en 422 de validación)
+        setAnalyzeError(extractErrorMessage(err, 'Error al procesar el archivo.'))
       }
-    } catch {
-      setAnalyzeError('No se pudo conectar con el servidor.')
+    } catch (err) {
+      setAnalyzeError(describeNetworkError(err, 'No se pudo conectar con el servidor.'))
     } finally {
       setAnalyzing(false)
     }
-  }, [file, options, tipo])
+  }, [file, analyzing, options, tipo])
 
   return {
     file,

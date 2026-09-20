@@ -59,7 +59,7 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
       <input
         ref={inputRef}
         type="file"
-        accept=".xlsx,.xls,.csv"
+        accept=".xlsx"
         style={{ display: 'none' }}
         onChange={handleChange}
       />
@@ -98,7 +98,7 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
         ) : (
           <>
             <p className="upload-zone-primary">Arrastra tu archivo aquí o <span className="upload-zone-link">haz clic para explorar</span></p>
-            <p className="upload-zone-secondary">Soportado: .xls, .xlsx (Máximo 15MB)</p>
+            <p className="upload-zone-secondary">Soportado: .xlsx (Máximo 15MB)</p>
           </>
         )}
       </div>
@@ -168,4 +168,4 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
       )}
     </div>
   )
-}
+}

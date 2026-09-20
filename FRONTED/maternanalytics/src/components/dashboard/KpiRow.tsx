@@ -48,7 +48,7 @@ export function KpiRow({
         </div>
         <div className="summary-trend-line">
           <TrendBadge compare={{ cur: curTot, prev: prevTot }} />
-          <span>variación contra el mes anterior</span>
+          <span>variación frente al periodo anterior (mes previo, o año previo si solo hay año)</span>
         </div>
       </div>
 

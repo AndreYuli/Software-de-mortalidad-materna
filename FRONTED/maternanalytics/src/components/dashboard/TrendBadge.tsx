@@ -9,7 +9,8 @@ export function TrendBadge({ compare }: TrendBadgeProps) {
 
   const { cur, prev } = compare
   if (prev === 0) {
-    return <span className="trend-badge neutral">Estable</span>
+    // 0 → N no es «estable»: no hay base de comparación.
+    return <span className="trend-badge neutral">{cur > 0 ? 'Sin base previa' : 'Estable'}</span>
   }
 
   const diff = cur - prev

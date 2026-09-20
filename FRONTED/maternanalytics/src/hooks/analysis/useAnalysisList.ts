@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { API_URL } from '../../api'
+import { API_URL, describeNetworkError, fetchWithTimeout } from '../../api'
 
 export interface AnalisisSummary {
   id: number
@@ -12,15 +12,16 @@ export function useAnalysisList(onAutoOpen?: (tipo: string, id: number) => void)
   const [selectedAnalisisId, setSelectedAnalisisId] = useState<number | null>(null)
   const [analysisType, setAnalysisType] = useState<string>('mortalidad')
   const [hasAutoOpenedLatest, setHasAutoOpenedLatest] = useState(false)
+  const [listLoading, setListLoading] = useState(true)
+  const [listError, setListError] = useState<string | null>(null)
 
   const fetchAnalisis = useCallback(
     async (autoOpenLatest = false) => {
       try {
-        const res = await fetch(`${API_URL}/analisis/`)
-        console.log('fetchAnalisis res.ok:', res.ok)
+        const res = await fetchWithTimeout(`${API_URL}/analisis/`)
+        setListError(res.ok ? null : 'No se pudo cargar la lista de análisis. Intenta de nuevo.')
         if (res.ok) {
           const data: AnalisisSummary[] = await res.json()
-          console.log('fetchAnalisis data:', data)
           setAnalisisList(data)
 
           const latestMortalidad = data.find((item) => item.tipo === 'mortalidad')
@@ -38,7 +39,9 @@ export function useAnalysisList(onAutoOpen?: (tipo: string, id: number) => void)
         }
       } catch (e) {
         console.error('Error fetching analisis:', e)
-        /* backend puede no estar activo */
+        setListError(describeNetworkError(e, 'No se pudo conectar con el servidor. Verifica que el backend esté activo.'))
+      } finally {
+        setListLoading(false)
       }
     },
     [hasAutoOpenedLatest, onAutoOpen, selectedAnalisisId],
@@ -61,5 +64,7 @@ export function useAnalysisList(onAutoOpen?: (tipo: string, id: number) => void)
     latestMortalidad,
     latestMorbilidad,
     fetchAnalisis,
+    listLoading,
+    listError,
   }
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Login.css'
-import { API_URL } from '../api'
+import { API_URL, describeNetworkError, extractErrorMessage, fetchWithTimeout } from '../api'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import LogoIcon from './LogoIcon'
@@ -34,14 +34,14 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
     setError('')
     setIsLoading(true)
     try {
-      const res = await fetch(`${API_URL}/auth/register/`, {
+      const res = await fetchWithTimeout(`${API_URL}/auth/register/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nombre: data.nombre, email: data.email, password: data.password }),
       })
-      const responseData: RegisterResponse = await res.json()
+      const responseData: RegisterResponse | null = await res.json().catch(() => null)
       if (!res.ok) {
-        setError(responseData.detail || responseData.error || 'Error al crear la cuenta.')
+        setError(extractErrorMessage(responseData, 'Error al crear la cuenta.'))
         return
       }
       setSuccess(true)
@@ -49,8 +49,8 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
         if (onRegistered) onRegistered()
         else navigate('/login')
       }, 1500)
-    } catch {
-      setError('No se pudo conectar al servidor. Verifica que el backend esté activo.')
+    } catch (err) {
+      setError(describeNetworkError(err, 'No se pudo conectar al servidor. Verifica que el backend esté activo.'))
     } finally {
       setIsLoading(false)
     }

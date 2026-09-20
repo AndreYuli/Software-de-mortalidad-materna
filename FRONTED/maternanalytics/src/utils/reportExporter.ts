@@ -154,6 +154,16 @@ export function exportToCsv(filename: string, headers: string[], rows: (string |
   URL.revokeObjectURL(url)
 }
 
+/** Escapa texto que proviene de celdas del Excel antes de interpolarlo en HTML (evita inyección en la ventana del PDF). */
+function escapeHtml(value: unknown): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 /**
  * Abre una ventana con un informe clínico/epidemiológico formal listo para imprimir o guardar como PDF.
  */
@@ -168,7 +178,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
     .map((c, i) => {
       const val = data.causasPrincipales.valores[i] || 0
       return `<tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;"><b>${c}</b> - ${getCie10Description(c)}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;"><b>${escapeHtml(c)}</b> - ${escapeHtml(getCie10Description(c))}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${val}</td>
       </tr>`
     })
@@ -178,7 +188,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
     .map((d, i) => {
       const val = data.demoras.valores[i] || 0
       return `<tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${d}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${escapeHtml(d)}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${val}</td>
       </tr>`
     })
@@ -189,7 +199,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
       const mort = data.distribucionEdad.mortalidad[i] || 0
       const morb = data.distribucionEdad.morbilidad[i] || 0
       return `<tr>
-        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${g} años</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${escapeHtml(g)} años</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${mort}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${morb}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${mort + morb}</td>
@@ -202,7 +212,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>${data.titulo} - VidaMaterna</title>
+  <title>${escapeHtml(data.titulo)} - VidaMaterna</title>
   <style>
     @page {
       size: A4;
@@ -404,7 +414,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
       ? `
   <div class="ai-box">
     <div class="ai-box-title">✨ Resumen Ejecutivo de Inteligencia Epidemiológica (IA)</div>
-    <p>${data.aiSummary}</p>
+    <p>${escapeHtml(data.aiSummary)}</p>
   </div>`
       : ''
   }

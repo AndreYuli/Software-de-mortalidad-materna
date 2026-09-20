@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './components/Login'
 import Register from './components/Register'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const DashboardOKD = lazy(() => import('./components/DashboardOKD'))
 
@@ -24,6 +25,7 @@ function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <BrowserRouter>
+      <ErrorBoundary>
       <Suspense
         fallback={
           <div
@@ -105,6 +107,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

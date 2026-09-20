@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   exportReportToExcel,
   exportToCsv,
@@ -15,11 +15,22 @@ export interface ExportReportModalProps {
 export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, reportData }) => {
   const [selectedFormat, setSelectedFormat] = useState<'excel' | 'pdf' | 'csv'>('excel')
   const [isExporting, setIsExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
   const handleExport = () => {
     setIsExporting(true)
+    setExportError(null)
     try {
       if (selectedFormat === 'excel') {
         exportReportToExcel(reportData)
@@ -39,6 +50,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
       }, 400)
     } catch (err) {
       console.error('Error al exportar reporte:', err)
+      setExportError('No se pudo generar el reporte. Intenta de nuevo o elige otro formato.')
       setIsExporting(false)
     }
   }
@@ -62,6 +74,9 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Exportar reporte epidemiológico"
         style={{
           background: '#ffffff',
           borderRadius: '18px',
@@ -85,6 +100,8 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
           </div>
           <button
             onClick={onClose}
+            type="button"
+            aria-label="Cerrar"
             style={{
               background: '#f1f5f9',
               border: 'none',
@@ -237,6 +254,12 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
             </div>
           </label>
         </div>
+
+        {exportError && (
+          <p role="alert" style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#b91c1c' }}>
+            {exportError}
+          </p>
+        )}
 
         {/* Buttons */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
