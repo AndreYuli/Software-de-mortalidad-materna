@@ -324,7 +324,7 @@ Aprovechar la infraestructura local desplegada de Ollama, mostrando el texto gen
 - [ ] Rejilla de 2 columnas ≥ 1024 px, 1 columna en móvil; gráficos de igual altura por fila.
 - [ ] Sin `style={{}}` nuevos ni hex sueltos; tipografía y colores según DESIGN §2.
 - [ ] Verificación visual a 375/768/1280 px con capturas.
-- [ ] Relacionado: al cambiar la variable del cruce, el eje X debe reflejar esa variable (`notes/notas.md`) — especificar en tarea aparte tras revisar `CruceVariablesSection.tsx`.
+- [x] (Resuelto en TASK-003) Relacionado: al cambiar la variable del cruce, el eje X debe reflejar esa variable (`notes/notas.md`) — especificar en tarea aparte tras revisar `CruceVariablesSection.tsx`.
 
 ---
 
