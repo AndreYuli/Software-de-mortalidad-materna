@@ -60,7 +60,8 @@ describe('rutas de App', () => {
     localStorage.setItem('token', 'abc')
     window.history.pushState({}, '', '/')
     const { unmount } = render(<App />)
-    expect((await screen.findByTestId('vista')).textContent).toBe('analisis')
+    // Primera carga en frío del layout diferido (lazy): puede superar el 1 s por defecto.
+    expect((await screen.findByTestId('vista', {}, { timeout: 5000 })).textContent).toBe('analisis')
     unmount()
 
     window.history.pushState({}, '', '/dashboard')
