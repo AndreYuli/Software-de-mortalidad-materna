@@ -9,7 +9,7 @@ Uso (desde backend/):
 import sys
 from pathlib import Path
 
-import requests
+import httpx
 
 API_URL = 'http://localhost:8000/api'
 EMAIL = 'e2e@vidamaterna.co'
@@ -25,12 +25,12 @@ _XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 def main() -> int:
     """Registra (si hace falta) al usuario de pruebas y sube los dos Excels."""
     # 201 si se crea; 400 si ya existía: ambos valen.
-    requests.post(
+    httpx.post(
         f'{API_URL}/auth/register/',
         json={'nombre': 'Usuario E2E', 'email': EMAIL, 'password': PASSWORD},
         timeout=30,
     )
-    login = requests.post(
+    login = httpx.post(
         f'{API_URL}/auth/login/', json={'email': EMAIL, 'password': PASSWORD}, timeout=30
     )
     login.raise_for_status()
@@ -38,7 +38,7 @@ def main() -> int:
 
     for tipo, ruta in _ARCHIVOS:
         with open(ruta, 'rb') as fh:
-            respuesta = requests.post(
+            respuesta = httpx.post(
                 f'{API_URL}/analisis/',
                 data={'tipo': tipo},
                 files={'archivo': (ruta.name, fh, _XLSX)},

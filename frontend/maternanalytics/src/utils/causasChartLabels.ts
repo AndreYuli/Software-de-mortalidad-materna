@@ -20,10 +20,10 @@ export const wrapLabel = (text: string, maxLen: number = 45): string | string[] 
   return lines
 }
 
-export const calculateChartHeight = (labels: string[]): number => {
+export const calculateChartHeight = (labels: string[], maxLen: number = 45): number => {
   if (labels.length === 0) return MIN_CHART_HEIGHT
   const totalBarsHeight = labels.reduce((sum, label) => {
-    const wrapped = wrapLabel(label)
+    const wrapped = wrapLabel(label, maxLen)
     const lineCount = Array.isArray(wrapped) ? wrapped.length : 1
     return sum + MIN_BAR_HEIGHT + lineCount * LINE_HEIGHT
   }, 0)

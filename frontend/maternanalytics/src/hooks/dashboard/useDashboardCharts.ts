@@ -79,7 +79,7 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
       labels: sorted.map((c) => getCie10Description(c.codigo)),
       values: sorted.map((c) => c.casos),
       colors: sorted.map(() => CHART_COLORS.mortalidad),
-      total: mortalidadData?.total_registros ?? 0,
+      total: mortalidadData?.estadisticas_basicas?.total_casos ?? mortalidadData?.total_registros ?? 0,
     }
   }, [segmento, mortalidadData])
 
@@ -93,7 +93,7 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
       labels: sorted.map((c) => getCie10Description(c.codigo)),
       values: sorted.map((c) => c.casos),
       colors: sorted.map(() => CHART_COLORS.morbilidad),
-      total: morbilidadData?.total_registros ?? 0,
+      total: morbilidadData?.estadisticas_basicas?.total_casos ?? morbilidadData?.total_registros ?? 0,
     }
   }, [segmento, morbilidadData])
 

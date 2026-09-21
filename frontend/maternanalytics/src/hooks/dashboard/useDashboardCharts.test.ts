@@ -39,7 +39,7 @@ describe('useDashboardCharts — sociodemografica por evento', () => {
 
 function fixtureConCausas(causas: [string, number][], totalRegistros: number): AnalisisCompleto {
   return {
-    total_registros: totalRegistros,
+    estadisticas_basicas: { total_casos: totalRegistros },
     causas_cie10: {
       top_causas: causas.map(([codigo, casos]) => ({ codigo, casos })),
       total_causas_unicas: causas.length,

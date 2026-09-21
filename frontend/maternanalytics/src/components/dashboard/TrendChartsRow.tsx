@@ -8,6 +8,7 @@ import { getTopCausasAiInsight } from '../../utils/aiChartInsights'
 import { calculateChartHeight, wrapLabel } from '../../utils/causasChartLabels'
 import { chartHeightClass } from '../../utils/chartHeight'
 import { describeSeries } from '../../utils/chartA11y'
+import { useMediaQuery } from '../../hooks/useMediaQuery'
 
 export interface TopCausasChartData {
   labels: string[]
@@ -32,6 +33,12 @@ export interface TrendChartsRowProps {
 // — pendiente si se necesita soportar pantallas más angostas.
 const Y_AXIS_WIDTH_SAFETY_MARGIN = 70
 
+// En pantallas estrechas las etiquetas se parten antes y se quita el margen fijo del eje Y
+// (con ~300 px de gráfica, etiquetas de 45 caracteres más el margen dejaban el eje recortado).
+const MAX_LABEL_LEN_DESKTOP = 45
+const MAX_LABEL_LEN_NARROW = 16
+const NARROW_QUERY = '(max-width: 640px)'
+
 interface CausasBarChartProps {
   title: string
   eyebrow: string
@@ -41,17 +48,19 @@ interface CausasBarChartProps {
 }
 
 function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasBarChartProps) {
+  const narrow = useMediaQuery(NARROW_QUERY)
+  const maxLen = narrow ? MAX_LABEL_LEN_NARROW : MAX_LABEL_LEN_DESKTOP
   const plugins = useMemo(() => [barValueLabelsPlugin(data.total ?? 0)], [data.total])
   return (
     <ChartCard title={title} eyebrow={eyebrow} insight={insight}>
       {data.values.length > 0 ? (
-        <div className={chartHeightClass(calculateChartHeight(data.labels))}>
+        <div className={chartHeightClass(calculateChartHeight(data.labels, maxLen))}>
           <Bar
             plugins={plugins}
             role="img"
             aria-label={describeSeries(title, data.labels, data.values)}
             data={{
-              labels: data.labels.map((l) => wrapLabel(l)),
+              labels: data.labels.map((l) => wrapLabel(l, maxLen)),
               datasets: [
                 {
                   data: data.values,
@@ -64,14 +73,14 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
               responsive: true,
               maintainAspectRatio: false,
               indexAxis: 'y' as const,
-              layout: { padding: { right: 84 } },
+              layout: { padding: { right: narrow ? 76 : 84 } },
               plugins: {
                 legend: { display: false },
                 tooltip: {
                   callbacks: {
                     title: (items: TooltipItem<'bar'>[]) => {
                       const idx = items[0]?.dataIndex
-                      return idx !== undefined ? wrapLabel(data.labels[idx]) : ''
+                      return idx !== undefined ? wrapLabel(data.labels[idx], maxLen) : ''
                     },
                   },
                 },
@@ -80,8 +89,10 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
                 x: { title: { display: true, text: 'Casos' }, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
                 y: {
                   grid: { display: false },
+                  // Sin esto Chart.js omite etiquetas cuando las filas quedan juntas (móvil).
+                  ticks: { autoSkip: false, font: { size: narrow ? 10 : 12 } },
                   afterFit: (scale: Scale) => {
-                    scale.width += Y_AXIS_WIDTH_SAFETY_MARGIN
+                    if (!narrow) scale.width += Y_AXIS_WIDTH_SAFETY_MARGIN
                   },
                 },
               },

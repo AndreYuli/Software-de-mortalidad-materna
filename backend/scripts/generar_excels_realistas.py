@@ -101,8 +101,34 @@ _EDADES_MORBILIDAD = {
     39: 7,
 }
 # Semanas de gestación: más casos a término (37-41) que en el resto.
+# Textos exactos de cat_sitio_defuncion (el generador base usa variantes que la carga rechaza).
+_SITIOS_DEFUNCION = {
+    'IPS (hospital/clínica)': 70,
+    'IPS (centro/puesto de salud)': 8,
+    'Domicilio': 10,
+    'Durante el traslado': 7,
+    'Vía pública': 2,
+    'Lugar de trabajo': 1,
+    'Otro': 2,
+}
 _SEMANAS = list(range(20, 43))
 _PESOS_SEMANAS = [1 if s < 28 else 2 if s < 37 else 4 if s < 42 else 1 for s in _SEMANAS]
+
+
+def _reparto_proporcional(rng: random.Random, pesos: dict[str, float], n: int) -> list[str]:
+    """Reparte `n` elementos según los pesos (método del mayor resto) y los mezcla.
+
+    Con muestras pequeñas (60 muertes) `random.choices` deja el orden de las causas al azar.
+    """
+    total = sum(pesos.values())
+    cuotas = {k: n * v / total for k, v in pesos.items()}
+    conteos = {k: int(c) for k, c in cuotas.items()}
+    faltan = n - sum(conteos.values())
+    for k in sorted(cuotas, key=lambda k: cuotas[k] - conteos[k], reverse=True)[:faltan]:
+        conteos[k] += 1
+    lista = [k for k, c in conteos.items() for _ in range(c)]
+    rng.shuffle(lista)
+    return lista
 
 
 def _fechas(rng: random.Random, n: int) -> list[date]:
@@ -138,8 +164,9 @@ def generar_mortalidad_realista(n: int, rng: random.Random) -> pd.DataFrame:
         rng.getrandbits(32)
     )  # las funciones base usan el generador global: se fija desde `rng`
     df = base.generar_mortalidad(n)
-    df['10.1 Causa básica CIE-10'] = rng.choices(
-        list(_CAUSAS_MORTALIDAD), weights=list(_CAUSAS_MORTALIDAD.values()), k=n
+    df['10.1 Causa básica CIE-10'] = _reparto_proporcional(rng, _CAUSAS_MORTALIDAD, n)
+    df['5.1 Sitio de Defunción'] = rng.choices(
+        list(_SITIOS_DEFUNCION), weights=list(_SITIOS_DEFUNCION.values()), k=n
     )
     df['9.2 Semana gestación'] = rng.choices(_SEMANAS, weights=_PESOS_SEMANAS, k=n)
     _aplicar_fechas_y_edades(df, rng, '5.2 Fecha de defunción', _EDADES_MORTALIDAD)
