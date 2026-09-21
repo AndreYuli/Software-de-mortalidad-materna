@@ -68,6 +68,8 @@ export const CATEGORICAL_PALETTE = [
 /** Barras delgadas: horizontales (muchas categorías) y verticales (pocas barras). */
 export const BAR_STYLE_HORIZONTAL = { borderRadius: 4, borderWidth: 0, maxBarThickness: 16, barPercentage: 0.6 }
 export const BAR_STYLE_VERTICAL = { borderRadius: 4, borderWidth: 0, maxBarThickness: 40 }
+/** Barras agrupadas (varias series por categoría): casi sin hueco dentro del grupo para no quedar demasiado finas. */
+export const BAR_STYLE_GROUPED = { ...BAR_STYLE_HORIZONTAL, barPercentage: 0.9 }
 
 ChartJS.defaults.font.family = CHART_FONT_FAMILY
 ChartJS.defaults.color = CHART_TEXT_COLOR

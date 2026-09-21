@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import type { Scale } from 'chart.js'
-import { BAR_STYLE_HORIZONTAL, CATEGORICAL_PALETTE, CHART_FONT_FAMILY } from '../../constants/chartTheme'
+import { BAR_STYLE_GROUPED, CATEGORICAL_PALETTE, CHART_FONT_FAMILY } from '../../constants/chartTheme'
 import { ChartCard } from './ChartCard'
-import { calculateChartHeight, wrapLabel } from '../../utils/causasChartLabels'
-import { chartHeightClass } from '../../utils/chartHeight'
+import { wrapLabel } from '../../utils/causasChartLabels'
+import { calculateGroupedChartHeight, chartHeightClass } from '../../utils/chartHeight'
 import { describeMatrix } from '../../utils/chartA11y'
 import { getCruceAiInsight } from '../../utils/aiChartInsights'
 import { getCruceLabels } from '../../utils/cruceLabels'
@@ -127,7 +127,7 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
       )}
 
       {!loading && !error && data && data.total > 0 && (
-        <div className={chartHeightClass(calculateChartHeight(data.categorias_socio))}>
+        <div className={chartHeightClass(calculateGroupedChartHeight(data.categorias_socio, data.categorias_clinica.length))}>
           <Bar
             role="img"
             aria-label={describeMatrix(labels.title, data.categorias_socio, data.categorias_clinica, data.matriz)}
@@ -137,7 +137,7 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
                 label: cat,
                 data: data.categorias_socio.map((_, i) => data.matriz[i][j]),
                 backgroundColor: CATEGORICAL_PALETTE[j % CATEGORICAL_PALETTE.length],
-                ...BAR_STYLE_HORIZONTAL,
+                ...BAR_STYLE_GROUPED,
               })),
             }}
             options={{

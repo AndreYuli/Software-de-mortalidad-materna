@@ -8,6 +8,7 @@ import {
   CATEGORICAL_PALETTE,
   BAR_STYLE_HORIZONTAL,
   BAR_STYLE_VERTICAL,
+  BAR_STYLE_GROUPED,
 } from './chartTheme'
 
 describe('chartTheme', () => {
@@ -34,5 +35,7 @@ describe('chartTheme', () => {
     expect(new Set(CATEGORICAL_PALETTE).size).toBe(8)
     expect(BAR_STYLE_HORIZONTAL).toMatchObject({ borderWidth: 0, maxBarThickness: 16, barPercentage: 0.6 })
     expect(BAR_STYLE_VERTICAL).toMatchObject({ borderWidth: 0, maxBarThickness: 40 })
+    // Barras agrupadas (varias series por categoría): mismo grosor máximo pero casi sin hueco dentro del grupo.
+    expect(BAR_STYLE_GROUPED).toMatchObject({ borderWidth: 0, maxBarThickness: 16, barPercentage: 0.9 })
   })
 })

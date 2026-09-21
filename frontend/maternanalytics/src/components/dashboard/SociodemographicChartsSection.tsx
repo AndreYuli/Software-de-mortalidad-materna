@@ -127,7 +127,7 @@ export function SociodemographicChartsSection({ data, evento }: Sociodemographic
 
   return (
     <section className="flex flex-col gap-4">
-      <h3 className="text-lg font-semibold text-brand-deep">Factores Sociodemográficos ({evento})</h3>
+      <h2 className="text-xl font-bold text-brand-deep">Factores Sociodemográficos ({evento})</h2>
       <div data-testid="sociodemographic-grid" className="grid gap-6 lg:grid-cols-2">
         {variables.map((v) => {
           const item = data[v.key]
