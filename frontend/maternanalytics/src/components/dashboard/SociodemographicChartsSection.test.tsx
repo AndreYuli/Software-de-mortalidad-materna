@@ -27,4 +27,16 @@ describe('SociodemographicChartsSection', () => {
     render(<SociodemographicChartsSection data={{}} evento="Mortalidad" />)
     expect(screen.getByText(/No hay datos sociodemográficos disponibles/)).toBeInTheDocument()
   })
+
+  it('no rompe la vista si una variable tiene total positivo pero valores vacíos o inválidos', () => {
+    const data = {
+      zona_residencia: { labels: undefined as any, valores: undefined as any, total: 1 },
+      poblacion_vulnerable: { labels: [], valores: [], total: 0 },
+      etnia: { labels: [], valores: [], total: 0 },
+      tipo_afiliacion: { labels: [], valores: [], total: 0 },
+    }
+
+    expect(() => render(<SociodemographicChartsSection data={data} evento="Mortalidad" />)).not.toThrow()
+    expect(screen.getByText(/No hay datos sociodemográficos disponibles/)).toBeInTheDocument()
+  })
 })

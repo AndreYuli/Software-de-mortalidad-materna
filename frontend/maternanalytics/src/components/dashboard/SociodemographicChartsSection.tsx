@@ -13,26 +13,51 @@ const TITLES: Record<string, string> = {
   tipo_afiliacion: 'Tipo de Afiliación',
 }
 
+function normalizeSociodemographicSeries(labels: unknown, valores: unknown) {
+  const safeLabels: string[] = Array.isArray(labels)
+    ? labels
+        .map((label) => (typeof label === 'string' ? label.trim() : String(label ?? '').trim()))
+        .filter((label) => label.length > 0)
+    : []
+
+  const safeValues: number[] = Array.isArray(valores)
+    ? valores.map((value) => Number(value)).filter((value) => Number.isFinite(value))
+    : []
+
+  const pairs = safeLabels
+    .map((label, index) => ({ label, value: safeValues[index] }))
+    .filter(({ value }) => Number.isFinite(value))
+
+  return {
+    labels: pairs.map((pair) => pair.label),
+    valores: pairs.map((pair) => pair.value),
+  }
+}
+
 const INSIGHTS: Record<string, (labels: string[], valores: number[]) => string> = {
   zona_residencia: (labels, valores) => {
     if (!labels.length) return 'Sin datos de zona de residencia.'
-    const max = labels[valores.indexOf(Math.max(...valores))]
-    return `La zona ${max} concentra la mayor parte de los casos. Revise si hay correlación con tiempos de remisión y acceso a controles prenatales.`
+    const maxValue = Math.max(...valores)
+    const maxLabel = labels[valores.indexOf(maxValue)] ?? labels[0]
+    return `La zona ${maxLabel} concentra la mayor parte de los casos. Revise si hay correlación con tiempos de remisión y acceso a controles prenatales.`
   },
   poblacion_vulnerable: (labels, valores) => {
     if (!labels.length) return 'Sin datos de población vulnerable.'
-    const max = labels[valores.indexOf(Math.max(...valores))]
-    return `La categoría "${max}" es la más frecuente. Considere barreras de acceso diferenciadas para este grupo.`
+    const maxValue = Math.max(...valores)
+    const maxLabel = labels[valores.indexOf(maxValue)] ?? labels[0]
+    return `La categoría "${maxLabel}" es la más frecuente. Considere barreras de acceso diferenciadas para este grupo.`
   },
   etnia: (labels, valores) => {
     if (!labels.length) return 'Sin datos de etnia.'
-    const max = labels[valores.indexOf(Math.max(...valores))]
-    return `El grupo "${max}" predomina en los registros. Verifique si hay subregistro en comunidades con menor acceso a servicios.`
+    const maxValue = Math.max(...valores)
+    const maxLabel = labels[valores.indexOf(maxValue)] ?? labels[0]
+    return `El grupo "${maxLabel}" predomina en los registros. Verifique si hay subregistro en comunidades con menor acceso a servicios.`
   },
   tipo_afiliacion: (labels, valores) => {
     if (!labels.length) return 'Sin datos de tipo de afiliación.'
-    const max = labels[valores.indexOf(Math.max(...valores))]
-    return `El régimen "${max}" es el más reportado. Analice posibles diferencias en oportunidad y calidad de atención por tipo de afiliación.`
+    const maxValue = Math.max(...valores)
+    const maxLabel = labels[valores.indexOf(maxValue)] ?? labels[0]
+    return `El régimen "${maxLabel}" es el más reportado. Analice posibles diferencias en oportunidad y calidad de atención por tipo de afiliación.`
   },
 }
 
@@ -49,7 +74,9 @@ function SociodemographicBarChart({
   valores: number[]
   total: number
 }) {
-  if (!labels.length || total === 0) {
+  const safeSeries = normalizeSociodemographicSeries(labels, valores)
+
+  if (!safeSeries.labels.length || total === 0 || safeSeries.valores.length === 0) {
     return (
       <ChartCard title={title}>
         <p className="text-sm text-slate-500">Sin datos suficientes para esta gráfica.</p>
@@ -57,19 +84,19 @@ function SociodemographicBarChart({
     )
   }
 
-  const insightText = INSIGHTS[insightKey]?.(labels, valores) ?? null
+  const insightText = INSIGHTS[insightKey]?.(safeSeries.labels, safeSeries.valores) ?? null
 
   return (
     <ChartCard title={title} description={`Total: ${total} casos con dato registrado`} insight={insightText}>
-      <div className={chartHeightClass(calculateChartHeight(labels))}>
+      <div className={chartHeightClass(calculateChartHeight(safeSeries.labels))}>
         <Bar
           role="img"
-          aria-label={describeSeries(title, labels, valores)}
+          aria-label={describeSeries(title, safeSeries.labels, safeSeries.valores)}
           data={{
-            labels: labels.map((l) => wrapLabel(l)),
+            labels: safeSeries.labels.map((l) => wrapLabel(l)),
             datasets: [
               {
-                data: valores,
+                data: safeSeries.valores,
                 backgroundColor: BRAND_COLOR,
                 ...BAR_STYLE_HORIZONTAL,
               },
@@ -116,7 +143,12 @@ export function SociodemographicChartsSection({ data, evento, leading }: Sociode
     { key: 'tipo_afiliacion', label: TITLES.tipo_afiliacion },
   ]
 
-  const hasAnyData = variables.some((v) => data[v.key] && data[v.key].total > 0)
+  const hasAnyData = variables.some((v) => {
+    const item = data[v.key]
+    if (!item || Number(item.total) <= 0) return false
+    const safeSeries = normalizeSociodemographicSeries(item.labels, item.valores)
+    return safeSeries.labels.length > 0 && safeSeries.valores.length > 0
+  })
 
   if (!hasAnyData) {
     return (
@@ -135,14 +167,17 @@ export function SociodemographicChartsSection({ data, evento, leading }: Sociode
         {leading}
         {variables.map((v) => {
           const item = data[v.key]
-          if (!item || item.total === 0) return null
+          if (!item || Number(item.total) <= 0) return null
+          const safeSeries = normalizeSociodemographicSeries(item.labels, item.valores)
+          if (!safeSeries.labels.length || !safeSeries.valores.length) return null
+
           return (
             <SociodemographicBarChart
               key={v.key}
               title={v.label}
               insightKey={v.key}
-              labels={item.labels}
-              valores={item.valores}
+              labels={safeSeries.labels}
+              valores={safeSeries.valores}
               total={item.total}
             />
           )
