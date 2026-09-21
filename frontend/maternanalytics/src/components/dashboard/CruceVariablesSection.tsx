@@ -1,14 +1,18 @@
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import type { Scale } from 'chart.js'
-import { CHART_FONT_FAMILY } from '../../constants/chartTheme'
-import { ChartAiInsight } from './ChartAiInsight'
-import { wrapLabel } from '../../utils/causasChartLabels'
+import { BAR_STYLE_HORIZONTAL, CATEGORICAL_PALETTE, CHART_FONT_FAMILY } from '../../constants/chartTheme'
+import { ChartCard } from './ChartCard'
+import { calculateChartHeight, wrapLabel } from '../../utils/causasChartLabels'
+import { chartHeightClass } from '../../utils/chartHeight'
+import { describeMatrix } from '../../utils/chartA11y'
 import { getCruceAiInsight } from '../../utils/aiChartInsights'
 import { getCruceLabels } from '../../utils/cruceLabels'
 import { useCruceVariables } from '../../hooks/dashboard/useCruceVariables'
 
-const CRUCE_PALETTE = ['#6366f1', '#f472b6', '#34d399', '#fbbf24', '#38bdf8', '#fb923c', '#a78bfa', '#f87171']
+const LABEL_CLASS = 'mb-1 block text-xs font-medium text-slate-500'
+const SELECT_CLASS =
+  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand-magenta focus:ring-2 focus:ring-brand-magenta/30'
 
 const VARIABLES_SOCIO = [
   { key: 'zona_residencia', label: 'Zona de residencia' },
@@ -61,112 +65,113 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
   const labels = useMemo(() => getCruceLabels(varSocioLabel, varClinicaLabel), [varSocioLabel, varClinicaLabel])
 
   return (
-    <div className="chart-card-col-12">
-      <h3 className="chart-card-title">Cruce de Variables ({evento})</h3>
-      <p>
-        Compare una variable sociodemográfica con una clínica para identificar combinaciones de mayor riesgo.
-      </p>
-
-      <div>
+    <ChartCard
+      title={`Cruce de Variables (${evento})`}
+      description="Compare una variable sociodemográfica con una clínica para identificar combinaciones de mayor riesgo."
+      insight={!loading && !error && data && data.total > 0 ? insight : null}
+    >
+      <div className="mb-4 grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="field-label" htmlFor={`cruce-socio-${evento}`}>
+          <label className={LABEL_CLASS} htmlFor={`cruce-socio-${evento}`}>
             Variable sociodemográfica
           </label>
-          <div className="custom-select-wrapper">
-            <select
-              id={`cruce-socio-${evento}`}
-              className="sidebar-select"
-              value={varSocio}
-              onChange={(e) => setVarSocio(e.target.value)}
-            >
-              {VARIABLES_SOCIO.map((v) => (
-                <option key={v.key} value={v.key}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            id={`cruce-socio-${evento}`}
+            className={SELECT_CLASS}
+            value={varSocio}
+            onChange={(e) => setVarSocio(e.target.value)}
+          >
+            {VARIABLES_SOCIO.map((v) => (
+              <option key={v.key} value={v.key}>
+                {v.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
-          <label className="field-label" htmlFor={`cruce-clinica-${evento}`}>
+          <label className={LABEL_CLASS} htmlFor={`cruce-clinica-${evento}`}>
             Variable clínica
           </label>
-          <div className="custom-select-wrapper">
-            <select
-              id={`cruce-clinica-${evento}`}
-              className="sidebar-select"
-              value={varClinica}
-              onChange={(e) => setVarClinica(e.target.value)}
-            >
-              {variablesClinicas.map((v) => (
-                <option key={v.key} value={v.key}>
-                  {v.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <select
+            id={`cruce-clinica-${evento}`}
+            className={SELECT_CLASS}
+            value={varClinica}
+            onChange={(e) => setVarClinica(e.target.value)}
+          >
+            {variablesClinicas.map((v) => (
+              <option key={v.key} value={v.key}>
+                {v.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {loading && <p>Calculando cruce…</p>}
+      {loading && (
+        <p role="status" className="text-sm text-slate-500">
+          Calculando cruce…
+        </p>
+      )}
 
-      {!loading && error && <p>{error}</p>}
+      {!loading && error && (
+        <p role="alert" className="text-sm text-red-700">
+          {error}
+        </p>
+      )}
 
       {!loading && !error && (!data || data.total === 0) && (
-        <p>
+        <p className="text-sm text-slate-500">
           No hay suficientes datos con ambas variables registradas para este cruce.
         </p>
       )}
 
       {!loading && !error && data && data.total > 0 && (
-        <>
-          <div>
-            <Bar
-              data={{
-                labels: data.categorias_socio.map((l) => wrapLabel(l)),
-                datasets: data.categorias_clinica.map((cat, j) => ({
-                  label: cat,
-                  data: data.categorias_socio.map((_, i) => data.matriz[i][j]),
-                  backgroundColor: CRUCE_PALETTE[j % CRUCE_PALETTE.length],
-                  borderColor: '#475569',
-                  borderWidth: 1,
-                })),
-              }}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y' as const,
-                plugins: {
-                  title: { display: true, text: labels.title, font: { family: CHART_FONT_FAMILY } },
-                  legend: {
-                    display: true,
-                    position: 'bottom',
-                    title: { display: true, text: labels.legend, font: { family: CHART_FONT_FAMILY } },
-                    labels: { font: { family: CHART_FONT_FAMILY } },
+        <div className={chartHeightClass(calculateChartHeight(data.categorias_socio))}>
+          <Bar
+            role="img"
+            aria-label={describeMatrix(labels.title, data.categorias_socio, data.categorias_clinica, data.matriz)}
+            data={{
+              labels: data.categorias_socio.map((l) => wrapLabel(l)),
+              datasets: data.categorias_clinica.map((cat, j) => ({
+                label: cat,
+                data: data.categorias_socio.map((_, i) => data.matriz[i][j]),
+                backgroundColor: CATEGORICAL_PALETTE[j % CATEGORICAL_PALETTE.length],
+                ...BAR_STYLE_HORIZONTAL,
+              })),
+            }}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              indexAxis: 'y' as const,
+              plugins: {
+                title: { display: true, text: labels.title, font: { family: CHART_FONT_FAMILY } },
+                legend: {
+                  display: true,
+                  position: 'bottom',
+                  title: { display: true, text: labels.legend, font: { family: CHART_FONT_FAMILY } },
+                  labels: { font: { family: CHART_FONT_FAMILY } },
+                },
+              },
+              scales: {
+                x: {
+                  title: { display: true, text: labels.xAxis, font: { family: CHART_FONT_FAMILY } },
+                  beginAtZero: true,
+                  ticks: { precision: 0 },
+                  grid: { color: 'rgba(0,0,0,0.05)' },
+                },
+                y: {
+                  title: { display: true, text: labels.yAxis, font: { family: CHART_FONT_FAMILY } },
+                  grid: { display: false },
+                  afterFit: (scale: Scale) => {
+                    scale.width += 70
                   },
                 },
-                scales: {
-                  x: {
-                    title: { display: true, text: labels.xAxis, font: { family: CHART_FONT_FAMILY } },
-                    beginAtZero: true,
-                    ticks: { precision: 0 },
-                    grid: { color: 'rgba(0,0,0,0.05)' },
-                  },
-                  y: {
-                    title: { display: true, text: labels.yAxis, font: { family: CHART_FONT_FAMILY } },
-                    grid: { display: false },
-                    afterFit: (scale: Scale) => {
-                      scale.width += 70
-                    },
-                  },
-                },
-              }}
-            />
-          </div>
-          <ChartAiInsight insight={insight} />
-        </>
+              },
+            }}
+          />
+        </div>
       )}
-    </div>
+    </ChartCard>
   )
 }
