@@ -4,7 +4,6 @@ import { MESES_ES } from '../../constants/dashboardConstants'
 import type { Segmento } from '../../hooks/dashboard/useDashboardMetrics'
 
 const SEMANAS_ISO = Array.from({ length: 53 }, (_, i) => i + 1)
-const DIAS_MES = Array.from({ length: 31 }, (_, i) => i + 1)
 
 const LABEL_CLASS = 'mb-1 block text-xs font-medium text-slate-500'
 const SELECT_CLASS =
@@ -22,8 +21,6 @@ export interface FiltersBarProps {
   onMonthChange: (month: string) => void
   filterWeek: string
   onWeekChange: (week: string) => void
-  filterDay: string
-  onDayChange: (day: string) => void
   onExport: () => void
 }
 
@@ -77,24 +74,21 @@ export function FiltersBar({
   onMonthChange,
   filterWeek,
   onWeekChange,
-  filterDay,
-  onDayChange,
   onExport,
 }: FiltersBarProps) {
   const [open, setOpen] = useState(false)
-  const hasActiveFilters = Boolean(filterYear || filterMonth || filterWeek || filterDay)
+  const hasActiveFilters = Boolean(filterYear || filterMonth || filterWeek)
 
   const handleClearFilters = () => {
     onYearChange('')
     onMonthChange('')
     onWeekChange('')
-    onDayChange('')
   }
 
   return (
     <section
       aria-label="Filtros del análisis"
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm lg:sticky lg:top-0 lg:z-10"
+      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
     >
       <div className="flex flex-wrap items-end gap-3">
         <button
@@ -176,22 +170,6 @@ export function FiltersBar({
             {SEMANAS_ISO.map((w) => (
               <option key={w} value={String(w)}>
                 Semana {w}
-              </option>
-            ))}
-          </SelectField>
-
-          <SelectField
-            id="filter-day"
-            label="Día de Reporte"
-            value={filterDay}
-            onChange={onDayChange}
-            disabled={!filterMonth}
-            hint={!filterMonth ? 'Selecciona un mes primero para habilitar días.' : undefined}
-          >
-            <option value="">Todos los días</option>
-            {DIAS_MES.map((d) => (
-              <option key={d} value={String(d)}>
-                {d}
               </option>
             ))}
           </SelectField>

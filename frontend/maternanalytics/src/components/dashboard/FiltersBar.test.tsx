@@ -10,35 +10,34 @@ const baseProps = {
   onMonthChange: vi.fn(),
   filterWeek: '',
   onWeekChange: vi.fn(),
-  filterDay: '',
-  onDayChange: vi.fn(),
   onExport: vi.fn(),
 }
 
 describe('FiltersBar', () => {
-  it('deshabilita semana y día cuando no hay año/mes seleccionados', () => {
+  it('deshabilita la semana cuando no hay año seleccionado', () => {
     render(<FiltersBar {...baseProps} />)
     expect(screen.getByLabelText('Semana de Reporte')).toBeDisabled()
-    expect(screen.getByLabelText('Día de Reporte')).toBeDisabled()
   })
 
-  it('habilita semana al seleccionar año, y día al seleccionar mes', () => {
+  it('habilita la semana al seleccionar año', () => {
     render(<FiltersBar {...baseProps} filterYear="2026" filterMonth="3" />)
     expect(screen.getByLabelText('Semana de Reporte')).not.toBeDisabled()
-    expect(screen.getByLabelText('Día de Reporte')).not.toBeDisabled()
   })
 
-  it('renderiza las 53 semanas ISO y los 31 días', () => {
+  it('renderiza las 53 semanas ISO', () => {
     render(<FiltersBar {...baseProps} filterYear="2026" filterMonth="3" />)
     expect(screen.getByText('Semana 53')).toBeInTheDocument()
-    expect(screen.getByLabelText('Día de Reporte').querySelectorAll('option')).toHaveLength(32) // 31 + "Todos los días"
   })
 
-  it('el botón Limpiar resetea los 4 filtros', () => {
+  it('ya no ofrece el filtro por día de reporte', () => {
+    render(<FiltersBar {...baseProps} filterYear="2026" filterMonth="3" />)
+    expect(screen.queryByLabelText('Día de Reporte')).not.toBeInTheDocument()
+  })
+
+  it('el botón Limpiar resetea año, mes y semana', () => {
     const onYearChange = vi.fn()
     const onMonthChange = vi.fn()
     const onWeekChange = vi.fn()
-    const onDayChange = vi.fn()
     render(
       <FiltersBar
         {...baseProps}
@@ -48,15 +47,17 @@ describe('FiltersBar', () => {
         onMonthChange={onMonthChange}
         filterWeek="11"
         onWeekChange={onWeekChange}
-        filterDay="15"
-        onDayChange={onDayChange}
       />,
     )
     fireEvent.click(screen.getByText('Limpiar'))
     expect(onYearChange).toHaveBeenCalledWith('')
     expect(onMonthChange).toHaveBeenCalledWith('')
     expect(onWeekChange).toHaveBeenCalledWith('')
-    expect(onDayChange).toHaveBeenCalledWith('')
+  })
+
+  it('la barra no queda fija al hacer scroll', () => {
+    render(<FiltersBar {...baseProps} />)
+    expect(screen.getByRole('region', { name: 'Filtros del análisis' }).className).not.toMatch(/sticky/)
   })
 
   it('no muestra Limpiar cuando no hay ningún filtro activo', () => {

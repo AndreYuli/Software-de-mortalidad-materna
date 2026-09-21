@@ -60,7 +60,6 @@ export function AnalysisHomeSection({
   onYearChange,
   onMonthChange,
   onWeekChange,
-  onDayChange,
   segmento,
   onSegmentoChange,
   tabs,
@@ -204,8 +203,6 @@ export function AnalysisHomeSection({
         onMonthChange={onMonthChange}
         filterWeek={filterWeek}
         onWeekChange={onWeekChange}
-        filterDay={filterDay}
-        onDayChange={onDayChange}
         onExport={handleExportReport}
       />
 
