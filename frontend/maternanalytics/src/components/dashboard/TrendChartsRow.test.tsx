@@ -24,4 +24,12 @@ describe('TrendChartsRow', () => {
     expect(screen.getByText('Sin registros de causas de mortalidad')).toBeInTheDocument()
     expect(screen.getByText('Sin registros de causas de morbilidad')).toBeInTheDocument()
   })
+
+  it('cada gráfica expone una descripción accesible con sus datos', () => {
+    render(<TrendChartsRow {...sampleProps} />)
+    expect(
+      screen.getByRole('img', { name: 'Top 10 Causas de Mortalidad. Preeclampsia Severa: 5' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Top 10 Causas de Morbilidad. Eclampsia: 3' })).toBeInTheDocument()
+  })
 })

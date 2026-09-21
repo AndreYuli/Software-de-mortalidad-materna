@@ -1,10 +1,12 @@
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import type { Scale, TooltipItem } from 'chart.js'
-import '../../constants/chartTheme'
-import { ChartAiInsight } from './ChartAiInsight'
+import { BAR_STYLE_HORIZONTAL } from '../../constants/chartTheme'
+import { ChartCard } from './ChartCard'
 import { getTopCausasAiInsight } from '../../utils/aiChartInsights'
-import { wrapLabel } from '../../utils/causasChartLabels'
+import { calculateChartHeight, wrapLabel } from '../../utils/causasChartLabels'
+import { chartHeightClass } from '../../utils/chartHeight'
+import { describeSeries } from '../../utils/chartA11y'
 
 export interface TopCausasChartData {
   labels: string[]
@@ -37,22 +39,19 @@ interface CausasBarChartProps {
 
 function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasBarChartProps) {
   return (
-    <article className="chart-card-col-12 epidemiology-chart-card">
-      <div className="chart-card-heading">
-        <span className="chart-card-eyebrow">{eyebrow}</span>
-        <h3 className="chart-card-title">{title}</h3>
-      </div>
-      <div>
-        {data.values.length > 0 ? (
+    <ChartCard title={title} eyebrow={eyebrow} insight={insight}>
+      {data.values.length > 0 ? (
+        <div className={chartHeightClass(calculateChartHeight(data.labels))}>
           <Bar
+            role="img"
+            aria-label={describeSeries(title, data.labels, data.values)}
             data={{
               labels: data.labels.map((l) => wrapLabel(l)),
               datasets: [
                 {
                   data: data.values,
                   backgroundColor: data.colors,
-                  borderColor: '#475569',
-                  borderWidth: 1,
+                  ...BAR_STYLE_HORIZONTAL,
                 },
               ],
             }}
@@ -82,14 +81,11 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
               },
             }}
           />
-        ) : (
-          <div>
-            {emptyMessage}
-          </div>
-        )}
-      </div>
-      <ChartAiInsight insight={insight} />
-    </article>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">{emptyMessage}</p>
+      )}
+    </ChartCard>
   )
 }
 
@@ -105,13 +101,15 @@ export function TrendChartsRow({ topCausasMortalidad, topCausasMorbilidad }: Tre
   )
 
   return (
-    <section className="causes-analysis-section" aria-label="Análisis de causas principales">
-      <div className="causes-section-header">
-        <span className="causes-section-kicker">Priorización clínica</span>
-        <h2>Causas principales notificadas</h2>
-        <p>Compare los diagnósticos líderes por evento antes de pasar a variables sociodemográficas o clínicas.</p>
+    <section className="flex flex-col gap-4" aria-label="Análisis de causas principales">
+      <div>
+        <span className="text-xs font-semibold uppercase tracking-wider text-brand-magenta">Priorización clínica</span>
+        <h2 className="text-xl font-bold text-brand-deep">Causas principales notificadas</h2>
+        <p className="text-sm text-slate-500">
+          Compare los diagnósticos líderes por evento antes de pasar a variables sociodemográficas o clínicas.
+        </p>
       </div>
-      <div className="charts-grid-row">
+      <div className="grid gap-6 lg:grid-cols-2">
         <CausasBarChart
           eyebrow="Evento 550"
           title="Top 10 Causas de Mortalidad"
