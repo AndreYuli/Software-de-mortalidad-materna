@@ -18,6 +18,7 @@ import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
 import { SociodemographicChartsSection } from './SociodemographicChartsSection'
 import { CruceVariablesSection } from './CruceVariablesSection'
 import { NarrativasResumen } from './NarrativasResumen'
+import { AiSummaryPanel } from './AiSummaryPanel'
 import { calcularIndicadores } from '../../utils/indicadoresMaternos'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
@@ -218,14 +219,6 @@ export function AnalysisHomeSection({
         periodo={filterMonth ? 'mes' : 'año'}
       />
 
-      <NarrativasResumen
-        latestMortalidad={latestMortalidad}
-        latestMorbilidad={latestMorbilidad}
-        segmento={segmento}
-        filterYear={filterYear}
-        filterMonth={filterMonth}
-      />
-
       {activeTab === 'generalidades' && (
         <TrendChartsRow topCausasMortalidad={topCausasMortalidad} topCausasMorbilidad={topCausasMorbilidad} />
       )}
@@ -269,6 +262,16 @@ export function AnalysisHomeSection({
           )}
         </>
       )}
+
+      <AiSummaryPanel>
+        <NarrativasResumen
+          latestMortalidad={latestMortalidad}
+          latestMorbilidad={latestMorbilidad}
+          segmento={segmento}
+          filterYear={filterYear}
+          filterMonth={filterMonth}
+        />
+      </AiSummaryPanel>
 
       <ExportReportModal
         isOpen={isExportModalOpen}
