@@ -5,7 +5,7 @@ import { useDashboardCharts } from '../../hooks/dashboard/useDashboardCharts'
 import { WelcomeState } from './WelcomeState'
 import { DashboardLoadingState } from './DashboardLoadingState'
 import { DashboardErrorState } from './DashboardErrorState'
-import { FiltersSidebar } from './FiltersSidebar'
+import { FiltersBar } from './FiltersBar'
 import { KpiRow } from './KpiRow'
 import { TrendChartsRow } from './TrendChartsRow'
 import { ExportReportModal } from './ExportReportModal'
@@ -265,7 +265,7 @@ export function AnalysisHomeSection({
           )}
         </div>
 
-        <FiltersSidebar
+        <FiltersBar
           segmento={segmento}
           onSegmentoChange={onSegmentoChange}
           latestMortalidad={latestMortalidad}
