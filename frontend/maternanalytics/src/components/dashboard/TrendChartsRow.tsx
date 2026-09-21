@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
 import type { Scale, TooltipItem } from 'chart.js'
+import { barValueLabelsPlugin } from '../../utils/barValueLabels'
 import { BAR_STYLE_HORIZONTAL } from '../../constants/chartTheme'
 import { ChartCard } from './ChartCard'
 import { getTopCausasAiInsight } from '../../utils/aiChartInsights'
@@ -40,11 +41,13 @@ interface CausasBarChartProps {
 }
 
 function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasBarChartProps) {
+  const plugins = useMemo(() => [barValueLabelsPlugin(data.total ?? 0)], [data.total])
   return (
     <ChartCard title={title} eyebrow={eyebrow} insight={insight}>
       {data.values.length > 0 ? (
         <div className={chartHeightClass(calculateChartHeight(data.labels))}>
           <Bar
+            plugins={plugins}
             role="img"
             aria-label={describeSeries(title, data.labels, data.values)}
             data={{
@@ -61,6 +64,7 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
               responsive: true,
               maintainAspectRatio: false,
               indexAxis: 'y' as const,
+              layout: { padding: { right: 84 } },
               plugins: {
                 legend: { display: false },
                 tooltip: {

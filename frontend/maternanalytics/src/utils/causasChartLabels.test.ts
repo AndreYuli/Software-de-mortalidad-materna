@@ -28,12 +28,16 @@ describe('calculateChartHeight', () => {
   })
 
   it('crece cuando las etiquetas ocupan más líneas', () => {
-    const etiquetasCortas = ['Eclampsia', 'Sepsis', 'Hemorragia']
-    const etiquetasLargas = [
-      'O14.9 Preeclampsia no especificada con complicaciones hepáticas y renales graves durante el tercer trimestre',
-      'O72.1 Hemorragia postparto inmediata secundaria a atonía uterina severa con compromiso hemodinámico',
-      'O99.4 Enfermedades del sistema circulatorio que complican el embarazo, el parto y el puerperio',
-    ]
+    const etiquetasCortas = Array.from({ length: 10 }, () => 'Eclampsia')
+    const etiquetasLargas = Array.from(
+      { length: 10 },
+      () => 'O14.9 Preeclampsia no especificada con complicaciones hepáticas y renales graves durante el tercer trimestre',
+    )
     expect(calculateChartHeight(etiquetasLargas)).toBeGreaterThan(calculateChartHeight(etiquetasCortas))
+  })
+
+  it('una barra de una línea ocupa unos 28 px y cada línea extra suma 20 px', () => {
+    const diez = Array.from({ length: 10 }, () => 'Eclampsia')
+    expect(calculateChartHeight(diez)).toBe(60 + 10 * 28)
   })
 })

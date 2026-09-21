@@ -1,5 +1,5 @@
-const LINE_HEIGHT = 28
-const MIN_BAR_HEIGHT = 32
+const LINE_HEIGHT = 20
+const MIN_BAR_HEIGHT = 8
 const AXIS_PADDING = 60
 const MIN_CHART_HEIGHT = 320
 
