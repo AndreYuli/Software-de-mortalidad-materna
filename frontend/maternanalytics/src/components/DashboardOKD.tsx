@@ -4,7 +4,7 @@ import { useDashboardData } from '../hooks/useDashboardData'
 import { Sidebar, type DashboardFileStatus, type FileIndicator } from './dashboard/Sidebar'
 import type { DashboardOutletContext } from './dashboard/DashboardViewRoute'
 import type { ActiveView } from '../hooks/navigation/useActiveView'
-import { MenuIcon } from './icons'
+import { Menu } from 'lucide-react'
 import { clearSession } from '../api'
 
 export type { DashboardFileStatus, FileIndicator }
@@ -45,19 +45,14 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
   }, [navigate, onLogout])
 
   return (
-    <div className="dashboard-okd-container">
-      <button
-        className="mobile-topbar-menu-btn"
-        onClick={() => setIsMobileNavOpen(true)}
-        title="Abrir menú"
-        aria-label="Abrir menú"
-        type="button"
-      >
-        <MenuIcon />
-      </button>
-
+    <div className="flex min-h-screen bg-slate-50">
       {isMobileNavOpen && (
-        <div className="sidebar-overlay" onClick={() => setIsMobileNavOpen(false)} />
+        <div
+          data-testid="sidebar-overlay"
+          aria-hidden="true"
+          className="fixed inset-0 z-30 bg-slate-900/40 lg:hidden"
+          onClick={() => setIsMobileNavOpen(false)}
+        />
       )}
 
       <Sidebar
@@ -79,12 +74,28 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
         onMobileClose={() => setIsMobileNavOpen(false)}
       />
 
-      <main className="main-content-okd">
-        <div className="content-area-okd">
-          <Outlet context={{ data, onNavigate: handleNavigate } satisfies DashboardOutletContext} />
-        </div>
-      </main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(true)}
+            title="Abrir menú"
+            aria-label="Abrir menú"
+            className="rounded-lg p-2 text-slate-600 hover:bg-slate-100"
+          >
+            <Menu className="size-5" aria-hidden="true" />
+          </button>
+          <span className="text-lg font-bold text-brand-deep">
+            Vida<span className="text-brand-magenta">Materna</span>
+          </span>
+        </header>
+
+        <main className="flex-1">
+          <div className="mx-auto w-full max-w-7xl p-4 lg:p-8">
+            <Outlet context={{ data, onNavigate: handleNavigate } satisfies DashboardOutletContext} />
+          </div>
+        </main>
+      </div>
     </div>
   )
 }
-
