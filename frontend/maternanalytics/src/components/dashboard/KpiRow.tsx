@@ -1,6 +1,7 @@
-import { TrendBadge } from './TrendBadge'
+import type { ReactNode } from 'react'
+import { Activity, Droplet, Hospital, Percent, TriangleAlert, type LucideIcon } from 'lucide-react'
+import { TrendBadge, type TrendPeriodo } from './TrendBadge'
 import type { CompareResult } from '../../hooks/dashboard/useDashboardMetrics'
-import { BloodDropIcon, HospitalIcon } from '../icons'
 
 export interface KpiRowProps {
   totalCasos: number
@@ -11,6 +12,43 @@ export interface KpiRowProps {
   prevTot: number
   yearCompareMort: CompareResult | null
   yearCompareMorb: CompareResult | null
+  periodo?: TrendPeriodo
+}
+
+const LETALIDAD_ALTA_TEXTO = 'Valor atípicamente alto'
+
+interface KpiCellProps {
+  icon: LucideIcon
+  label: string
+  value: string | number
+  trend?: ReactNode
+  alert?: boolean
+}
+
+function KpiCell({ icon: Icon, label, value, trend, alert = false }: KpiCellProps) {
+  return (
+    <div
+      className={`flex flex-col gap-2 p-5 ${alert ? 'bg-amber-50' : 'bg-white'}`}
+      title={alert ? LETALIDAD_ALTA_TEXTO : undefined}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
+            alert ? 'bg-amber-100 text-amber-700' : 'bg-brand-magenta/10 text-brand-magenta'
+          }`}
+        >
+          <Icon className="size-5" aria-hidden="true" />
+        </span>
+        <span className="text-sm font-medium text-slate-500">{label}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <strong className={`text-3xl font-bold ${alert ? 'text-amber-700' : 'text-brand-deep'}`}>{value}</strong>
+        {alert && <TriangleAlert className="size-5 text-amber-600" aria-hidden="true" />}
+        {alert && <span className="sr-only">{LETALIDAD_ALTA_TEXTO}</span>}
+        {trend}
+      </div>
+    </div>
+  )
 }
 
 export function KpiRow({
@@ -22,74 +60,35 @@ export function KpiRow({
   prevTot,
   yearCompareMort,
   yearCompareMorb,
+  periodo,
 }: KpiRowProps) {
   const letalidadNumerica = Number.parseFloat(tasaLetalidad)
   const shouldReviewLetalidad = Number.isFinite(letalidadNumerica) && letalidadNumerica >= 50
-  const dominantEventLabel =
-    totalMortalidad > totalMorbilidad
-      ? 'Predomina mortalidad registrada'
-      : totalMorbilidad > totalMortalidad
-        ? 'Predomina morbilidad extrema'
-        : 'Eventos equilibrados'
 
   return (
-    <section className="epidemiology-summary" aria-label="Resumen epidemiológico">
-      <div className="summary-priority-panel">
-        <div className="summary-priority-header">
-          <span className="summary-priority-label">Lectura inicial de la cohorte</span>
-          <span className={`summary-quality-chip ${shouldReviewLetalidad ? 'review' : 'stable'}`}>
-            {shouldReviewLetalidad ? 'Revisar consistencia' : 'Indicador estable'}
-          </span>
-        </div>
-        <div className="summary-priority-value">{totalCasos}</div>
-        <div className="summary-priority-copy">
-          casos analizados entre eventos 549 y 550. {dominantEventLabel}; use esta proporción como primer control
-          antes de interpretar tendencias o causas.
-        </div>
-        <div className="summary-trend-line">
-          <TrendBadge compare={{ cur: curTot, prev: prevTot }} />
-          <span>variación frente al periodo anterior (mes previo, o año previo si solo hay año)</span>
-        </div>
-      </div>
-
-      <div className="surveillance-register">
-        <div className="surveillance-register-header">
-          <span>Registro por evento</span>
-          <span className="register-context">SIVIGILA</span>
-        </div>
-
-        <div className="register-metric register-metric-mortalidad">
-          <span className="register-icon"><BloodDropIcon /></span>
-          <div>
-            <span className="register-label">Mortalidad materna 550</span>
-            <span className="register-helper">Defunciones notificadas</span>
-          </div>
-          <strong>{totalMortalidad}</strong>
-          <TrendBadge compare={yearCompareMort} />
-        </div>
-
-        <div className="register-metric register-metric-morbilidad">
-          <span className="register-icon"><HospitalIcon /></span>
-          <div>
-            <span className="register-label">Morbilidad materna extrema 549</span>
-            <span className="register-helper">Casos no fatales / severos</span>
-          </div>
-          <strong>{totalMorbilidad}</strong>
-          <TrendBadge compare={yearCompareMorb} />
-        </div>
-
-        <div className={`case-fatality-note ${shouldReviewLetalidad ? 'review' : ''}`}>
-          <span className="case-fatality-value">{tasaLetalidad}%</span>
-          <div>
-            <span className="case-fatality-label">Tasa de letalidad</span>
-            <p>
-              {shouldReviewLetalidad
-                ? 'Valor atípicamente alto: confirme denominador, mezcla de eventos y calidad de carga.'
-                : 'Mortalidad ÷ (mortalidad + morbilidad) sobre los eventos filtrados.'}
-            </p>
-          </div>
-        </div>
-      </div>
+    <section
+      className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-slate-200 bg-slate-200 shadow-sm sm:grid-cols-2 lg:grid-cols-4"
+      aria-label="Resumen epidemiológico"
+    >
+      <KpiCell
+        icon={Activity}
+        label="Casos analizados"
+        value={totalCasos}
+        trend={<TrendBadge compare={{ cur: curTot, prev: prevTot }} periodo={periodo} />}
+      />
+      <KpiCell
+        icon={Droplet}
+        label="Mortalidad materna 550"
+        value={totalMortalidad}
+        trend={<TrendBadge compare={yearCompareMort} periodo={periodo} />}
+      />
+      <KpiCell
+        icon={Hospital}
+        label="Morbilidad materna extrema 549"
+        value={totalMorbilidad}
+        trend={<TrendBadge compare={yearCompareMorb} periodo={periodo} />}
+      />
+      <KpiCell icon={Percent} label="Tasa de letalidad" value={`${tasaLetalidad}%`} alert={shouldReviewLetalidad} />
     </section>
   )
 }

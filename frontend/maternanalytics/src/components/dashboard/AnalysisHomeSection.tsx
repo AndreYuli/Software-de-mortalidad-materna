@@ -209,6 +209,7 @@ export function AnalysisHomeSection({
             prevTot={metrics.prevTot}
             yearCompareMort={metrics.yearCompareMort}
             yearCompareMorb={metrics.yearCompareMorb}
+            periodo={filterMonth ? 'mes' : 'año'}
           />
 
           <NarrativasResumen
