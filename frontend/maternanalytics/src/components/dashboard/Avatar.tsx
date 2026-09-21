@@ -3,9 +3,12 @@ interface AvatarProps {
   className?: string
 }
 
-export function Avatar({ letter, className }: AvatarProps) {
+export function Avatar({ letter, className = '' }: AvatarProps) {
   return (
-    <div className={`avatar-okd ${className || ''}`} aria-hidden="true">
+    <div
+      className={`flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-deep text-sm font-semibold text-white ${className}`.trim()}
+      aria-hidden="true"
+    >
       {letter}
     </div>
   )

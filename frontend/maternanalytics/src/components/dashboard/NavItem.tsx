@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { AlertCircle, CheckCircle } from 'lucide-react'
 
 export interface NavItemStatus {
   hasFile?: boolean
@@ -22,29 +23,34 @@ export function NavItem({
   status,
   ariaLabel,
 }: NavItemProps) {
-  const isSuccess = status?.hasFile && !status?.hasError
   const isError = Boolean(status?.hasError)
-
-  const extraClass = isError ? 'nav-error' : isSuccess ? 'nav-success' : ''
+  const isSuccess = Boolean(status?.hasFile) && !isError
 
   return (
     <button
-      className={`nav-item-okd ${active ? 'active' : ''} ${extraClass}`.trim()}
+      type="button"
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       aria-label={ariaLabel}
+      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+        active ? 'bg-brand-magenta/10 text-brand-magenta' : 'text-slate-600 hover:bg-slate-100'
+      }`}
     >
       {icon}
-      <span className="nav-item-label-okd">{label}</span>
+      <span className="flex-1">{label}</span>
       {isSuccess && (
-        <span className="nav-badge-okd nav-badge-success" aria-label="Archivo cargado correctamente">
-          ✓
-        </span>
+        <CheckCircle
+          role="img"
+          aria-label="Archivo cargado correctamente"
+          className="size-4 shrink-0 text-green-600"
+        />
       )}
       {isError && (
-        <span className="nav-badge-okd nav-badge-error" aria-label="Error en el archivo cargado">
-          !
-        </span>
+        <AlertCircle
+          role="img"
+          aria-label="Error en el archivo cargado"
+          className="size-4 shrink-0 text-red-600"
+        />
       )}
     </button>
   )
