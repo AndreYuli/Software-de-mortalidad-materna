@@ -14,14 +14,14 @@ export function FilePreviewTable({ preview }: FilePreviewTableProps) {
   if (headers.length === 0) return null
 
   return (
-    <div className="upload-preview-card">
-      <p className="upload-preview-summary">
+    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <p className="mb-3 text-sm text-slate-600">
         Vista previa: <strong>{totalRows}</strong> {totalRows === 1 ? 'registro detectado' : 'registros detectados'} ·{' '}
         {headers.length} {headers.length === 1 ? 'columna' : 'columnas'}
       </p>
       {rows.length > 0 && (
-        <div className="upload-preview-table-wrapper">
-          <table className="upload-preview-table">
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="w-full border-collapse text-left text-xs [&_td]:whitespace-nowrap [&_td]:border-t [&_td]:border-slate-100 [&_td]:px-3 [&_td]:py-2 [&_td]:text-slate-600 [&_th]:whitespace-nowrap [&_th]:bg-slate-50 [&_th]:px-3 [&_th]:py-2 [&_th]:font-semibold [&_th]:text-slate-500">
             <thead>
               <tr>
                 {headers.map((header, i) => (

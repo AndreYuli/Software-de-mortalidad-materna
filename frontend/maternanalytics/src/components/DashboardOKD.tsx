@@ -6,6 +6,7 @@ import type { DashboardOutletContext } from './dashboard/DashboardViewRoute'
 import type { ActiveView } from '../hooks/navigation/useActiveView'
 import { Menu } from 'lucide-react'
 import { clearSession } from '../api'
+import { ChatWidget } from './chat/ChatWidget'
 
 export type { DashboardFileStatus, FileIndicator }
 
@@ -96,6 +97,16 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
           </div>
         </main>
       </div>
+
+      {data.selectedAnalisisId && activeView === 'analisis' && (
+        <ChatWidget 
+          analisisId={data.selectedAnalisisId} 
+          filtros={{ 
+            year: data.filterYear || undefined, 
+            month: data.filterMonth || undefined 
+          }} 
+        />
+      )}
     </div>
   )
 }

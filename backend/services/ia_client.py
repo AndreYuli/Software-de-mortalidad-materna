@@ -55,3 +55,53 @@ def generar_narrativa(
 
     body = response.json()
     return {'narrativa': body['narrativa'], 'modelo': body['modelo']}
+
+
+def chatear_ia(
+    pregunta: str,
+    historial: list[dict[str, str]],
+    tipo_analisis: str,
+    contexto: dict[str, Any],
+) -> dict[str, str]:
+    """Envía una pregunta de chat al IA-SERVICE.
+
+    Args:
+        pregunta: Texto de la pregunta del usuario.
+        historial: Lista de mensajes previos en formato {'rol': '...', 'contenido': '...'}.
+        tipo_analisis: 'mortalidad' o 'morbilidad'.
+        contexto: Subconjunto de indicadores agregados para responder.
+
+    Returns:
+        Dict con `respuesta` (texto generado) y `modelo`.
+
+    Raises:
+        IAServiceUnavailableError: Si el servicio está caído o da error.
+    """
+    try:
+        # Timeout más amplio para chats largos
+        with httpx.Client(timeout=120.0) as client:
+            response = client.post(
+                f'{Config.ia_service_url}/chat',
+                json={
+                    'pregunta': pregunta,
+                    'historial': historial,
+                    'tipo_analisis': tipo_analisis,
+                    'contexto': contexto,
+                },
+            )
+    except httpx.TimeoutException as exc:
+        raise IAServiceUnavailableError(
+            f'Timeout esperando respuesta de IA-SERVICE en chat: {exc}'
+        ) from exc
+    except httpx.ConnectError as exc:
+        raise IAServiceUnavailableError(
+            f'No se pudo conectar a IA-SERVICE para chat: {exc}'
+        ) from exc
+
+    if response.status_code != 200:
+        raise IAServiceUnavailableError(
+            f'IA-SERVICE devolvió status {response.status_code} en chat: {response.text}'
+        )
+
+    body = response.json()
+    return {'respuesta': body['respuesta'], 'modelo': body['modelo']}

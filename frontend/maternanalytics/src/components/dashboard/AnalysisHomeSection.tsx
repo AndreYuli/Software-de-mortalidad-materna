@@ -172,39 +172,43 @@ export function AnalysisHomeSection({
   })
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <span className="text-xs font-semibold uppercase tracking-wider text-brand-magenta">
-          Vigilancia materna SIVIGILA
-        </span>
-        <h1 className="text-2xl font-bold text-brand-deep">Sistema de análisis epidemiológico</h1>
-        <p className="text-sm text-slate-500">
-          Lectura técnica de mortalidad materna 550 y morbilidad materna extrema 549
-        </p>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-xs font-semibold uppercase leading-tight tracking-wider text-brand-magenta">
+            Vigilancia materna SIVIGILA
+          </span>
+          <h1 className="text-2xl font-bold leading-tight text-brand-deep">Sistema de análisis epidemiológico</h1>
+          <p className="text-sm leading-snug text-slate-500">
+            Lectura técnica de mortalidad materna 550 y morbilidad materna extrema 549
+          </p>
+        </div>
         {ultimaSemanaReportada && (
-          <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+          <p className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
             <CalendarClock className="size-4" aria-hidden="true" />
             Última carga: Semana {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
           </p>
         )}
       </div>
 
-      <MainTabs active={activeTab} onChange={setActiveTab} />
+      <div>
+        <MainTabs active={activeTab} onChange={setActiveTab} />
 
-      <FiltersBar
-        segmento={segmento}
-        onSegmentoChange={onSegmentoChange}
-        latestMortalidad={latestMortalidad}
-        latestMorbilidad={latestMorbilidad}
-        filterYear={filterYear}
-        onYearChange={onYearChange}
-        availableYears={availableYears}
-        filterMonth={filterMonth}
-        onMonthChange={onMonthChange}
-        filterWeek={filterWeek}
-        onWeekChange={onWeekChange}
-        onExport={handleExportReport}
-      />
+        <FiltersBar
+          segmento={segmento}
+          onSegmentoChange={onSegmentoChange}
+          latestMortalidad={latestMortalidad}
+          latestMorbilidad={latestMorbilidad}
+          filterYear={filterYear}
+          onYearChange={onYearChange}
+          availableYears={availableYears}
+          filterMonth={filterMonth}
+          onMonthChange={onMonthChange}
+          filterWeek={filterWeek}
+          onWeekChange={onWeekChange}
+          onExport={handleExportReport}
+        />
+      </div>
 
       <KpiRow
         totalMortalidad={metrics.totalMortalidad}
@@ -225,17 +229,18 @@ export function AnalysisHomeSection({
           <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
           {activeSubTab === 'sociodemografico' && (
-            <>
-              <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
-              <SociodemographicChartsSection data={sociodemograficaMorbilidad} evento="Morbilidad" />
-            </>
+            <SociodemographicChartsSection
+              data={sociodemograficaMorbilidad}
+              evento="Morbilidad"
+              leading={<DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />}
+            />
           )}
 
           {activeSubTab === 'clinico' && (
-            <>
+            <div className="grid items-start gap-3 lg:grid-cols-2">
               <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
               <CruceVariablesSection analisisId={latestMorbilidad?.id ?? null} evento="Morbilidad" />
-            </>
+            </div>
           )}
         </>
       )}
@@ -245,17 +250,18 @@ export function AnalysisHomeSection({
           <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
 
           {activeSubTab === 'sociodemografico' && (
-            <>
-              <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
-              <SociodemographicChartsSection data={sociodemograficaMortalidad} evento="Mortalidad" />
-            </>
+            <SociodemographicChartsSection
+              data={sociodemograficaMortalidad}
+              evento="Mortalidad"
+              leading={<DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />}
+            />
           )}
 
           {activeSubTab === 'clinico' && (
-            <>
+            <div className="grid items-start gap-3 lg:grid-cols-2">
               <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
               <CruceVariablesSection analisisId={latestMortalidad?.id ?? null} evento="Mortalidad" />
-            </>
+            </div>
           )}
         </>
       )}

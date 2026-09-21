@@ -172,6 +172,38 @@ export async function fetchHistorial(
   return data as HistorialResponse
 }
 
+export interface CargaCambios {
+  nombre_archivo?: string
+  /** Fecha y hora local de Colombia (`YYYY-MM-DDTHH:mm`); define año, mes y semana. */
+  fecha_carga?: string
+}
+
+async function mensajeDeError(response: Response, porDefecto: string): Promise<string> {
+  try {
+    const body = await response.json()
+    if (typeof body?.detail === 'string') return body.detail
+  } catch {
+    /* sin cuerpo JSON */
+  }
+  return `${porDefecto}: ${response.status}`
+}
+
+/** Corrige el nombre y/o la fecha de una carga del historial. */
+export async function actualizarCarga(id: number, cambios: CargaCambios): Promise<void> {
+  const response = await fetchWithTimeout(`${API_URL}/analisis/${id}/`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(cambios),
+  })
+  if (!response.ok) throw new Error(await mensajeDeError(response, 'Error al actualizar la carga'))
+}
+
+/** Elimina una carga del historial. */
+export async function eliminarCarga(id: number): Promise<void> {
+  const response = await fetchWithTimeout(`${API_URL}/analisis/${id}/`, { method: 'DELETE' })
+  if (!response.ok) throw new Error(await mensajeDeError(response, 'Error al eliminar la carga'))
+}
+
 export interface CruceResponse {
   categorias_socio: string[]
   categorias_clinica: string[]
@@ -193,4 +225,41 @@ export async function fetchCruce(
     throw new Error(extractErrorMessage(body, `Error al calcular el cruce: ${response.status}`))
   }
   return (await response.json()) as CruceResponse
+}
+
+
+export interface ChatMensaje {
+  rol: 'usuario' | 'asistente'
+  contenido: string
+}
+
+export async function enviarMensajeChat(
+  analisisId: number,
+  pregunta: string,
+  historial: ChatMensaje[],
+  filtros: { year?: string; month?: string } = {},
+): Promise<{ respuesta: string; modelo: string } | null> {
+  const params = new URLSearchParams()
+  if (filtros.year) params.append('year', filtros.year)
+  if (filtros.month) params.append('month', filtros.month)
+
+  const url = `${API_URL}/analisis/${analisisId}/chat/?${params.toString()}`
+
+  const response = await fetchWithTimeout(
+    url,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pregunta, historial }),
+    },
+    120_000,
+  )
+
+  if (response.status === 503) return null
+  if (!response.ok) {
+    const body = await response.json().catch(() => null)
+    throw new Error(extractErrorMessage(body, `Error en el chat: ${response.status}`))
+  }
+
+  return await response.json()
 }

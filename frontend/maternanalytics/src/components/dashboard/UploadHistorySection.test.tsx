@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { UploadHistorySection } from './UploadHistorySection'
 
 const fetchHistorial = vi.hoisted(() => vi.fn())
-vi.mock('../../api', () => ({ fetchHistorial }))
+const actualizarCarga = vi.hoisted(() => vi.fn())
+const eliminarCarga = vi.hoisted(() => vi.fn())
+vi.mock('../../api', () => ({ fetchHistorial, actualizarCarga, eliminarCarga }))
 
 const item = (id: number, over: Record<string, unknown> = {}) => ({
   id,
@@ -32,6 +34,8 @@ const respuesta = (items: unknown[], over: Record<string, unknown> = {}) => ({
 describe('UploadHistorySection', () => {
   beforeEach(() => {
     fetchHistorial.mockReset()
+    actualizarCarga.mockReset().mockResolvedValue(undefined)
+    eliminarCarga.mockReset().mockResolvedValue(undefined)
     fetchHistorial.mockResolvedValue(respuesta([item(1)]))
   })
 
@@ -131,5 +135,52 @@ describe('UploadHistorySection', () => {
 
     fireEvent.click(screen.getByText('Reintentar'))
     expect(await screen.findByText('archivo_1.xlsx')).toBeTruthy()
+  })
+
+  it('edita una carga: envía nombre y fecha en hora local y recarga el historial', async () => {
+    render(<UploadHistorySection />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar archivo_1.xlsx' }))
+
+    const dialogo = screen.getByRole('dialog', { name: 'Editar carga' })
+    expect(dialogo).toBeTruthy()
+    // 15:00 UTC = 10:00 en Colombia
+    expect((screen.getByLabelText('Fecha de la carga') as HTMLInputElement).value).toBe('2026-09-15T10:00')
+
+    fireEvent.change(screen.getByLabelText('Nombre del archivo'), { target: { value: 'corregido.xlsx' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+
+    await waitFor(() =>
+      expect(actualizarCarga).toHaveBeenCalledWith(1, { nombre_archivo: 'corregido.xlsx', fecha_carga: '2026-09-15T10:00' }),
+    )
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(fetchHistorial).toHaveBeenCalledTimes(2)
+  })
+
+  it('muestra el error del servidor al editar y mantiene el diálogo abierto', async () => {
+    actualizarCarga.mockRejectedValue(new Error('El nombre del archivo no puede estar vacío.'))
+    render(<UploadHistorySection />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar archivo_1.xlsx' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }))
+    expect((await screen.findByRole('alert')).textContent).toContain('no puede estar vacío')
+    expect(screen.getByRole('dialog', { name: 'Editar carga' })).toBeTruthy()
+  })
+
+  it('elimina una carga solo tras confirmar', async () => {
+    render(<UploadHistorySection />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Eliminar archivo_1.xlsx' }))
+    expect(eliminarCarga).not.toHaveBeenCalled()
+
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Eliminar carga' })).getByRole('button', { name: 'Eliminar' }))
+    await waitFor(() => expect(eliminarCarga).toHaveBeenCalledWith(1))
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(fetchHistorial).toHaveBeenCalledTimes(2)
+  })
+
+  it('cancelar la eliminación no borra nada', async () => {
+    render(<UploadHistorySection />)
+    fireEvent.click(await screen.findByRole('button', { name: 'Eliminar archivo_1.xlsx' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(eliminarCarga).not.toHaveBeenCalled()
   })
 })

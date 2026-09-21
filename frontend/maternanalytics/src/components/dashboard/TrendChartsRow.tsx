@@ -126,7 +126,7 @@ export function TrendChartsRow({ topCausasMortalidad, topCausasMorbilidad }: Tre
           Compare los diagnósticos líderes por evento antes de pasar a variables sociodemográficas o clínicas.
         </p>
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         <CausasBarChart
           eyebrow="Evento 550"
           title="Top 10 Causas de Mortalidad"

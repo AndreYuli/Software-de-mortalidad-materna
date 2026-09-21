@@ -7,7 +7,7 @@ const SEMANAS_ISO = Array.from({ length: 53 }, (_, i) => i + 1)
 
 const LABEL_CLASS = 'mb-1 block text-xs font-medium text-slate-500'
 const SELECT_CLASS =
-  'w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand-magenta focus:ring-2 focus:ring-brand-magenta/30 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400'
+  'field-inset w-full rounded-lg px-3 py-2 text-sm text-slate-900 outline-none focus:border-brand-magenta focus:ring-2 focus:ring-brand-magenta/30 disabled:cursor-not-allowed disabled:text-slate-400'
 
 export interface FiltersBarProps {
   segmento?: Segmento
@@ -88,7 +88,7 @@ export function FiltersBar({
   return (
     <section
       aria-label="Filtros del análisis"
-      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+      className="surface-raised rounded-b-xl rounded-tr-xl p-4"
     >
       <div className="flex flex-wrap items-end gap-3">
         <button
@@ -96,7 +96,7 @@ export function FiltersBar({
           aria-expanded={open}
           aria-controls="filters-panel"
           onClick={() => setOpen((value) => !value)}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 lg:hidden"
+          className="btn-raised inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 lg:hidden"
         >
           <SlidersHorizontal className="size-4" aria-hidden="true" />
           Filtros
@@ -189,7 +189,7 @@ export function FiltersBar({
           <button
             type="button"
             onClick={onExport}
-            className="inline-flex items-center gap-2 rounded-lg bg-brand-magenta px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            className="btn-primary-raised inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white"
           >
             <Download className="size-4" aria-hidden="true" />
             Exportar Reporte

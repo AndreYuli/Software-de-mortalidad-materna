@@ -30,6 +30,18 @@ class AnalisisResponse(BaseModel):
     resumen: dict[str, Any]
 
 
+class CargaUpdate(BaseModel):
+    """Campos corregibles de una carga del historial.
+
+    Attributes:
+        nombre_archivo: Nuevo nombre del archivo.
+        fecha_carga: Nueva fecha de carga; define año, mes y semana.
+    """
+
+    nombre_archivo: str | None = Field(default=None, max_length=255)
+    fecha_carga: datetime | None = None
+
+
 class ClusteringRequest(BaseModel):
     """Parámetros para una solicitud de clustering.
 
@@ -64,3 +76,22 @@ class PacienteResponse(BaseModel):
     numero_id: str
     fecha_nacimiento: date | None = None
     creado_en: datetime | None = None
+
+
+class ChatMensaje(BaseModel):
+    """Mensaje individual en el historial de chat."""
+
+    rol: str = Field(..., description="Rol del mensaje: 'usuario' o 'asistente'")
+    contenido: str = Field(..., description='Contenido del mensaje')
+
+
+class ChatRequest(BaseModel):
+    """Solicitud de chat desde el frontend.
+
+    Attributes:
+        pregunta: La pregunta actual del usuario.
+        historial: Mensajes previos en la conversación.
+    """
+
+    pregunta: str
+    historial: list[ChatMensaje] = Field(default_factory=list)

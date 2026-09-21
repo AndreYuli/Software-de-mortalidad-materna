@@ -13,3 +13,100 @@ body {
     background-color: #ffffff;
     color: #1b1e28;
 }
+
+/* Relieve y profundidad (neumorfismo ligero).
+   Degradados suaves de arriba (claro) a abajo (algo más oscuro), resalte blanco en el borde
+   superior y sombra en el inferior. Los campos se hunden con sombras internas. */
+@layer components {
+    /* Panel elevado: contenedor principal de filtros. */
+    .surface-raised {
+        background: linear-gradient(to bottom, #ffffff 0%, #eef1f6 100%);
+        border: 1px solid #cdd3de;
+        box-shadow:
+            inset 0 1px 0 #ffffff,
+            0 1px 0 rgba(255, 255, 255, 0.9),
+            0 2px 3px rgba(27, 30, 40, 0.08),
+            0 6px 14px -4px rgba(27, 30, 40, 0.12);
+    }
+
+    /* Botón secundario con volumen. */
+    .btn-raised {
+        background: linear-gradient(to bottom, #ffffff 0%, #e9edf3 100%);
+        border: 1px solid #c3cad6;
+        border-top-color: #ffffff;
+        border-bottom-color: #aeb6c4;
+        box-shadow: inset 0 1px 0 #ffffff, 0 1px 2px rgba(27, 30, 40, 0.15);
+        transition: box-shadow 120ms, filter 120ms, transform 120ms;
+    }
+    .btn-raised:hover:not(:disabled) {
+        filter: brightness(1.02);
+    }
+    .btn-raised:active:not(:disabled) {
+        background: linear-gradient(to bottom, #e3e8ef 0%, #eef1f6 100%);
+        box-shadow: inset 0 2px 3px rgba(27, 30, 40, 0.18);
+        transform: translateY(1px);
+    }
+
+    /* Botón principal (magenta) con volumen. */
+    .btn-primary-raised {
+        background: linear-gradient(to bottom, #a3107a 0%, #89005e 55%, #74004f 100%);
+        border: 1px solid #5f0041;
+        border-top-color: #b64394;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.35),
+            0 1px 2px rgba(41, 7, 100, 0.35),
+            0 3px 6px -2px rgba(137, 0, 94, 0.45);
+        transition: box-shadow 120ms, filter 120ms, transform 120ms;
+    }
+    .btn-primary-raised:hover {
+        filter: brightness(1.06);
+    }
+    .btn-primary-raised:active {
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+        transform: translateY(1px);
+    }
+
+    /* Campo hundido: selectores dentro del panel. */
+    .field-inset {
+        background: linear-gradient(to bottom, #e6eaf1 0%, #f7f8fb 35%, #ffffff 100%);
+        border: 1px solid #b9c1ce;
+        border-bottom-color: #ffffff;
+        box-shadow: inset 0 2px 4px rgba(27, 30, 40, 0.16), inset 0 0 0 1px rgba(27, 30, 40, 0.03);
+    }
+    .field-inset:disabled {
+        background: linear-gradient(to bottom, #dfe3ea 0%, #e9ecf1 100%);
+        box-shadow: inset 0 2px 4px rgba(27, 30, 40, 0.12);
+    }
+
+    /* Pestañas: la activa queda al nivel del panel; las inactivas, un escalón más abajo. */
+    .tab-raised-active {
+        position: relative;
+        z-index: 1;
+        background: linear-gradient(to bottom, #fdfdfe 0%, #ffffff 100%);
+        border: 1px solid #cdd3de;
+        border-top-color: #ffffff;
+        border-bottom-color: #ffffff;
+        box-shadow: inset 0 1px 0 #ffffff, 0 -2px 4px -1px rgba(27, 30, 40, 0.1);
+    }
+    .tab-raised-inactive {
+        background: linear-gradient(to bottom, #dde2ea 0%, #e9edf3 100%);
+        border: 1px solid #cdd3de;
+        box-shadow: inset 0 3px 5px rgba(27, 30, 40, 0.14), inset 0 -1px 0 rgba(255, 255, 255, 0.6);
+    }
+    .tab-raised-inactive:hover {
+        background: linear-gradient(to bottom, #e3e8ef 0%, #eef1f6 100%);
+    }
+
+    /* Subpestañas (píldoras): la activa sobresale, las inactivas quedan hundidas. */
+    .pill-raised-active {
+        background: linear-gradient(to bottom, #a3107a 0%, #89005e 100%);
+        border: 1px solid #5f0041;
+        border-top-color: #b64394;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 4px -1px rgba(137, 0, 94, 0.5);
+    }
+    .pill-raised-inactive {
+        background: linear-gradient(to bottom, #dde2ea 0%, #eceff4 100%);
+        border: 1px solid #cdd3de;
+        box-shadow: inset 0 2px 3px rgba(27, 30, 40, 0.14);
+    }
+}

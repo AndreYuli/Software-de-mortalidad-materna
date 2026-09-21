@@ -13,7 +13,7 @@ export interface CruceLabels {
 export function getCruceLabels(varSocioLabel: string, varClinicaLabel: string): CruceLabels {
   return {
     title: `${varSocioLabel} según ${varClinicaLabel}`,
-    xAxis: `Número de casos por ${varSocioLabel.toLowerCase()}`,
+    xAxis: `Casos — ${varSocioLabel}`,
     yAxis: varSocioLabel,
     legend: varClinicaLabel,
   }

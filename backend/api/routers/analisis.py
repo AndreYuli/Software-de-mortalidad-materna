@@ -9,9 +9,9 @@ from sqlalchemy.orm import Session
 from api.dependencies import get_current_user
 from db.database import get_db
 from db.models_sqlalchemy import Analisis
-from schemas.analisis_schema import AnalisisResponse, ClusteringRequest
+from schemas.analisis_schema import AnalisisResponse, CargaUpdate, ChatRequest, ClusteringRequest
 from services import analisis_service, narrativa_service
-from services.ia_client import IAServiceUnavailableError
+from services.ia_client import IAServiceUnavailableError, chatear_ia
 
 router = APIRouter(prefix='/api', tags=['analisis'], dependencies=[Depends(get_current_user)])
 
@@ -147,6 +147,35 @@ def historial_analisis(
         'total_pages': total_pages,
         'anios_disponibles': analisis_service.anios_historial(db),
     }
+
+
+@router.patch('/analisis/{pk}/', response_model=AnalisisResponse)
+def actualizar_analisis(
+    pk: int, datos: CargaUpdate, db: Session = Depends(get_db)
+) -> AnalisisResponse:
+    """Corrige el nombre de archivo y/o la fecha de una carga del historial.
+
+    Args:
+        pk: ID de la carga.
+        datos: Campos a modificar.
+        db: Sesión de base de datos inyectada.
+
+    Returns:
+        La carga actualizada.
+    """
+    analisis = _get_analisis_or_404(pk, db)
+    with _errores_servicio():
+        actualizado = analisis_service.actualizar_carga(
+            db, analisis, nombre_archivo=datos.nombre_archivo, fecha_carga=datos.fecha_carga
+        )
+    return AnalisisResponse.model_validate(actualizado)
+
+
+@router.delete('/analisis/{pk}/', status_code=status.HTTP_204_NO_CONTENT)
+def eliminar_analisis(pk: int, db: Session = Depends(get_db)) -> None:
+    """Elimina una carga del historial junto con sus narrativas de IA."""
+    analisis = _get_analisis_or_404(pk, db)
+    analisis_service.eliminar_carga(db, analisis)
 
 
 @router.get('/analisis/{pk}/', response_model=AnalisisResponse)
@@ -396,3 +425,54 @@ def obtener_narrativa_ia(
             ) from exc
 
     return resultado
+
+
+@router.post('/analisis/{pk}/chat/')
+def chat_analisis(
+    pk: int,
+    req: ChatRequest,
+    year: str | None = Query(default=None),
+    month: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    """Envía una pregunta al chatbot de IA sobre los datos del análisis.
+
+    Args:
+        pk: ID del análisis.
+        req: Pregunta y el historial de chat.
+        year: Año para filtrar los datos (opcional).
+        month: Mes para filtrar los datos (opcional).
+        db: Sesión de BD inyectada.
+
+    Returns:
+        Diccionario con la respuesta y el modelo utilizado.
+
+    Raises:
+        HTTPException: 503 si el servicio de IA no responde.
+    """
+    analisis = _get_analisis_or_404(pk, db)
+    with _errores_servicio():
+        analisis_completo = analisis_service.calcular_completo(analisis, year, month, db)
+
+        # Subconjunto de datos agregados para el contexto del chatbot
+        claves_contexto = [
+            'estadisticas_basicas',
+            'distribucion_mensual',
+            'demoras',
+            'causas_cie10',
+            'criterios_inclusion',
+            'distribucion_sociodemografica',
+            'obstetrico_edad',
+            'distribucion_edad_riesgo',
+        ]
+        contexto = {k: analisis_completo[k] for k in claves_contexto if k in analisis_completo}
+
+        historial_dicts = [{'rol': h.rol, 'contenido': h.contenido} for h in req.historial]
+
+        try:
+            return chatear_ia(req.pregunta, historial_dicts, analisis.tipo, contexto)
+        except IAServiceUnavailableError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=str(exc),
+            ) from exc

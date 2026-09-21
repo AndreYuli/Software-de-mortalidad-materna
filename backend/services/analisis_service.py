@@ -28,8 +28,10 @@ from services._analisis_excel import (
     preparar_dataframe_analisis,
 )
 from services._analisis_historial import (  # noqa: F401
+    actualizar_carga,
     anios_historial,
     buscar_historial,
+    eliminar_carga,
     periodo_de_carga,
 )
 from services._analisis_persistencia import _construir_df_desde_bd, _guardar_df_como_excel

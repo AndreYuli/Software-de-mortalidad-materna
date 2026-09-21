@@ -3,6 +3,7 @@
 Formato: fecha · agente · qué cambió y por qué. Lo más reciente arriba. Los commits anteriores a esta fecha están en `git log`.
 
 ## 2026-09-20 · Claude Code (seguridad y reorganización)
+- TASK-004: Chatbot de análisis implementado según plan (`docs/PLAN_CHATBOT.md`). Backend extrae un subconjunto seguro de agregados precalculados; `ia-service` proporciona el endpoint `/chat` y construye prompts restrictivos; el frontend despliega un `ChatWidget` interactivo y flotante. No se envían filas de pacientes a servicios externos y el historial se gestiona dinámicamente limitando el contexto a la ventana local.
 - TAREA 1 (seguridad de la API): `analisis` y `sivigila` exigen JWT; `/media` deja de servirse; el frontend envía `Authorization: Bearer` y, ante 401, borra la sesión y redirige a `/login`; `ProtectedRoute` exige `token`.
 - Reorganización (DEC-003, DEC-004): carpetas en minúscula, `data/`, `notes/`, `scripts/`, `docs/historico/`, `components/auth/`, `.dockerignore` por contexto de build, un solo `vitest.config.ts`, comillas simples en Python.
 - README reescrito según la estructura real.

@@ -135,19 +135,17 @@ El historial debe ayudar a auditar el proceso de carga y evitar confusión sobre
 
 ### Chatbot
 
-El chatbot será un módulo conversacional para consultar información del sistema en lenguaje natural.
+El chatbot es un módulo conversacional para consultar información del sistema en lenguaje natural.
 
 Debe permitir preguntas como:
 
 - ¿cuáles fueron las principales causas de mortalidad en un periodo?
 - ¿qué grupo de edad presenta más casos?
 - ¿cómo cambió la morbilidad respecto al periodo anterior?
-- ¿qué variables clínicas se relacionan con determinados perfiles sociodemográficos?
-- ¿qué resumen puede generarse para una reunión o reporte?
 
-El chatbot debe trabajar con información agregada y segura. No debe enviar datos crudos de pacientes a servicios externos ni exponer información sensible. Si usa IA generativa, debe respetar la arquitectura local definida para el proyecto.
+El chatbot trabaja exclusivamente con información agregada y segura precalculada por el backend. No envía datos crudos de pacientes a servicios externos ni expone información sensible. Utiliza la arquitectura local de IA generativa (Ollama) como "lector" del contexto, asegurando total privacidad.
 
-Estado actual: existe narrativa IA desde backend/microservicio local, pero el chatbot conversacional todavía está pendiente o en evolución.
+Estado actual: el chatbot conversacional se encuentra implementado e integrado en el dashboard como un panel flotante, con protección frente a fallos del servicio de IA local.
 
 ## Principios funcionales
 
@@ -183,7 +181,6 @@ Pendientes o puntos a validar:
 
 - validar completamente que todos los filtros actualicen correctamente indicadores y gráficas;
 - revisar recomendaciones de diseño recibidas para las gráficas y el dashboard;
-- completar o integrar el chatbot conversacional;
 - revisar la integración visible de narrativa IA en el frontend;
 - confirmar la definición estadística de indicadores sensibles como letalidad;
 - fortalecer seguridad/autenticación en endpoints y acceso a archivos, según auditorías existentes;

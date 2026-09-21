@@ -12,8 +12,8 @@ export interface ChartCardProps {
 
 export function ChartCard({ title, eyebrow, description, insight, children }: ChartCardProps) {
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-4">
+    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-2">
         {eyebrow && (
           <span className="block text-xs font-semibold uppercase tracking-wider text-brand-magenta">{eyebrow}</span>
         )}

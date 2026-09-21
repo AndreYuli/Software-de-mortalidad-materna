@@ -5,7 +5,7 @@ describe('getCruceLabels', () => {
   it('nombra las variables seleccionadas en título, ejes y leyenda', () => {
     expect(getCruceLabels('Etnia', 'N° de gestaciones')).toEqual({
       title: 'Etnia según N° de gestaciones',
-      xAxis: 'Número de casos por etnia',
+      xAxis: 'Casos — Etnia',
       yAxis: 'Etnia',
       legend: 'N° de gestaciones',
     })
@@ -17,6 +17,7 @@ describe('getCruceLabels', () => {
     expect(a).not.toEqual(b)
     for (const l of [a, b]) {
       expect(l.xAxis).not.toBe('Casos')
+      expect(l.xAxis.startsWith('Casos — ')).toBe(true)
       expect(l.yAxis).not.toBe('')
     }
   })

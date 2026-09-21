@@ -55,18 +55,20 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
   const missingColumnsLabel = missingColumns.length === 1 ? 'columna' : 'columnas'
 
   return (
-    <div className="upload-zone-wrapper">
-      <input
-        ref={inputRef}
-        type="file"
-        accept=".xlsx"
-
-        onChange={handleChange}
-      />
+    <div className="flex flex-col gap-3">
+      <input ref={inputRef} type="file" accept=".xlsx" className="hidden" onChange={handleChange} />
 
       {/* Drop Zone */}
       <div
-        className={`upload-drop-zone ${dragging ? 'dragging' : ''} ${error && !file ? 'zone-error' : ''} ${file && !error ? 'zone-success' : ''}`}
+        className={`flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed px-6 py-8 text-center transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-magenta/40 ${
+          dragging
+            ? 'border-brand-magenta bg-fuchsia-50'
+            : error && !file
+              ? 'border-red-300 bg-red-50/60'
+              : file && !error
+                ? 'border-emerald-300 bg-emerald-50/60'
+                : 'border-slate-300 bg-slate-50 hover:border-brand-magenta hover:bg-fuchsia-50/50'
+        }`}
         onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
@@ -77,7 +79,7 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
         aria-label={`Cargar archivo Excel para ${eventLabel}`}
       >
         {/* Cloud Upload Icon */}
-        <div className="upload-zone-icon">
+        <div className="mb-1 size-12 text-brand-magenta">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <polyline points="16 16 12 12 8 16" />
             <line x1="12" y1="12" x2="12" y2="21" />
@@ -87,27 +89,27 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
 
         {validating ? (
           <>
-            <p className="upload-zone-primary">Validando estructura...</p>
-            <p className="upload-zone-secondary">Comprobando columnas requeridas</p>
+            <p className="text-base font-semibold text-brand-deep">Validando estructura...</p>
+            <p className="text-sm text-slate-500">Comprobando columnas requeridas</p>
           </>
         ) : file && !error ? (
           <>
-            <p className="upload-zone-primary">¡Archivo cargado con éxito!</p>
-            <p className="upload-zone-secondary-success">📄 {file.name}</p>
+            <p className="text-base font-semibold text-brand-deep">¡Archivo cargado con éxito!</p>
+            <p className="text-sm font-medium text-emerald-700">📄 {file.name}</p>
           </>
         ) : (
           <>
-            <p className="upload-zone-primary">Arrastra tu archivo aquí o <span className="upload-zone-link">haz clic para explorar</span></p>
-            <p className="upload-zone-secondary">Soportado: .xlsx (Máximo 15MB)</p>
+            <p className="text-base font-semibold text-brand-deep">Arrastra tu archivo aquí o <span className="text-brand-magenta underline">haz clic para explorar</span></p>
+            <p className="text-sm text-slate-500">Soportado: .xlsx (Máximo 15MB)</p>
           </>
         )}
       </div>
 
       {/* File Preview Card */}
       {file && !error && (
-        <div className="upload-file-card">
-          <div className="upload-file-info">
-            <div className="upload-file-icon">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="size-9 shrink-0 rounded-lg bg-slate-100 p-2 text-slate-600">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
@@ -116,9 +118,9 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
                 <polyline points="10 9 9 9 8 9"/>
               </svg>
             </div>
-            <div className="upload-file-details">
-              <span className="upload-file-name" title={file.name}>{file.name}</span>
-              <span className="upload-file-status">
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-medium text-slate-800" title={file.name}>{file.name}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-emerald-700 [&_svg]:size-3.5">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
@@ -128,7 +130,7 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
           </div>
           <button
             data-prevent-open="true"
-            className="upload-remove-btn"
+            className="btn-raised shrink-0 rounded-lg p-2 text-slate-600 hover:text-red-700 [&_svg]:size-4"
             onClick={(e) => { e.stopPropagation(); onRemove() }}
             title="Eliminar archivo"
             type="button"
@@ -146,22 +148,22 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
 
       {/* Error Panel */}
       {error && (
-        <div className="upload-error-panel" data-prevent-open="true">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" data-prevent-open="true">
           {error.parseError ? (
-            <p className="upload-error-summary">No se pudo leer el archivo. Verifica que sea un Excel válido.</p>
+            <p className="flex items-center gap-2 font-semibold [&_svg]:size-4 [&_svg]:shrink-0">No se pudo leer el archivo. Verifica que sea un Excel válido.</p>
           ) : (
             <>
-              <p className="upload-error-summary">
+              <p className="flex items-center gap-2 font-semibold [&_svg]:size-4 [&_svg]:shrink-0">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                 </svg>
                 Faltan {missingColumns.length} {missingColumnsLabel}
               </p>
-              <ul className="upload-error-cols">
+              <ul className="mt-2 list-inside list-disc text-xs">
                 {missingColumns.slice(0, 8).map((col) => <li key={col}>{col}</li>)}
-                {missingColumns.length > 8 && <li className="more">…y {missingColumns.length - 8} más</li>}
+                {missingColumns.length > 8 && <li className="list-none italic text-red-700">…y {missingColumns.length - 8} más</li>}
               </ul>
-              <button className="upload-retry-btn" onClick={triggerFileInput} type="button">Intentar con otro archivo</button>
+              <button className="btn-raised mt-3 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-700" onClick={triggerFileInput} type="button">Intentar con otro archivo</button>
             </>
           )}
         </div>

@@ -43,7 +43,7 @@ describe('CruceVariablesSection: etiquetas dinámicas (DEC-002)', () => {
     const opciones = () => barProps.last!.options as BarOptions
     let o = opciones()
     expect(o.plugins.title.text).toBe('Zona de residencia según N° de gestaciones')
-    expect(o.scales.x.title.text).toBe('Número de casos por zona de residencia')
+    expect(o.scales.x.title.text).toBe('Casos — Zona de residencia')
     expect(o.scales.y.title.text).toBe('Zona de residencia')
     expect(o.plugins.legend.title.text).toBe('N° de gestaciones')
 
@@ -53,7 +53,7 @@ describe('CruceVariablesSection: etiquetas dinámicas (DEC-002)', () => {
     await waitFor(() => expect(fetchCruce).toHaveBeenLastCalledWith(1, 'etnia', 'cesareas'))
     await waitFor(() => expect(opciones().plugins.title.text).toBe('Etnia según Cesáreas'))
     o = opciones()
-    expect(o.scales.x.title.text).toBe('Número de casos por etnia')
+    expect(o.scales.x.title.text).toBe('Casos — Etnia')
     expect(o.scales.y.title.text).toBe('Etnia')
     expect(o.plugins.legend.title.text).toBe('Cesáreas')
   })

@@ -183,13 +183,22 @@ La reunión menciona un "chat para charlar con la guía" que ayude en la interpr
 - Mantener la regla de privacidad: no enviar datos crudos de pacientes a servicios externos.
 - Definir si será un FAQ guiado, un chatbot con IA local o una combinación.
 
-### Pendiente de definición
+### Definición de alcance (2026-09-20)
 
-- Alcance exacto de preguntas.
-- Ubicación en la interfaz.
-- Si consulta datos filtrados del dashboard o solo responde preguntas generales.
-- Si usa `IA-SERVICE`/Ollama o respuestas predefinidas.
-- Criterios de seguridad y auditoría.
+Alcance definido y plan aprobado en `PLAN_CHATBOT.md`. Decisión: **chatbot con IA local (Ollama
+`qwen2.5`) sobre los datos cargados**, con contexto de indicadores agregados (opción A — "LLM
+lector"). El backend precalcula el contexto con `calcular_completo` y lo reenvía a `IA-SERVICE`
+como campo `contexto`; el LLM solo responde sobre esos agregados. No se genera código Python por
+pregunta (opción B descartada en el plan). El historial de conversación viaja en cada petición
+(sin estado); se limita a los últimos ~6 mensajes.
+
+- Alcance de preguntas: las que se responden con los agregados del dashboard (totales, distribución
+  mensual, causas, demoras, criterios, sociodemográfico).
+- Ubicación en la interfaz: pendiente de decisión visual al implementar (panel flotante o pestaña),
+  definido como tarea de UI en el plan.
+- Consulta datos filtrados: sí — los filtros `year`/`month` activos aplican a `calcular_completo`.
+- Uso de IA: `IA-SERVICE`/Ollama (preguntas sobre los datos), no respuestas predefinidas.
+- Seguridad: solo agregados, mismo patrón de privacidad que las narrativas; 503 limpio si IA cae.
 
 ### Restricciones
 
@@ -207,16 +216,16 @@ La reunión menciona un "chat para charlar con la guía" que ayude en la interpr
 
 ### Criterios de aceptación
 
-- [ ] Alcance del chatbot definido.
-- [ ] Interfaz integrada sin romper el dashboard.
-- [ ] Respuestas útiles para interpretar la información.
-- [ ] No se envían datos crudos de pacientes a servicios externos.
-- [ ] El sistema maneja errores o indisponibilidad de IA.
-- [ ] Se documenta el comportamiento en `PRODUCT.md` y `ARCHITECTURE.md`.
+- [x] Alcance del chatbot definido.
+- [x] Interfaz integrada sin romper el dashboard.
+- [x] Respuestas útiles para interpretar la información.
+- [x] No se envían datos crudos de pacientes a servicios externos.
+- [x] El sistema maneja errores o indisponibilidad de IA.
+- [x] Se documenta el comportamiento en `PRODUCT.md` y `ARCHITECTURE.md`.
 
 ### Estado
 
-PROPUESTA. Requiere definición de producto antes de implementación.
+IMPLEMENTADO (2026-09-20). Plan `docs/PLAN_CHATBOT.md` ejecutado, con ChatWidget flotante y servidor Ollama integrado para la lectura del contexto.
 
 ---
 
@@ -329,7 +338,7 @@ Aprovechar la infraestructura local desplegada de Ollama, mostrando el texto gen
 ---
 
 ## Fuera de tareas (pendiente de decisión de producto)
-- **Chatbot** (`notes/notas.md`): sin alcance definido y en tensión con la regla de privacidad de IA. No se planifica hasta que producto lo especifique.
+- (Sin tareas pendientes en esta sección)
 
 ---
 

@@ -41,3 +41,43 @@ def generar(prompt: str) -> str:
         )
 
     return response.json()['response']
+
+
+def chatear(messages: list[dict[str, str]]) -> str:
+    """Envía una lista de mensajes a Ollama (/api/chat) y devuelve la respuesta.
+
+    Args:
+        messages: Lista de diccionarios con claves 'role' y 'content'.
+
+    Returns:
+        Texto de la respuesta generada por el modelo.
+
+    Raises:
+        OllamaUnavailableError: Si Ollama no responde o devuelve error.
+    """
+    try:
+        # Usamos 120s explícitamente para el chat dado el contexto grande y el tiempo de cold-start
+        with httpx.Client(timeout=120.0) as client:
+            response = client.post(
+                f'{Config.ollama_host}/api/chat',
+                json={
+                    'model': Config.ollama_model,
+                    'messages': messages,
+                    'stream': False,
+                },
+            )
+    except httpx.TimeoutException as exc:
+        raise OllamaUnavailableError(
+            f'Timeout esperando respuesta de Ollama (chat): {exc}'
+        ) from exc
+    except httpx.ConnectError as exc:
+        raise OllamaUnavailableError(
+            f'No se pudo conectar a Ollama (chat): {exc}'
+        ) from exc
+
+    if response.status_code != 200:
+        raise OllamaUnavailableError(
+            f'Ollama devolvió status {response.status_code} en chat: {response.text}'
+        )
+
+    return response.json()['message']['content']

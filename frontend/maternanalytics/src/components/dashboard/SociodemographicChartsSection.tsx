@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Bar } from 'react-chartjs-2'
 import { BAR_STYLE_HORIZONTAL, BRAND_COLOR, CHART_FONT_FAMILY } from '../../constants/chartTheme'
 import { ChartCard } from './ChartCard'
@@ -81,7 +82,7 @@ function SociodemographicBarChart({
             plugins: { legend: { display: false } },
             scales: {
               x: {
-                title: { display: true, text: 'Casos', font: { family: CHART_FONT_FAMILY } },
+                title: { display: true, text: `Casos — ${title}`, font: { family: CHART_FONT_FAMILY } },
                 beginAtZero: true,
                 ticks: { precision: 0 },
                 grid: { color: 'rgba(0,0,0,0.05)' },
@@ -103,9 +104,11 @@ function SociodemographicBarChart({
 export interface SociodemographicChartsSectionProps {
   data: Record<string, { labels: string[]; valores: number[]; total: number; evento?: string }>
   evento: 'Mortalidad' | 'Morbilidad'
+  /** Tarjeta extra que comparte la cuadrícula de dos columnas con las gráficas. */
+  leading?: ReactNode
 }
 
-export function SociodemographicChartsSection({ data, evento }: SociodemographicChartsSectionProps) {
+export function SociodemographicChartsSection({ data, evento, leading }: SociodemographicChartsSectionProps) {
   const variables: { key: string; label: string }[] = [
     { key: 'zona_residencia', label: TITLES.zona_residencia },
     { key: 'poblacion_vulnerable', label: TITLES.poblacion_vulnerable },
@@ -128,7 +131,8 @@ export function SociodemographicChartsSection({ data, evento }: Sociodemographic
   return (
     <section className="flex flex-col gap-4">
       <h2 className="text-xl font-bold text-brand-deep">Factores Sociodemográficos ({evento})</h2>
-      <div data-testid="sociodemographic-grid" className="grid gap-6 lg:grid-cols-2">
+      <div data-testid="sociodemographic-grid" className="grid gap-3 lg:grid-cols-2">
+        {leading}
         {variables.map((v) => {
           const item = data[v.key]
           if (!item || item.total === 0) return null

@@ -25,7 +25,7 @@ export function SubTabs({ active, onChange }: SubTabsProps) {
             aria-selected={selected}
             onClick={() => onChange(key)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
-              selected ? 'bg-brand-magenta text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              selected ? 'pill-raised-active text-white' : 'pill-raised-inactive text-slate-600 hover:text-slate-900'
             }`}
           >
             {SUBTAB_LABELS[key]}

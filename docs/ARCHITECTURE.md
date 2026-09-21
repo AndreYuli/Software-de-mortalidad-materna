@@ -163,8 +163,11 @@ El flujo general de datos es:
 7. Los filtros por año, mes, semana o día se envían como query params al backend.
 8. El backend recalcula o devuelve indicadores filtrados.
 9. El frontend transforma esos datos en KPIs, gráficas, cruces, tablas y reportes.
+10. El usuario interactúa con el Chatbot (mediante el componente `ChatWidget`), que envía la pregunta y el historial de conversación a `POST /api/analisis/{pk}/chat/`.
+11. El backend agrega el contexto de indicadores al prompt y reenvía la solicitud a `POST /chat` en `ia-service`.
+12. El `ia-service` genera la respuesta usando Ollama y la devuelve, fluyendo de regreso hasta el usuario.
 
-El cliente HTTP central está en `frontend/maternanalytics/src/api.ts`. Allí se define `API_URL`, timeout de peticiones, manejo básico de errores, historial, cruces y narrativa IA.
+El cliente HTTP central está en `frontend/maternanalytics/src/api.ts`. Allí se define `API_URL`, timeout de peticiones, manejo básico de errores, historial, cruces, narrativa IA y el endpoint del chat.
 
 ## Visualizaciones
 
@@ -230,6 +233,7 @@ backend/
 - `GET /api/analisis/{pk}/heatmap/`: heatmap para morbilidad.
 - `POST /api/analisis/{pk}/clustering/`: clustering.
 - `GET /api/analisis/{pk}/narrativa/{tipo_narrativa}/`: narrativa IA.
+- `POST /api/analisis/{pk}/chat/`: conversador del chatbot con base en agregados.
 
 ## IA-SERVICE
 
@@ -238,7 +242,7 @@ backend/
 Reglas:
 
 - recibe indicadores agregados, no registros crudos de pacientes;
-- expone `GET /health` y `POST /generar-narrativa`;
+- expone `GET /health`, `POST /generar-narrativa` y `POST /chat`;
 - si Ollama falla, responde error controlado;
 - el backend cachea narrativas en la tabla `narrativa_ia`.
 

@@ -32,3 +32,38 @@ class NarrativaResponse(BaseModel):
 
     narrativa: str
     modelo: str
+
+
+class ChatMensaje(BaseModel):
+    """Mensaje individual en el historial de chat."""
+
+    rol: Literal['usuario', 'asistente']
+    contenido: str
+
+
+class ChatRequest(BaseModel):
+    """Solicitud de chat.
+
+    Attributes:
+        pregunta: La pregunta actual del usuario.
+        historial: Mensajes previos en la conversación.
+        tipo_analisis: Tipo de análisis del que provienen los indicadores.
+        contexto: Datos ya agregados (nunca filas de pacientes).
+    """
+
+    pregunta: str
+    historial: list[ChatMensaje]
+    tipo_analisis: TipoAnalisis
+    contexto: dict[str, Any]
+
+
+class ChatResponse(BaseModel):
+    """Respuesta del chatbot.
+
+    Attributes:
+        respuesta: Texto de la respuesta generada.
+        modelo: Nombre del modelo LLM usado.
+    """
+
+    respuesta: str
+    modelo: str

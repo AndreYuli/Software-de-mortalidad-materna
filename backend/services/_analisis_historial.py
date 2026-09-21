@@ -1,11 +1,15 @@
 """Consulta del historial de cargas: período de cada carga (año, mes, semana) y filtros."""
 
+import logging
 from datetime import datetime, timezone
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from sqlalchemy.orm import Session
 
-from db.models_sqlalchemy import Analisis
+from db.models_sqlalchemy import Analisis, NarrativaIA
+
+logger = logging.getLogger(__name__)
 
 # `fecha_carga` se guarda en UTC sin zona horaria. El período se calcula en hora de Colombia:
 # una carga el domingo por la noche ya es lunes en UTC y caería en la semana siguiente.
@@ -93,3 +97,59 @@ def anios_historial(db: Session) -> list[int]:
     """Lista los años (más reciente primero) en los que hay cargas, para el filtro de año."""
     fechas = db.query(Analisis.fecha_carga).all()
     return sorted({periodo_de_carga(f)[0] for (f,) in fechas}, reverse=True)
+
+
+def actualizar_carga(
+    db: Session,
+    analisis: Analisis,
+    nombre_archivo: str | None = None,
+    fecha_carga: datetime | None = None,
+) -> Analisis:
+    """Corrige los datos de una carga: nombre del archivo y/o fecha (que define año, mes y semana).
+
+    Args:
+        db: Sesión de base de datos.
+        analisis: Carga a modificar.
+        nombre_archivo: Nuevo nombre; se ignora si viene vacío.
+        fecha_carga: Nueva fecha. Con zona horaria se convierte a UTC; sin ella se interpreta
+            como hora de Colombia, igual que la ve el usuario en el historial.
+
+    Returns:
+        La carga actualizada.
+
+    Raises:
+        ValueError: Si no se indica ningún cambio o el nombre queda vacío.
+    """
+    if nombre_archivo is None and fecha_carga is None:
+        raise ValueError('Indique al menos un dato a modificar.')
+    if nombre_archivo is not None:
+        nombre = nombre_archivo.strip()
+        if not nombre:
+            raise ValueError('El nombre del archivo no puede estar vacío.')
+        analisis.nombre_archivo = nombre
+    if fecha_carga is not None:
+        if fecha_carga.tzinfo is None:
+            fecha_carga = fecha_carga.replace(tzinfo=_ZONA_LOCAL)
+        analisis.fecha_carga = fecha_carga.astimezone(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    db.refresh(analisis)
+    return analisis
+
+
+def eliminar_carga(db: Session, analisis: Analisis) -> None:
+    """Elimina una carga con sus narrativas de IA y, si nadie más lo usa, su archivo almacenado.
+
+    Los casos ya integrados a la base clínica (pacientes y casos) no se tocan.
+    """
+    ruta = analisis.archivo
+    db.query(NarrativaIA).filter(NarrativaIA.analisis_id == analisis.id).delete()
+    db.delete(analisis)
+    db.commit()
+    if not ruta:
+        return
+    if db.query(Analisis.id).filter(Analisis.archivo == ruta).first():
+        return
+    try:
+        Path(ruta.lstrip('/')).unlink(missing_ok=True)
+    except OSError:
+        logger.warning('No se pudo borrar el archivo %s', ruta)

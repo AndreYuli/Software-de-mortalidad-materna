@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { clearSession, describeNetworkError, extractErrorMessage, fetchWithTimeout } from './api'
+import { clearSession, describeNetworkError, extractErrorMessage, fetchWithTimeout, enviarMensajeChat } from './api'
 
 describe('extractErrorMessage', () => {
   it('devuelve detail cuando es string', () => {
@@ -114,5 +114,41 @@ describe('fetchWithTimeout — sesión', () => {
     localStorage.setItem('user_email', 'e')
     clearSession()
     expect(localStorage.length).toBe(0)
+  })
+})
+
+describe('enviarMensajeChat', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('devuelve el objeto con respuesta y modelo si status 200', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ respuesta: 'Hola', modelo: 'test' }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        })
+      )
+    )
+    const res = await enviarMensajeChat(1, 'hola', [])
+    expect(res).toEqual({ respuesta: 'Hola', modelo: 'test' })
+  })
+
+  it('devuelve null si status es 503', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 503 })))
+    const res = await enviarMensajeChat(1, 'hola', [])
+    expect(res).toBeNull()
+  })
+
+  it('lanza error extraído del cuerpo si status no ok y no 503', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ detail: 'Error de prueba' }), { status: 400 })
+      )
+    )
+    await expect(enviarMensajeChat(1, 'hola', [])).rejects.toThrow('Error de prueba')
   })
 })

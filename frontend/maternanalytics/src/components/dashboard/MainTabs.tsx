@@ -13,10 +13,11 @@ const TABS: { key: MainTab; label: string }[] = [
 
 export function MainTabs({ active, onChange }: MainTabsProps) {
   return (
-    // El borde gris va en el contenedor exterior; el interior (con scroll horizontal) baja 1 px para que
-    // la línea de la pestaña activa lo tape sin que el overflow la recorte.
-    <div className="border-b border-slate-200">
-      <div role="tablist" aria-label="Secciones del análisis" className="-mb-px flex gap-6 overflow-x-auto">
+    // La pestaña activa baja 1 px y tapa el borde superior del panel de filtros, que va justo debajo:
+    // así queda fusionada con el panel. En pantallas anchas el contenedor no recorta (overflow visible);
+    // en móvil hace scroll horizontal y ese solape de 1 px se recorta.
+    <div>
+      <div role="tablist" aria-label="Secciones del análisis" className="-mb-px flex items-end gap-1.5 overflow-x-auto px-1 pt-1 sm:overflow-visible">
         {TABS.map(({ key, label }) => {
           const selected = active === key
           return (
@@ -26,10 +27,10 @@ export function MainTabs({ active, onChange }: MainTabsProps) {
               role="tab"
               aria-selected={selected}
               onClick={() => onChange(key)}
-              className={`shrink-0 whitespace-nowrap border-b-2 px-1 pb-3 text-sm font-medium transition ${
+              className={`shrink-0 whitespace-nowrap rounded-b-none rounded-t-lg px-4 text-sm font-medium transition ${
                 selected
-                  ? 'border-brand-magenta text-brand-magenta'
-                  : 'border-transparent text-slate-500 hover:text-slate-800'
+                  ? 'tab-raised-active pb-3 pt-2.5 font-semibold text-brand-magenta'
+                  : 'tab-raised-inactive mt-1 pb-2 pt-1.5 text-slate-500 hover:text-slate-800'
               }`}
             >
               {label}
