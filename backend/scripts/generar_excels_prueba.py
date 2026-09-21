@@ -77,7 +77,8 @@ def _fmt(d: date) -> str:
 
 def _fecha_nacimiento_para_edad(fecha_evento: date, edad: int) -> date:
     """Calcula una fecha de nacimiento consistente con la edad y la fecha del evento."""
-    return fecha_evento.replace(year=fecha_evento.year - edad) - timedelta(
+    dia = 28 if (fecha_evento.month, fecha_evento.day) == (2, 29) else fecha_evento.day
+    return fecha_evento.replace(year=fecha_evento.year - edad, day=dia) - timedelta(
         days=random.randint(0, 300)
     )
 
