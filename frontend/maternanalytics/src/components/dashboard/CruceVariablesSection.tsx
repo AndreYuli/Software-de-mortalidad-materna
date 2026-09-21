@@ -156,7 +156,7 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
                     font: { family: CHART_FONT_FAMILY },
                     generateLabels(chart) {
                       return chart.data.datasets.map((dataset, index) => ({
-                        text: dataset.label ?? index,
+                        text: dataset.label ?? String(index),
                         fillStyle: Array.isArray(dataset.backgroundColor)
                           ? dataset.backgroundColor[index % dataset.backgroundColor.length]
                           : dataset.backgroundColor,
