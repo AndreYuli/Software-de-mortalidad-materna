@@ -1,18 +1,9 @@
 import { Bar } from 'react-chartjs-2'
-import { CHART_FONT_FAMILY } from '../../constants/chartTheme'
-import { ChartAiInsight } from './ChartAiInsight'
-import { wrapLabel } from '../../utils/causasChartLabels'
-
-const SOCIO_PALETTE = [
-  '#6366f1',
-  '#8b5cf6',
-  '#a78bfa',
-  '#c4b5fd',
-  '#f472b6',
-  '#fb923c',
-  '#fbbf24',
-  '#34d399',
-]
+import { BAR_STYLE_HORIZONTAL, BRAND_COLOR, CHART_FONT_FAMILY } from '../../constants/chartTheme'
+import { ChartCard } from './ChartCard'
+import { calculateChartHeight, wrapLabel } from '../../utils/causasChartLabels'
+import { chartHeightClass } from '../../utils/chartHeight'
+import { describeSeries } from '../../utils/chartA11y'
 
 const TITLES: Record<string, string> = {
   zona_residencia: 'Zona de Residencia',
@@ -59,31 +50,27 @@ function SociodemographicBarChart({
 }) {
   if (!labels.length || total === 0) {
     return (
-      <div className="chart-card-col-12">
-        <h3 className="chart-card-title">{title}</h3>
-        <p>Sin datos suficientes para esta gráfica.</p>
-      </div>
+      <ChartCard title={title}>
+        <p className="text-sm text-slate-500">Sin datos suficientes para esta gráfica.</p>
+      </ChartCard>
     )
   }
 
   const insightText = INSIGHTS[insightKey]?.(labels, valores) ?? null
 
   return (
-    <div className="chart-card-col-12">
-      <h3 className="chart-card-title">{title}</h3>
-      <p>
-        Total: {total} casos con dato registrado
-      </p>
-      <div>
+    <ChartCard title={title} description={`Total: ${total} casos con dato registrado`} insight={insightText}>
+      <div className={chartHeightClass(calculateChartHeight(labels))}>
         <Bar
+          role="img"
+          aria-label={describeSeries(title, labels, valores)}
           data={{
             labels: labels.map((l) => wrapLabel(l)),
             datasets: [
               {
                 data: valores,
-                backgroundColor: labels.map((_, i) => SOCIO_PALETTE[i % SOCIO_PALETTE.length]),
-                borderColor: '#475569',
-                borderWidth: 1,
+                backgroundColor: BRAND_COLOR,
+                ...BAR_STYLE_HORIZONTAL,
               },
             ],
           }}
@@ -109,8 +96,7 @@ function SociodemographicBarChart({
           }}
         />
       </div>
-      <ChartAiInsight insight={insightText} />
-    </div>
+    </ChartCard>
   )
 }
 
@@ -131,21 +117,18 @@ export function SociodemographicChartsSection({ data, evento }: Sociodemographic
 
   if (!hasAnyData) {
     return (
-      <div className="chart-card-col-12">
-        <h3 className="chart-card-title">Factores Sociodemográficos ({evento})</h3>
-        <p>
+      <ChartCard title={`Factores Sociodemográficos (${evento})`}>
+        <p className="text-sm text-slate-500">
           No hay datos sociodemográficos disponibles. Suba archivos con las columnas de zona, población vulnerable, etnia y tipo de afiliación.
         </p>
-      </div>
+      </ChartCard>
     )
   }
 
   return (
-    <div className="sociodemographic-section">
-      <h3 className="chart-card-title">
-        Factores Sociodemográficos ({evento})
-      </h3>
-      <div className="sociodemographic-grid">
+    <section className="flex flex-col gap-4">
+      <h3 className="text-lg font-semibold text-brand-deep">Factores Sociodemográficos ({evento})</h3>
+      <div data-testid="sociodemographic-grid" className="grid gap-6 lg:grid-cols-2">
         {variables.map((v) => {
           const item = data[v.key]
           if (!item || item.total === 0) return null
@@ -161,6 +144,6 @@ export function SociodemographicChartsSection({ data, evento }: Sociodemographic
           )
         })}
       </div>
-    </div>
+    </section>
   )
 }

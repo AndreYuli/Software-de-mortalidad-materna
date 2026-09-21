@@ -14,7 +14,7 @@ describe('SociodemographicChartsSection', () => {
     }
     const { container } = render(<SociodemographicChartsSection data={data} evento="Morbilidad" />)
 
-    const grid = container.querySelector('.sociodemographic-grid')
+    const grid = container.querySelector('[data-testid="sociodemographic-grid"]')
     expect(grid).not.toBeNull()
     // La variable sin datos no ocupa un hueco en la rejilla
     expect(grid!.children).toHaveLength(3)
