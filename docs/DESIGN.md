@@ -124,9 +124,9 @@ Reglas:
 
 Tokens globales principales definidos en `frontend/maternanalytics/src/index.css`:
 
-- escala azul `--blue-100` a `--blue-900`;
+- escala principal (basada en morado #662d90) `--blue-100` a `--blue-900` (usada en login);
 - acento `--pink-500`;
-- escala `--brand-500`, `--brand-700`, `--brand-900`.
+- escala de marca (basada en morado #662d90) `--brand-500`, `--brand-700`, `--brand-900` (usada en dashboard).
 
 Reglas:
 

@@ -48,7 +48,7 @@ export const MESES_ES = [
 
 export const CIE10_DESCRIPTIONS: Record<string, string> = cie10Nombres
 
-export const CLUSTER_COLORS = ['#0f766e', '#c0392b', '#2ca02c', '#f39c12', '#6f42c1', '#16a085', '#d35400', '#8e44ad']
+export const CLUSTER_COLORS = ['#662d90', '#c0392b', '#2ca02c', '#f39c12', '#6f42c1', '#16a085', '#d35400', '#8e44ad']
 
 export function getCie10Description(code: unknown): string {
   const normalized = String(code ?? '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');

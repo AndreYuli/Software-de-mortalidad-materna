@@ -4,10 +4,10 @@
    ============================================================ */
 
 :root {
-  --cream:      #f4f8ff;
-  --text-dark:  #1a2433;
-  --text-mid:   #3d5a80;
-  --text-light: #7a9bbf;
+  --cream:      #faf7fe;
+  --text-dark:  #221c30;
+  --text-mid:   #57496f;
+  --text-light: #9c8fb4;
 }
 
 .login-page {
@@ -25,7 +25,7 @@
   flex: 1.1;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(160deg, var(--blue-900) 0%, var(--blue-700) 50%, var(--blue-500) 100%);
+  background: linear-gradient(160deg, var(--blue-700) 0%, var(--blue-600) 55%, var(--blue-500) 100%);
 }
 
 .login-left::before {
@@ -33,8 +33,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 30% 70%, rgba(122, 174, 232, 0.15) 0%, transparent 70%),
-    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(168, 205, 240, 0.1)  0%, transparent 60%);
+    radial-gradient(ellipse 80% 60% at 30% 70%, rgba(193, 145, 230, 0.20) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(224, 197, 245, 0.14)  0%, transparent 60%);
 }
 
 /* RIGHT PANEL */

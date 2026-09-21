@@ -228,7 +228,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
       font-size: 13px;
     }
     .header {
-      border-bottom: 2px solid #3b82f6;
+      border-bottom: 2px solid #662d90;
       padding-bottom: 16px;
       margin-bottom: 20px;
       display: flex;
@@ -238,7 +238,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
     .header-title h1 {
       margin: 0 0 4px 0;
       font-size: 20px;
-      color: #0f172a;
+      color: #2b1141;
       font-weight: 800;
     }
     .header-title p {
@@ -270,7 +270,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
     .kpi-card .val {
       font-size: 22px;
       font-weight: 800;
-      color: #0f172a;
+      color: #2b1141;
       margin: 4px 0;
     }
     .kpi-card .lbl {
@@ -304,7 +304,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
     .section-title {
       font-size: 15px;
       font-weight: 700;
-      color: #0f172a;
+      color: #2b1141;
       margin: 20px 0 10px 0;
       border-bottom: 1px solid #e2e8f0;
       padding-bottom: 4px;
@@ -359,7 +359,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
       border: none;
     }
     .btn-primary {
-      background: #2563eb;
+      background: #662d90;
       color: white;
     }
     .btn-secondary {
@@ -397,7 +397,7 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
     </div>
     <div class="kpi-card">
       <div class="lbl">Morbilidad Extrema (MME)</div>
-      <div class="val" style="color: #3b82f6;">${data.kpis.totalMorbilidad}</div>
+      <div class="val" style="color: #512277;">${data.kpis.totalMorbilidad}</div>
     </div>
     <div class="kpi-card">
       <div class="lbl">Total Casos Consolidados</div>
