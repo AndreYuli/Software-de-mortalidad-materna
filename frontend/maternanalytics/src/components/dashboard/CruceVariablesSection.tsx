@@ -149,7 +149,6 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
                 legend: {
                   display: true,
                   position: 'bottom',
-                  title: { display: true, text: labels.legend, font: { family: CHART_FONT_FAMILY } },
                   labels: { font: { family: CHART_FONT_FAMILY } },
                 },
               },
