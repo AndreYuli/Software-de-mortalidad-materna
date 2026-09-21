@@ -18,6 +18,7 @@ import { DistribucionEdadRiesgo } from './DistribucionEdadRiesgo'
 import { SociodemographicChartsSection } from './SociodemographicChartsSection'
 import { CruceVariablesSection } from './CruceVariablesSection'
 import { NarrativasResumen } from './NarrativasResumen'
+import { calcularIndicadores } from '../../utils/indicadoresMaternos'
 import { getTimelineAiInsight } from '../../utils/aiChartInsights'
 
 export interface AnalysisHomeSectionProps {
@@ -164,6 +165,12 @@ export function AnalysisHomeSection({
   if (loading) return <DashboardLoadingState />
   if (error) return <DashboardErrorState message={error} />
 
+  const { relacionMmeMm, indiceMortalidad } = calcularIndicadores({
+    ambosEventos: segmento === 'ambos',
+    totalMortalidad: metrics.totalMortalidad,
+    totalMorbilidad: metrics.totalMorbilidad,
+  })
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
@@ -202,12 +209,10 @@ export function AnalysisHomeSection({
       />
 
       <KpiRow
-        totalCasos={metrics.totalCasos}
         totalMortalidad={metrics.totalMortalidad}
         totalMorbilidad={metrics.totalMorbilidad}
-        tasaLetalidad={metrics.tasaLetalidad}
-        curTot={metrics.curTot}
-        prevTot={metrics.prevTot}
+        relacionMmeMm={relacionMmeMm}
+        indiceMortalidad={indiceMortalidad}
         yearCompareMort={metrics.yearCompareMort}
         yearCompareMorb={metrics.yearCompareMorb}
         periodo={filterMonth ? 'mes' : 'año'}

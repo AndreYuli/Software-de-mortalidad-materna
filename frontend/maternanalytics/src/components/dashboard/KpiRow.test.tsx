@@ -3,68 +3,69 @@ import { render, screen } from '@testing-library/react'
 import { KpiRow, type KpiRowProps } from './KpiRow'
 
 const base: KpiRowProps = {
-  totalCasos: 120,
-  totalMortalidad: 15,
-  totalMorbilidad: 105,
-  tasaLetalidad: '12.5',
-  curTot: 120,
-  prevTot: 100,
+  totalMortalidad: 60,
+  totalMorbilidad: 3000,
+  relacionMmeMm: 50,
+  indiceMortalidad: 1.96,
   yearCompareMort: { cur: 15, prev: 10 },
   yearCompareMorb: { cur: 105, prev: 117 },
 }
 
 describe('KpiRow', () => {
-  it('muestra la región, las cuatro etiquetas y las cuatro cifras', () => {
+  it('muestra la región y las cuatro etiquetas nuevas', () => {
     render(<KpiRow {...base} />)
     expect(screen.getByRole('region', { name: 'Resumen epidemiológico' })).toBeInTheDocument()
-    expect(screen.getByText('Casos analizados')).toBeInTheDocument()
     expect(screen.getByText('Mortalidad materna 550')).toBeInTheDocument()
     expect(screen.getByText('Morbilidad materna extrema 549')).toBeInTheDocument()
-    expect(screen.getByText('Tasa de letalidad')).toBeInTheDocument()
-    expect(screen.getByText('120')).toBeInTheDocument()
-    expect(screen.getByText('15')).toBeInTheDocument()
-    expect(screen.getByText('105')).toBeInTheDocument()
-    expect(screen.getByText('12.5%')).toBeInTheDocument()
+    expect(screen.getByText('Relación MME/MM')).toBeInTheDocument()
+    expect(screen.getByText('Índice de mortalidad')).toBeInTheDocument()
   })
 
-  it('muestra las tendencias con la base de comparación indicada', () => {
+  it('ya no muestra "Casos analizados" ni "Tasa de letalidad"', () => {
+    render(<KpiRow {...base} />)
+    expect(screen.queryByText('Casos analizados')).not.toBeInTheDocument()
+    expect(screen.queryByText('Tasa de letalidad')).not.toBeInTheDocument()
+  })
+
+  it('muestra las cifras con formato es-CO', () => {
+    render(<KpiRow {...base} />)
+    expect(screen.getByText('60')).toBeInTheDocument()
+    expect(screen.getByText('3.000')).toBeInTheDocument()
+    expect(screen.getByText('50,0:1')).toBeInTheDocument()
+    expect(screen.getByText('2,0%')).toBeInTheDocument()
+  })
+
+  it('muestra "—" cuando la relación o el índice no se pueden calcular', () => {
+    render(<KpiRow {...base} relacionMmeMm={null} indiceMortalidad={null} />)
+    expect(screen.getAllByText('—')).toHaveLength(2)
+  })
+
+  it('muestra las tendencias de mortalidad y morbilidad con la base de comparación', () => {
     render(<KpiRow {...base} periodo="mes" />)
-    expect(screen.getByText('+20% vs mes anterior')).toBeInTheDocument()
     expect(screen.getByText('+50% vs mes anterior')).toBeInTheDocument()
     expect(screen.getByText('-10% vs mes anterior')).toBeInTheDocument()
   })
 
   it('usa "año anterior" cuando el periodo es el año', () => {
     render(<KpiRow {...base} periodo="año" />)
-    expect(screen.getAllByText(/vs año anterior/)).toHaveLength(3)
+    expect(screen.getAllByText(/vs año anterior/)).toHaveLength(2)
   })
 
-  it('sin comparación (sin año elegido) muestra "Histórico" en las tres tendencias', () => {
-    // Sin año, curTot y prevTot valen 0 y darían un falso "Estable": debe decir "Histórico" como las otras.
-    render(<KpiRow {...base} curTot={0} prevTot={0} yearCompareMort={null} yearCompareMorb={null} />)
-    expect(screen.getAllByText('Histórico')).toHaveLength(3)
-    expect(screen.queryByText('Estable')).not.toBeInTheDocument()
+  it('sin comparación muestra "Histórico" en las dos tendencias', () => {
+    render(<KpiRow {...base} yearCompareMort={null} yearCompareMorb={null} />)
+    expect(screen.getAllByText('Histórico')).toHaveLength(2)
   })
 
-  it('si solo un evento tiene comparación, la de casos sigue mostrando la variación', () => {
-    render(<KpiRow {...base} yearCompareMort={null} periodo="mes" />)
-    expect(screen.getByText('+20% vs mes anterior')).toBeInTheDocument()
-    expect(screen.getAllByText('Histórico')).toHaveLength(1)
+  it('explica cómo se calcula cada indicador en un tooltip accesible', () => {
+    render(<KpiRow {...base} />)
+    const botones = screen.getAllByRole('button', { name: 'Cómo se calcula' })
+    expect(botones).toHaveLength(2)
+    expect(botones[1]).toHaveAccessibleDescription(/MM \/ \(MME \+ MM\) × 100/)
+    expect(screen.getAllByRole('tooltip', { hidden: true })).toHaveLength(2)
   })
 
-  it('con letalidad menor de 50 no muestra la alerta', () => {
-    render(<KpiRow {...base} tasaLetalidad="49.9" />)
-    expect(screen.queryByText('Valor atípicamente alto')).not.toBeInTheDocument()
-  })
-
-  it('con letalidad de 50 o más muestra la alerta accesible', () => {
-    render(<KpiRow {...base} tasaLetalidad="62.5" />)
-    expect(screen.getByText('Valor atípicamente alto')).toBeInTheDocument()
-    expect(screen.getByTitle('Valor atípicamente alto')).toBeInTheDocument()
-  })
-
-  it('con una tasa no numérica no muestra la alerta', () => {
-    render(<KpiRow {...base} tasaLetalidad="N/A" />)
+  it('no muestra una alerta de umbral aunque el índice sea alto', () => {
+    render(<KpiRow {...base} indiceMortalidad={62.5} />)
     expect(screen.queryByText('Valor atípicamente alto')).not.toBeInTheDocument()
   })
 })
