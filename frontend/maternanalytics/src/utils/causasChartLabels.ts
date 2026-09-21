@@ -1,5 +1,6 @@
-const LINE_HEIGHT = 20
-const MIN_BAR_HEIGHT = 8
+// Chart.js dibuja las etiquetas con lineHeight 1.15 (≈14 px a 12 px de fuente).
+const LINE_HEIGHT = 15
+const MIN_BAR_HEIGHT = 10
 const AXIS_PADDING = 60
 const MIN_CHART_HEIGHT = 320
 

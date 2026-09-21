@@ -36,8 +36,8 @@ describe('calculateChartHeight', () => {
     expect(calculateChartHeight(etiquetasLargas)).toBeGreaterThan(calculateChartHeight(etiquetasCortas))
   })
 
-  it('una barra de una línea ocupa unos 28 px y cada línea extra suma 20 px', () => {
-    const diez = Array.from({ length: 10 }, () => 'Eclampsia')
-    expect(calculateChartHeight(diez)).toBe(60 + 10 * 28)
+  it('una barra de una línea ocupa 25 px y cada línea extra suma 15 px', () => {
+    const veinte = Array.from({ length: 20 }, () => 'Eclampsia')
+    expect(calculateChartHeight(veinte)).toBe(60 + 20 * 25)
   })
 })

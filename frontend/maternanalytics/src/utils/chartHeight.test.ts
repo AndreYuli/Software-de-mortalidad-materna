@@ -9,8 +9,9 @@ describe('chartHeightClass', () => {
   })
 
   it('sube al siguiente paso cuando la altura lo supera', () => {
-    expect(chartHeightClass(321)).toBe('h-[400px]')
+    expect(chartHeightClass(321)).toBe('h-[360px]')
     expect(chartHeightClass(400)).toBe('h-[400px]')
+    expect(chartHeightClass(401)).toBe('h-[440px]')
   })
 
   it('elige el primer paso que cubre la altura pedida', () => {

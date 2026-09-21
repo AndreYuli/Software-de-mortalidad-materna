@@ -4,11 +4,17 @@ import { calculateChartHeight } from './causasChartLabels'
 // clases literales (para que el escaneo las encuentre) y se elige el primer paso que cubre la altura.
 const HEIGHT_STEPS: { px: number; className: string }[] = [
   { px: 320, className: 'h-80' },
+  { px: 360, className: 'h-[360px]' },
   { px: 400, className: 'h-[400px]' },
+  { px: 440, className: 'h-[440px]' },
   { px: 480, className: 'h-[480px]' },
+  { px: 520, className: 'h-[520px]' },
   { px: 560, className: 'h-[560px]' },
+  { px: 600, className: 'h-[600px]' },
   { px: 640, className: 'h-[640px]' },
+  { px: 680, className: 'h-[680px]' },
   { px: 720, className: 'h-[720px]' },
+  { px: 760, className: 'h-[760px]' },
   { px: 800, className: 'h-[800px]' },
   { px: 880, className: 'h-[880px]' },
   { px: 960, className: 'h-[960px]' },

@@ -90,7 +90,7 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
                 y: {
                   grid: { display: false },
                   // Sin esto Chart.js omite etiquetas cuando las filas quedan juntas (móvil).
-                  ticks: { autoSkip: false, font: { size: narrow ? 10 : 12 } },
+                  ticks: { autoSkip: false, font: { size: narrow ? 10 : 12, lineHeight: 1.15 } },
                   afterFit: (scale: Scale) => {
                     if (!narrow) scale.width += Y_AXIS_WIDTH_SAFETY_MARGIN
                   },
