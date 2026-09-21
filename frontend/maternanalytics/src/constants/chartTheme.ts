@@ -26,9 +26,13 @@ ChartJS.register(
 export const CHART_FONT_FAMILY = 'Plus Jakarta Sans, sans-serif'
 export const CHART_TEXT_COLOR = '#1a202c'
 
+// Vino y ámbar en lugar de rojo y verde: el verde comunica "bueno" y no encaja con la morbilidad
+// materna extrema, y rojo/verde se confunden en daltonismo (ΔE 6,5 frente a 23,5 ahora).
+// Validados con `validate_palette.js`; el contraste del ámbar (2,85:1) se compensa con las
+// etiquetas de valor de las barras.
 export const CHART_COLORS = {
-  mortalidad: '#c0392b',
-  morbilidad: '#2ca02c',
+  mortalidad: '#9F1D35',
+  morbilidad: '#D9822B',
 }
 
 /**

@@ -12,6 +12,8 @@ export interface TopCausasChartData {
   labels: string[]
   values: number[]
   colors: string[]
+  /** Registros del evento, para calcular el porcentaje de cada causa. */
+  total?: number
 }
 
 export interface TrendChartsRowProps {

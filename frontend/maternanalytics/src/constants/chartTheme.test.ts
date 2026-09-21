@@ -14,8 +14,8 @@ import {
 describe('chartTheme', () => {
   it('expone la fuente y los colores base compartidos', () => {
     expect(CHART_FONT_FAMILY).toBe('Plus Jakarta Sans, sans-serif')
-    expect(CHART_COLORS.mortalidad).toBe('#c0392b')
-    expect(CHART_COLORS.morbilidad).toBe('#2ca02c')
+    expect(CHART_COLORS.mortalidad).toBe('#9F1D35')
+    expect(CHART_COLORS.morbilidad).toBe('#D9822B')
   })
 
   it('registra los defaults globales de Chart.js al importarse', () => {

@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import type { AnalisisCompleto } from '../../types'
+import { CHART_COLORS } from '../../constants/chartTheme'
 import { getCie10Description } from '../../constants/dashboardConstants'
 import type { Segmento } from './useDashboardMetrics'
 
@@ -52,7 +53,7 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
     if ((segmento === 'ambos' || segmento === 'mortalidad') && mortalidadData?.distribucion_mensual) {
       series.push({
         name: 'Mortalidad',
-        color: '#c0392b',
+        color: CHART_COLORS.mortalidad,
         data: getMonthly(mortalidadData.distribucion_mensual),
       })
     }
@@ -60,7 +61,7 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
     if ((segmento === 'ambos' || segmento === 'morbilidad') && morbilidadData?.distribucion_mensual) {
       series.push({
         name: 'Morbilidad',
-        color: '#2ca02c',
+        color: CHART_COLORS.morbilidad,
         data: getMonthly(morbilidadData.distribucion_mensual),
       })
     }
@@ -70,27 +71,29 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
 
   const topCausasMortalidad = useMemo(() => {
     if (!(segmento === 'ambos' || segmento === 'mortalidad')) {
-      return { labels: [], values: [], colors: [] }
+      return { labels: [], values: [], colors: [], total: 0 }
     }
     const causas = mortalidadData?.causas_cie10?.top_causas ?? []
-    const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10).reverse()
+    const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10)
     return {
       labels: sorted.map((c) => getCie10Description(c.codigo)),
       values: sorted.map((c) => c.casos),
-      colors: sorted.map(() => '#c0392b'),
+      colors: sorted.map(() => CHART_COLORS.mortalidad),
+      total: mortalidadData?.total_registros ?? 0,
     }
   }, [segmento, mortalidadData])
 
   const topCausasMorbilidad = useMemo(() => {
     if (!(segmento === 'ambos' || segmento === 'morbilidad')) {
-      return { labels: [], values: [], colors: [] }
+      return { labels: [], values: [], colors: [], total: 0 }
     }
     const causas = morbilidadData?.causas_cie10?.top_causas ?? []
-    const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10).reverse()
+    const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10)
     return {
       labels: sorted.map((c) => getCie10Description(c.codigo)),
       values: sorted.map((c) => c.casos),
-      colors: sorted.map(() => '#2ca02c'),
+      colors: sorted.map(() => CHART_COLORS.morbilidad),
+      total: morbilidadData?.total_registros ?? 0,
     }
   }, [segmento, morbilidadData])
 
