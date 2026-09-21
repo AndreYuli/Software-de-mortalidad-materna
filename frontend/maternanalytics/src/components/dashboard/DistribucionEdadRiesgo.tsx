@@ -1,9 +1,11 @@
 import { useMemo } from 'react'
 import { Bar } from 'react-chartjs-2'
-import { CHART_FONT_FAMILY, STATUS_COLORS } from '../../constants/chartTheme'
-import { ChartAiInsight } from './ChartAiInsight'
+import { BAR_STYLE_VERTICAL, CHART_FONT_FAMILY, STATUS_COLORS } from '../../constants/chartTheme'
+import { ChartCard } from './ChartCard'
 import { getEdadRiesgoAiInsight } from '../../utils/aiChartInsights'
 import { wrapLabel } from '../../utils/causasChartLabels'
+import { CHART_HEIGHT_FIXED } from '../../utils/chartHeight'
+import { describeSeries } from '../../utils/chartA11y'
 
 export interface DistribucionEdadRiesgoData {
   labels: string[]
@@ -23,29 +25,31 @@ export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoP
 
   if (!data || data.labels.length === 0) {
     return (
-      <div className="chart-card-col-12">
-        <h3 className="chart-card-title">Distribución por Edad y Riesgo Obstétrico</h3>
-        <p>No hay datos suficientes de edad para generar esta gráfica.</p>
-      </div>
+      <ChartCard title="Distribución por Edad y Riesgo Obstétrico">
+        <p className="text-sm text-slate-500">No hay datos suficientes de edad para generar esta gráfica.</p>
+      </ChartCard>
     )
   }
 
+  const title = `Distribución por Edad y Riesgo Obstétrico (${evento})`
+
   return (
-    <div className="chart-card-col-12">
-      <h3 className="chart-card-title">Distribución por Edad y Riesgo Obstétrico ({evento})</h3>
-      <p>
-        Las mujeres menores de 19 años o de 35 años en adelante tienen mayor riesgo de morbilidad y mortalidad materna.
-      </p>
-      <div>
+    <ChartCard
+      title={title}
+      description="Las mujeres menores de 19 años o de 35 años en adelante tienen mayor riesgo de morbilidad y mortalidad materna."
+      insight={insight}
+    >
+      <div className={CHART_HEIGHT_FIXED}>
         <Bar
+          role="img"
+          aria-label={describeSeries(title, data.labels, data.valores)}
           data={{
             labels: data.labels.map((l) => wrapLabel(l)),
             datasets: [
               {
                 data: data.valores,
                 backgroundColor: RISK_COLORS,
-                borderColor: '#475569',
-                borderWidth: 1,
+                ...BAR_STYLE_VERTICAL,
               },
             ],
           }}
@@ -71,7 +75,6 @@ export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoP
           }}
         />
       </div>
-      <ChartAiInsight insight={insight} />
-    </div>
+    </ChartCard>
   )
 }
