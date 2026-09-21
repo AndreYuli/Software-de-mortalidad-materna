@@ -14,17 +14,24 @@ const SUBTAB_ORDER: SubTab[] = ['sociodemografico', 'clinico']
 
 export function SubTabs({ active, onChange }: SubTabsProps) {
   return (
-    <div className="dashboard-subtabs">
-      {SUBTAB_ORDER.map((key) => (
-        <button
-          key={key}
-          type="button"
-          className={`subtab-button ${active === key ? 'active' : ''}`}
-          onClick={() => onChange(key)}
-        >
-          {SUBTAB_LABELS[key]}
-        </button>
-      ))}
+    <div role="tablist" aria-label="Factores" className="flex flex-wrap gap-2">
+      {SUBTAB_ORDER.map((key) => {
+        const selected = active === key
+        return (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={selected}
+            onClick={() => onChange(key)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+              selected ? 'bg-brand-magenta text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            {SUBTAB_LABELS[key]}
+          </button>
+        )
+      })}
     </div>
   )
 }

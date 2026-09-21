@@ -11,8 +11,8 @@ describe('SubTabs', () => {
 
   it('marca como activo el botón correspondiente a `active`', () => {
     render(<SubTabs active="sociodemografico" onChange={() => {}} />)
-    expect(screen.getByText('Factores Sociodemográficos')).toHaveClass('active')
-    expect(screen.getByText('Factores Clínicos')).not.toHaveClass('active')
+    expect(screen.getByRole('tab', { name: 'Factores Sociodemográficos' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Factores Clínicos' })).toHaveAttribute('aria-selected', 'false')
   })
 
   it('llama a onChange con la clave de la subpestaña al hacer click', () => {
