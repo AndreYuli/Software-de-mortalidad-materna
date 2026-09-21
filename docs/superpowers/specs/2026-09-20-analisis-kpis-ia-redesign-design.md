@@ -10,7 +10,7 @@ Partes anteriores: `2026-09-20-auth-redesign-design.md` y `2026-09-20-dashboard-
 - Tailwind v4 y `lucide-react` configurados. Tokens: `brand-deep` (#290764), `brand-violet` (#4b0453), `brand-magenta` (#89005e). En `src/index.css` el magenta está pensado para "alertas de IA".
 - Ubicación: `src/components/dashboard/` (`KpiRow.tsx`, `TrendBadge.tsx`, `ChartAiInsight.tsx`, `NarrativasResumen.tsx`) y `src/components/NarrativaIA.tsx`.
 - Existe `NarrativasResumen.test.tsx` (6 tests, deben seguir pasando sin cambios). No hay tests de `KpiRow`, `TrendBadge` ni `ChartAiInsight`.
-- `AnalysisHomeSection` usa estos componentes; sus props no cambian, así que ese archivo no se modifica.
+- `AnalysisHomeSection` usa estos componentes. Su única modificación es pasar a `KpiRow` la prop `periodo` (`filterMonth ? 'mes' : 'año'`); sus propias props no cambian.
 
 ## Decisiones
 
@@ -18,12 +18,13 @@ Partes anteriores: `2026-09-20-auth-redesign-design.md` y `2026-09-20-dashboard-
 - Se **quitan** los textos explicativos y el chip "Revisar consistencia / Indicador estable".
 - Resumen de IA: **tarjeta magenta suave** con ícono `Sparkles`.
 - Tendencias: **subir en verde, bajar en rojo**.
+- Texto de la tendencia: dice contra qué compara (`vs mes anterior` / `vs año anterior`), en lugar de la abreviatura `vs ant.`.
 
 ## Componentes
 
 ### `KpiRow`
 
-Props sin cambios: `totalCasos`, `totalMortalidad`, `totalMorbilidad`, `tasaLetalidad`, `curTot`, `prevTot`, `yearCompareMort`, `yearCompareMorb`.
+Props existentes sin cambios: `totalCasos`, `totalMortalidad`, `totalMorbilidad`, `tasaLetalidad`, `curTot`, `prevTot`, `yearCompareMort`, `yearCompareMorb`. Nueva prop opcional: `periodo?: 'mes' | 'año'`, que `KpiRow` reenvía a cada `TrendBadge`.
 
 - `section` con `aria-label="Resumen epidemiológico"`, blanca, borde `border-slate-200`, esquinas redondeadas y sombra suave.
 - Rejilla de 4 celdas: 1 columna en móvil, 2 desde `sm`, 4 desde `lg`; divisores entre celdas.
@@ -41,17 +42,23 @@ Props sin cambios: `totalCasos`, `totalMortalidad`, `totalMorbilidad`, `tasaLeta
 
 ### `TrendBadge`
 
-Props sin cambios: `compare: CompareResult | null`. Misma lógica de cálculo.
+Props: `compare: CompareResult | null` (sin cambios) y una nueva opcional `periodo?: 'mes' | 'año'`. Misma lógica de cálculo.
+
+La base de la comparación depende del filtro (ver `getMonthlyCompare` en `useDashboardMetrics.ts`): con año y mes elegidos se compara con el mes anterior (enero con diciembre del año previo); con solo el año, el año completo con el año anterior; sin año (`''`, "Todos los años", que es el estado inicial de la app) no hay comparación y `compare` es `null`. Por eso el texto debe decir la base:
+
+- `periodo === 'mes'` → sufijo `vs mes anterior`.
+- `periodo === 'año'` → sufijo `vs año anterior`.
+- `periodo` no indicado → sufijo `vs periodo anterior` (valor por defecto, para no romper otros usos).
 
 | Caso | Salida |
 |---|---|
 | `compare` nulo | texto gris "Histórico" |
 | `prev === 0` y `cur > 0` | píldora gris "Sin base previa" |
 | `prev === 0` y `cur === 0` | píldora gris "Estable" |
-| `pct > 0` | píldora verde con `TrendingUp` y `+N% vs ant.` |
-| `pct <= 0` | píldora roja con `TrendingDown` y `N% vs ant.` |
+| `pct > 0` | píldora verde con `TrendingUp` y `+N % vs mes anterior` (o `vs año anterior`) |
+| `pct <= 0` | píldora roja con `TrendingDown` y `N % vs mes anterior` (o `vs año anterior`) |
 
-El signo y los decimales se calculan como hoy (`pct.toFixed(0)`, `+` solo si `pct >= 0`). Nota: hoy `pct === 0` cae en la clase `trend-down`; se mantiene esa regla (rojo con `+0% vs ant.`) para no cambiar la lógica en un rediseño visual. Los íconos llevan `aria-hidden`.
+El signo y los decimales se calculan como hoy (`pct.toFixed(0)`, `+` solo si `pct >= 0`). Nota: hoy `pct === 0` cae en la clase `trend-down`; se mantiene esa regla (rojo con `+0 %`) para no cambiar la lógica en un rediseño visual. Los íconos llevan `aria-hidden`.
 
 ### `NarrativaIA` (`src/components/NarrativaIA.tsx`)
 
@@ -86,7 +93,7 @@ Misma familia visual, más ligera: `rounded-lg border border-brand-magenta/20 bg
 ## Pruebas
 
 - `NarrativasResumen.test.tsx`: sin cambios, debe seguir pasando (protege `NarrativaIA`).
-- Nuevo `TrendBadge.test.tsx`: los cinco casos de la tabla, incluido el signo y `pct === 0`.
+- Nuevo `TrendBadge.test.tsx`: los cinco casos de la tabla, incluido el signo y `pct === 0`, y el sufijo según `periodo` ('mes', 'año' y sin indicar).
 - Nuevo `KpiRow.test.tsx`: muestra las cuatro etiquetas y cifras; la letalidad < 50 no muestra la alerta; ≥ 50 sí (texto `sr-only` "Valor atípicamente alto"); tasa no numérica no muestra alerta.
 - Nuevo `ChartAiInsight.test.tsx`: devuelve nada sin `insight` y muestra etiqueta y texto con él.
 - Verificar `tsc -b`, `vite build` y `vitest run --testTimeout=30000`.
