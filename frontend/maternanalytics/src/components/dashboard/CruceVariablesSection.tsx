@@ -64,6 +64,9 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
 
   const labels = useMemo(() => getCruceLabels(varSocioLabel, varClinicaLabel), [varSocioLabel, varClinicaLabel])
 
+  const formatCruceSerieLabel = (valor: string | number) => `${valor} ${varClinicaLabel}`
+  const formatCruceTooltipLabel = (valor: string | number, casos: number) => `${casos} casos con ${valor} ${varClinicaLabel}`
+
   return (
     <ChartCard
       title={`Cruce de Variables (${evento})`}
@@ -134,7 +137,7 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
             data={{
               labels: data.categorias_socio.map((l) => wrapLabel(l)),
               datasets: data.categorias_clinica.map((cat, j) => ({
-                label: cat,
+                label: formatCruceSerieLabel(cat),
                 data: data.categorias_socio.map((_, i) => data.matriz[i][j]),
                 backgroundColor: CATEGORICAL_PALETTE[j % CATEGORICAL_PALETTE.length],
                 ...BAR_STYLE_GROUPED,
@@ -149,7 +152,34 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
                 legend: {
                   display: true,
                   position: 'bottom',
-                  labels: { font: { family: CHART_FONT_FAMILY } },
+                  labels: {
+                    font: { family: CHART_FONT_FAMILY },
+                    generateLabels(chart) {
+                      return chart.data.datasets.map((dataset, index) => ({
+                        text: dataset.label ?? index,
+                        fillStyle: Array.isArray(dataset.backgroundColor)
+                          ? dataset.backgroundColor[index % dataset.backgroundColor.length]
+                          : dataset.backgroundColor,
+                        strokeStyle: Array.isArray(dataset.backgroundColor)
+                          ? dataset.backgroundColor[index % dataset.backgroundColor.length]
+                          : dataset.backgroundColor,
+                        lineWidth: 0,
+                        datasetIndex: index,
+                        hidden: false,
+                        index,
+                      }))
+                    },
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label(context) {
+                      const valor = context.parsed.x ?? context.parsed.y ?? 0
+                      const categoria = context.dataset.label ?? context.label ?? ''
+                      const labelBase = categoria.replace(new RegExp(`\\s*${varClinicaLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`), '')
+                      return formatCruceTooltipLabel(labelBase, valor)
+                    },
+                  },
                 },
               },
               scales: {
