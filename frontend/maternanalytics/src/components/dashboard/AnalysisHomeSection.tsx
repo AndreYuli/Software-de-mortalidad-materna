@@ -1,10 +1,12 @@
 import { useCallback, useMemo, useState } from 'react'
+import { CalendarClock } from 'lucide-react'
 import { useAnalysisHomeData } from '../../hooks/dashboard/useAnalysisHomeData'
 import { useDashboardMetrics, type Segmento } from '../../hooks/dashboard/useDashboardMetrics'
 import { useDashboardCharts } from '../../hooks/dashboard/useDashboardCharts'
 import { WelcomeState } from './WelcomeState'
 import { DashboardLoadingState } from './DashboardLoadingState'
 import { DashboardErrorState } from './DashboardErrorState'
+import { MainTabs } from './MainTabs'
 import { FiltersBar } from './FiltersBar'
 import { KpiRow } from './KpiRow'
 import { TrendChartsRow } from './TrendChartsRow'
@@ -163,125 +165,105 @@ export function AnalysisHomeSection({
   if (error) return <DashboardErrorState message={error} />
 
   return (
-    <div className="dashboard-strategic-container">
-      <div className="dashboard-analysis-layout">
-        <div className="dashboard-analysis-main">
-          <div className="dashboard-analysis-header">
-            <div className="dash-control-title">
-              <span className="dash-control-eyebrow">Vigilancia materna SIVIGILA</span>
-              <h1>Sistema de análisis epidemiológico</h1>
-              <p>Lectura técnica de mortalidad materna 550 y morbilidad materna extrema 549</p>
-              {ultimaSemanaReportada && (
-                <p className="dash-ultima-semana">
-                  Última carga: Semana {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
-                </p>
-              )}
-            </div>
-
-            <div className="dashboard-tabs">
-              <button
-                className={`tab-button ${activeTab === 'generalidades' ? 'active' : ''}`}
-                onClick={() => setActiveTab('generalidades')}
-              >
-                Generalidades
-              </button>
-              <button
-                className={`tab-button ${activeTab === 'morbilidad' ? 'active' : ''}`}
-                onClick={() => setActiveTab('morbilidad')}
-              >
-                Morbilidad (Ev. 549)
-              </button>
-              <button
-                className={`tab-button ${activeTab === 'mortalidad' ? 'active' : ''}`}
-                onClick={() => setActiveTab('mortalidad')}
-              >
-                Mortalidad (Ev. 550)
-              </button>
-            </div>
-          </div>
-
-          <KpiRow
-            totalCasos={metrics.totalCasos}
-            totalMortalidad={metrics.totalMortalidad}
-            totalMorbilidad={metrics.totalMorbilidad}
-            tasaLetalidad={metrics.tasaLetalidad}
-            curTot={metrics.curTot}
-            prevTot={metrics.prevTot}
-            yearCompareMort={metrics.yearCompareMort}
-            yearCompareMorb={metrics.yearCompareMorb}
-            periodo={filterMonth ? 'mes' : 'año'}
-          />
-
-          <NarrativasResumen
-            latestMortalidad={latestMortalidad}
-            latestMorbilidad={latestMorbilidad}
-            segmento={segmento}
-            filterYear={filterYear}
-            filterMonth={filterMonth}
-          />
-
-          {activeTab === 'generalidades' && (
-            <TrendChartsRow topCausasMortalidad={topCausasMortalidad} topCausasMorbilidad={topCausasMorbilidad} />
-          )}
-
-          {activeTab === 'morbilidad' && (
-            <>
-              <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
-
-              {activeSubTab === 'sociodemografico' && (
-                <>
-                  <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
-                  <SociodemographicChartsSection data={sociodemograficaMorbilidad} evento="Morbilidad" />
-                </>
-              )}
-
-              {activeSubTab === 'clinico' && (
-                <>
-                  <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
-                  <CruceVariablesSection analisisId={latestMorbilidad?.id ?? null} evento="Morbilidad" />
-                </>
-              )}
-            </>
-          )}
-
-          {activeTab === 'mortalidad' && (
-            <>
-              <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
-
-              {activeSubTab === 'sociodemografico' && (
-                <>
-                  <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
-                  <SociodemographicChartsSection data={sociodemograficaMortalidad} evento="Mortalidad" />
-                </>
-              )}
-
-              {activeSubTab === 'clinico' && (
-                <>
-                  <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
-                  <CruceVariablesSection analisisId={latestMortalidad?.id ?? null} evento="Mortalidad" />
-                </>
-              )}
-            </>
-          )}
-        </div>
-
-        <FiltersBar
-          segmento={segmento}
-          onSegmentoChange={onSegmentoChange}
-          latestMortalidad={latestMortalidad}
-          latestMorbilidad={latestMorbilidad}
-          filterYear={filterYear}
-          onYearChange={onYearChange}
-          availableYears={availableYears}
-          filterMonth={filterMonth}
-          onMonthChange={onMonthChange}
-          filterWeek={filterWeek}
-          onWeekChange={onWeekChange}
-          filterDay={filterDay}
-          onDayChange={onDayChange}
-          onExport={handleExportReport}
-        />
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-brand-magenta">
+          Vigilancia materna SIVIGILA
+        </span>
+        <h1 className="text-2xl font-bold text-brand-deep">Sistema de análisis epidemiológico</h1>
+        <p className="text-sm text-slate-500">
+          Lectura técnica de mortalidad materna 550 y morbilidad materna extrema 549
+        </p>
+        {ultimaSemanaReportada && (
+          <p className="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            <CalendarClock className="size-4" aria-hidden="true" />
+            Última carga: Semana {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
+          </p>
+        )}
       </div>
+
+      <MainTabs active={activeTab} onChange={setActiveTab} />
+
+      <FiltersBar
+        segmento={segmento}
+        onSegmentoChange={onSegmentoChange}
+        latestMortalidad={latestMortalidad}
+        latestMorbilidad={latestMorbilidad}
+        filterYear={filterYear}
+        onYearChange={onYearChange}
+        availableYears={availableYears}
+        filterMonth={filterMonth}
+        onMonthChange={onMonthChange}
+        filterWeek={filterWeek}
+        onWeekChange={onWeekChange}
+        filterDay={filterDay}
+        onDayChange={onDayChange}
+        onExport={handleExportReport}
+      />
+
+      <KpiRow
+        totalCasos={metrics.totalCasos}
+        totalMortalidad={metrics.totalMortalidad}
+        totalMorbilidad={metrics.totalMorbilidad}
+        tasaLetalidad={metrics.tasaLetalidad}
+        curTot={metrics.curTot}
+        prevTot={metrics.prevTot}
+        yearCompareMort={metrics.yearCompareMort}
+        yearCompareMorb={metrics.yearCompareMorb}
+        periodo={filterMonth ? 'mes' : 'año'}
+      />
+
+      <NarrativasResumen
+        latestMortalidad={latestMortalidad}
+        latestMorbilidad={latestMorbilidad}
+        segmento={segmento}
+        filterYear={filterYear}
+        filterMonth={filterMonth}
+      />
+
+      {activeTab === 'generalidades' && (
+        <TrendChartsRow topCausasMortalidad={topCausasMortalidad} topCausasMorbilidad={topCausasMorbilidad} />
+      )}
+
+      {activeTab === 'morbilidad' && (
+        <>
+          <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
+
+          {activeSubTab === 'sociodemografico' && (
+            <>
+              <DistribucionEdadRiesgo data={edadRiesgoMorbilidad} evento="Morbilidad" />
+              <SociodemographicChartsSection data={sociodemograficaMorbilidad} evento="Morbilidad" />
+            </>
+          )}
+
+          {activeSubTab === 'clinico' && (
+            <>
+              <DistribucionEdadGestacional data={edadGestacionalMorbilidad} evento="Morbilidad" />
+              <CruceVariablesSection analisisId={latestMorbilidad?.id ?? null} evento="Morbilidad" />
+            </>
+          )}
+        </>
+      )}
+
+      {activeTab === 'mortalidad' && (
+        <>
+          <SubTabs active={activeSubTab} onChange={setActiveSubTab} />
+
+          {activeSubTab === 'sociodemografico' && (
+            <>
+              <DistribucionEdadRiesgo data={edadRiesgoMortalidad} evento="Mortalidad" />
+              <SociodemographicChartsSection data={sociodemograficaMortalidad} evento="Mortalidad" />
+            </>
+          )}
+
+          {activeSubTab === 'clinico' && (
+            <>
+              <DistribucionEdadGestacional data={edadGestacionalMortalidad} evento="Mortalidad" />
+              <CruceVariablesSection analisisId={latestMortalidad?.id ?? null} evento="Mortalidad" />
+            </>
+          )}
+        </>
+      )}
 
       <ExportReportModal
         isOpen={isExportModalOpen}

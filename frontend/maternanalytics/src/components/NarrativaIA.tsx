@@ -41,7 +41,7 @@ export default function NarrativaIA({ analisisId, tipo, titulo, filtros = {} }: 
   if (estado === 'unavailable') return null
 
   return (
-    <div className="mt-4 rounded-xl border border-brand-magenta/30 bg-brand-magenta/5 p-4">
+    <div className="rounded-xl border border-brand-magenta/30 bg-brand-magenta/5 p-4">
       <div className="mb-3 flex items-center gap-2 font-semibold text-brand-deep">
         <Sparkles className="size-5 text-brand-magenta" aria-hidden="true" />
         <span>{titulo}</span>
