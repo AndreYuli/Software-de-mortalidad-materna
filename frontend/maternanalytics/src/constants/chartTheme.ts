@@ -46,6 +46,29 @@ export const STATUS_COLORS = {
   safe: '#64748b',
 }
 
+/** Color de marca para gráficas de una sola serie sin significado propio (p. ej. las sociodemográficas). */
+export const BRAND_COLOR = '#89005e'
+
+/**
+ * Paleta categórica para gráficas de varias series (cruce de variables), en orden fijo.
+ * Validada con `validate_palette.js --mode light`: todos los controles pasan; el contraste bajo
+ * de turquesa, amarillo y rosa (< 3:1) se compensa con la leyenda visible de la gráfica.
+ */
+export const CATEGORICAL_PALETTE = [
+  '#2a78d6',
+  '#eb6834',
+  '#1baf7a',
+  '#eda100',
+  '#e87ba4',
+  '#008300',
+  '#4a3aa7',
+  '#e34948',
+]
+
+/** Barras delgadas: horizontales (muchas categorías) y verticales (pocas barras). */
+export const BAR_STYLE_HORIZONTAL = { borderRadius: 4, borderWidth: 0, maxBarThickness: 16, barPercentage: 0.6 }
+export const BAR_STYLE_VERTICAL = { borderRadius: 4, borderWidth: 0, maxBarThickness: 40 }
+
 ChartJS.defaults.font.family = CHART_FONT_FAMILY
 ChartJS.defaults.color = CHART_TEXT_COLOR
 ChartJS.defaults.plugins.legend.position = 'bottom'
