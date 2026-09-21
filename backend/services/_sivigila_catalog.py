@@ -15,6 +15,16 @@ from utils.text_utils import clean_text, is_empty, slugify
 
 logger = logging.getLogger(__name__)
 
+_CATALOG_STOPWORDS = {'de', 'del', 'la', 'el', 'las', 'los', 'y', 'e'}
+
+
+def _normalizar_catalogo_slug(value: Any) -> str:
+    """Convierte texto de catálogo a una forma comparable ignorando artículos y conectores frecuentes."""
+    slug = slugify(value)
+    if not slug:
+        return ''
+    return ' '.join(token for token in slug.split() if token not in _CATALOG_STOPWORDS)
+
 
 def _catalog_comparables(obj: Any, code_field: str | None, extra_field: str | None) -> list[Any]:
     """Reúne los valores comparables de un objeto de catálogo para búsqueda por texto.
@@ -100,13 +110,12 @@ def _resolve_catalog_by_fields(
                 resultado = obj
                 break
     if resultado is None:
-        slug = slugify(texto)
+        slug = _normalizar_catalogo_slug(texto)
         if slug:
-            slug_norm = slug.replace(' de ', ' ')
             for obj in catalog_cache[cache_key]:
                 for v in _catalog_comparables(obj, code_field, extra_field):
-                    v_slug = slugify(v)
-                    if v_slug and (v_slug == slug or v_slug.replace(' de ', ' ') == slug_norm):
+                    v_slug = _normalizar_catalogo_slug(v)
+                    if v_slug and (v_slug == slug):
                         resultado = obj
                         break
                 if resultado:

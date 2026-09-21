@@ -1,7 +1,24 @@
 """Tests de regresión sobre MortalidadProcessor (código existente, sin tests previos)."""
 
 from services._mortalidad_processor import MortalidadProcessor
+from services._sivigila_catalog import _resolve_catalog_by_fields
 from tests.fixtures_sivigila import df_mortalidad_ejemplo
+
+
+class _FakeCatalog:
+    def __init__(self, descripcion: str):
+        self.descripcion = descripcion
+
+
+class _FakeDB:
+    def query(self, _model):
+        return self
+
+    def all(self):
+        return [
+            _FakeCatalog('IPS (hospital/clínica)'),
+            _FakeCatalog('Durante el traslado'),
+        ]
 
 
 def test_calcular_estadisticas_basicas_con_datos_sinteticos():
@@ -82,3 +99,15 @@ def test_analizar_distribucion_edad_gestacional_agrupa_por_categorias_clinicas()
     assert resultado['labels'] == ['<28 semanas', '28-36 semanas', '37-41 semanas', '≥42 semanas']
     assert resultado['valores'] == [1, 2, 2, 1]
     assert resultado['total'] == 6
+
+
+def test_resuelve_catalogo_con_variantes_de_articulo_en_sitio_defuncion():
+    """Debe aceptar variantes como 'Durante traslado' cuando el catálogo usa 'Durante el traslado'."""
+    resultado = _resolve_catalog_by_fields(
+        _FakeDB(),
+        _FakeCatalog,
+        'Durante traslado',
+        catalog_cache={},
+    )
+    assert resultado is not None
+    assert resultado.descripcion == 'Durante el traslado'
