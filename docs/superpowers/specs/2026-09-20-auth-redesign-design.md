@@ -34,8 +34,16 @@ Esqueleto común de ambas pantallas. Props: `title`, `subtitle`, `children`, `fo
 Campo de formulario reutilizable. Props: `id`, `label`, `icon` (componente lucide), `type`, `placeholder`, `error`, más el `register(...)` de react-hook-form.
 
 - Ícono a la izquierda dentro del input.
-- Si `type="password"`, botón `Eye` / `EyeOff` a la derecha que alterna entre `password` y `text`. El botón lleva `aria-label` ("Mostrar contraseña" / "Ocultar contraseña") y `type="button"`.
+- Si `type="password"`, botón `Eye` / `EyeOff` a la derecha que alterna entre `password` y `text`. El botón lleva `type="button"`, `aria-pressed` y `aria-label` "Mostrar" / "Ocultar". No incluye la palabra "contraseña" a propósito: los tests e2e usan `getByLabel(/Contraseña/i)` y una segunda coincidencia los rompería.
 - Con `error`: borde rojo y mensaje bajo el campo.
+
+### `AuthNotice` (nuevo, `src/components/auth/AuthNotice.tsx`)
+
+Aviso con ícono y variante `error` (`AlertCircle`, `role="alert"`), `info` (`Info`) o `success` (`CheckCircle`), ambos con `role="status"`.
+
+### `authStyles.ts` (nuevo, `src/components/auth/authStyles.ts`)
+
+Constantes con las clases de Tailwind del botón principal y de los enlaces, compartidas por Login y Register.
 
 ### `Login` y `Register` (modificados)
 
@@ -72,7 +80,8 @@ La lógica no se toca: `react-hook-form` con los esquemas zod (`loginSchema`, `r
 
 - Cada input mantiene su `<label htmlFor>`.
 - Íconos decorativos con `aria-hidden="true"`.
-- Botón de ver contraseña con `aria-label`.
+- Botón de ver contraseña con `aria-label` y `aria-pressed`.
+- El título de cada pantalla es un `h2` y la marca un `h1` (los e2e buscan `heading` nivel 2 "Inicio de sesión").
 - Los mensajes de error del servidor con `role="alert"`.
 
 ## Pruebas
