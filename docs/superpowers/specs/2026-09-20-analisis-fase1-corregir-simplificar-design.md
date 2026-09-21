@@ -28,7 +28,7 @@ Fuera de alcance (proyectos aparte, ver "No incluido"): razón de mortalidad mat
 
 ### `KpiRow`
 
-- Props nuevas: `totalMortalidad`, `totalMorbilidad`, `indiceMortalidad` (`string`, valor de `metrics.tasaLetalidad`), `yearCompareMort`, `yearCompareMorb`, `periodo?`. Se retiran `totalCasos`, `curTot` y `prevTot`.
+- Props nuevas: `totalMortalidad`, `totalMorbilidad`, `relacionMmeMm` e `indiceMortalidad` (números o `null` si no se pueden calcular; los calcula `calcularIndicadores` en `utils/indicadoresMaternos.ts`, que además solo los da con ambos eventos en el análisis), `yearCompareMort`, `yearCompareMorb`, `periodo?`. Se retiran `totalCasos`, `curTot` y `prevTot`.
 - Celdas: (1) Mortalidad materna 550 con `TrendBadge`; (2) Morbilidad materna extrema 549 con `TrendBadge`; (3) **Relación MME/MM** = `totalMorbilidad / totalMortalidad`, mostrada como `N:1` con un decimal y formato es-CO, o `—` si no hay muertes; (4) **Índice de mortalidad** con `%` y un tooltip con la fórmula (botón con `Info`, `aria-label`, texto también para lectores de pantalla).
 - Formato numérico es-CO en todas las cifras (`20.100`, `50,1 %`).
 - Sin alerta de umbral.
@@ -42,7 +42,7 @@ Fuera de alcance (proyectos aparte, ver "No incluido"): razón de mortalidad mat
 
 - `useDashboardCharts` deja de invertir la lista (`.reverse()`) para que la barra mayor quede arriba.
 - `TopCausasChartData` gana `total` (registros del evento, para el porcentaje).
-- Plugin propio de Chart.js (`barValueLabels`, sin dependencias nuevas) en `constants/chartTheme.ts`: dibuja `n (p %)` a la derecha de cada barra; el eje X deja margen para que no se recorten.
+- Plugin propio de Chart.js (`barValueLabelsPlugin`, sin dependencias nuevas) en `utils/barValueLabels.ts`: dibuja `n (p %)` a la derecha de cada barra; el eje X deja margen para que no se recorten.
 - `calculateChartHeight` pasa a ~28 px por barra de una línea (+20 px por línea extra); se actualizan sus constantes y su test.
 
 ### `AiSummaryPanel` (nuevo, `src/components/dashboard/AiSummaryPanel.tsx`)
