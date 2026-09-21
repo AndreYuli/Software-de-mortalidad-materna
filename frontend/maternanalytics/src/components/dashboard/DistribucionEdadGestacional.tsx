@@ -21,9 +21,15 @@ export interface DistribucionEdadGestacionalProps {
 const GESTACIONAL_COLORS = [STATUS_COLORS.risk, STATUS_COLORS.risk, STATUS_COLORS.safe, STATUS_COLORS.risk]
 
 export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGestacionalProps) {
-  const insight = useMemo(() => getEdadGestacionalAiInsight(data, evento), [data, evento])
+  // El backend usa {} para indicar que no pudo calcular esta distribución.
+  // No debe convertirse en un error de renderizado del dashboard.
+  const chartData =
+    data && Array.isArray(data.labels) && Array.isArray(data.valores) && typeof data.total === 'number'
+      ? data
+      : null
+  const insight = useMemo(() => getEdadGestacionalAiInsight(chartData, evento), [chartData, evento])
 
-  if (!data || data.labels.length === 0) {
+  if (!chartData || chartData.labels.length === 0 || chartData.valores.length === 0 || chartData.total === 0) {
     return (
       <ChartCard title="Distribución por Edad Gestacional">
         <p className="text-sm text-slate-500">No hay datos suficientes de edad gestacional para generar esta gráfica.</p>
@@ -42,12 +48,12 @@ export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGe
       <div className={CHART_HEIGHT_FIXED}>
         <Bar
           role="img"
-          aria-label={describeSeries(title, data.labels, data.valores)}
+          aria-label={describeSeries(title, chartData.labels, chartData.valores)}
           data={{
-            labels: data.labels.map((l) => wrapLabel(l)),
+            labels: chartData.labels.map((l) => wrapLabel(l)),
             datasets: [
               {
-                data: data.valores,
+                data: chartData.valores,
                 backgroundColor: GESTACIONAL_COLORS,
                 ...BAR_STYLE_VERTICAL,
               },

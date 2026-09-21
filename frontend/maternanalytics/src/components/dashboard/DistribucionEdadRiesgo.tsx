@@ -21,9 +21,15 @@ export interface DistribucionEdadRiesgoProps {
 const RISK_COLORS = [STATUS_COLORS.risk, STATUS_COLORS.safe, STATUS_COLORS.risk]
 
 export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoProps) {
-  const insight = useMemo(() => getEdadRiesgoAiInsight(data, evento), [data, evento])
+  // El backend devuelve {} si no puede calcular la distribución. Normalizar
+  // esa respuesta evita que el cambio de pestaña rompa el dashboard.
+  const chartData =
+    data && Array.isArray(data.labels) && Array.isArray(data.valores) && typeof data.total === 'number'
+      ? data
+      : null
+  const insight = useMemo(() => getEdadRiesgoAiInsight(chartData, evento), [chartData, evento])
 
-  if (!data || data.labels.length === 0) {
+  if (!chartData || chartData.labels.length === 0 || chartData.valores.length === 0 || chartData.total === 0) {
     return (
       <ChartCard title="Distribución por Edad y Riesgo Obstétrico">
         <p className="text-sm text-slate-500">No hay datos suficientes de edad para generar esta gráfica.</p>
@@ -42,12 +48,12 @@ export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoP
       <div className={CHART_HEIGHT_FIXED}>
         <Bar
           role="img"
-          aria-label={describeSeries(title, data.labels, data.valores)}
+          aria-label={describeSeries(title, chartData.labels, chartData.valores)}
           data={{
-            labels: data.labels.map((l) => wrapLabel(l)),
+            labels: chartData.labels.map((l) => wrapLabel(l)),
             datasets: [
               {
-                data: data.valores,
+                data: chartData.valores,
                 backgroundColor: RISK_COLORS,
                 ...BAR_STYLE_VERTICAL,
               },

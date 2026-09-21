@@ -14,4 +14,9 @@ describe('DistribucionEdadGestacional', () => {
     render(<DistribucionEdadGestacional data={null} evento="Morbilidad" />)
     expect(screen.getByText('No hay datos suficientes de edad gestacional para generar esta gráfica.')).toBeInTheDocument()
   })
+
+  it('tolera la respuesta vacía que entrega el backend cuando no puede calcular la distribución', () => {
+    render(<DistribucionEdadGestacional data={{} as never} evento="Mortalidad" />)
+    expect(screen.getByText('No hay datos suficientes de edad gestacional para generar esta gráfica.')).toBeInTheDocument()
+  })
 })
