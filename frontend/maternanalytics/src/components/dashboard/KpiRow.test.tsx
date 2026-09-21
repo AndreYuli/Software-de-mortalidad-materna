@@ -39,10 +39,17 @@ describe('KpiRow', () => {
     expect(screen.getAllByText(/vs año anterior/)).toHaveLength(3)
   })
 
-  it('sin comparación muestra "Histórico" en las tendencias de mortalidad y morbilidad', () => {
-    render(<KpiRow {...base} yearCompareMort={null} yearCompareMorb={null} />)
-    // La de casos usa curTot/prevTot, que siempre existen; las otras dos son null.
-    expect(screen.getAllByText('Histórico')).toHaveLength(2)
+  it('sin comparación (sin año elegido) muestra "Histórico" en las tres tendencias', () => {
+    // Sin año, curTot y prevTot valen 0 y darían un falso "Estable": debe decir "Histórico" como las otras.
+    render(<KpiRow {...base} curTot={0} prevTot={0} yearCompareMort={null} yearCompareMorb={null} />)
+    expect(screen.getAllByText('Histórico')).toHaveLength(3)
+    expect(screen.queryByText('Estable')).not.toBeInTheDocument()
+  })
+
+  it('si solo un evento tiene comparación, la de casos sigue mostrando la variación', () => {
+    render(<KpiRow {...base} yearCompareMort={null} periodo="mes" />)
+    expect(screen.getByText('+20% vs mes anterior')).toBeInTheDocument()
+    expect(screen.getAllByText('Histórico')).toHaveLength(1)
   })
 
   it('con letalidad menor de 50 no muestra la alerta', () => {

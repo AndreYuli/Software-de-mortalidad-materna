@@ -64,6 +64,8 @@ export function KpiRow({
 }: KpiRowProps) {
   const letalidadNumerica = Number.parseFloat(tasaLetalidad)
   const shouldReviewLetalidad = Number.isFinite(letalidadNumerica) && letalidadNumerica >= 50
+  // Sin año elegido no hay comparación: curTot/prevTot valdrían 0 y darían un falso «Estable».
+  const compareCasos = yearCompareMort || yearCompareMorb ? { cur: curTot, prev: prevTot } : null
 
   return (
     <section
@@ -74,7 +76,7 @@ export function KpiRow({
         icon={Activity}
         label="Casos analizados"
         value={totalCasos}
-        trend={<TrendBadge compare={{ cur: curTot, prev: prevTot }} periodo={periodo} />}
+        trend={<TrendBadge compare={compareCasos} periodo={periodo} />}
       />
       <KpiCell
         icon={Droplet}
