@@ -11,7 +11,7 @@ Fuera de alcance (proyectos aparte, ver "No incluido"): razón de mortalidad mat
 - Los datos cargados son de prueba: `backend/scripts/generar_excels_prueba.py` usa `random.choice` uniforme, lo que explica las barras de causas casi iguales y la proporción MME:MM ≈ 1:1 (10.031 frente a 10.069).
 - Referencia oficial (informe del Ministerio): 33.182 casos de MME en 2024 (15.109 en 2015); razón de MME de 22,9 a 72,6 por 1.000 nacidos vivos; razón de mortalidad materna de 45,6 por 100.000 nacidos vivos en 2024; 5.179 muertes maternas tempranas (evento 550) en el análisis 2015-2024. Es decir, decenas de casos de MME por cada muerte materna.
 - El informe usa la expresión "índice de letalidad" para la MME (Gráfico 3), mientras que la crítica dice que la fórmula de la app, `MM / (MME + MM)`, es el "índice de mortalidad" del enfoque *near miss*. No se pudo leer la fórmula oficial (está en una imagen).
-- Base de datos: PostgreSQL local (`sivigila_maternidad`, 83 MB) con 6 usuarios reales. No hay `pg_dump` en la máquina. **No se borra nada:** el dashboard muestra el último análisis de cada evento, así que basta con cargar datos realistas como una carga nueva.
+- Base de datos: PostgreSQL local (`sivigila_maternidad`, 83 MB) con 6 usuarios reales. No hay `pg_dump` en la máquina. **El análisis se calcula desde todos los casos acumulados en la base** (`_construir_df_desde_bd` devuelve "todos los casos de la base de datos" del tipo), no desde el último archivo subido. Por eso cargar datos realistas encima de los ~40.000 casos de prueba uniformes no serviría: habría que vaciar los casos. El equipo ya usa esa práctica (`backend/scripts/recortar_bd.py` hace `TRUNCATE`).
 - El árbol de trabajo tiene cambios sin commitear ajenos a esta fase (`backend/api/routers/analisis.py`, `backend/schemas/analisis_schema.py`, `backend/services/ia_client.py`, `ia-service/*`, `frontend/.../api.ts`, `frontend/.../DashboardOKD.tsx`, `docs/TASKS.md`, `docs/PLAN_CHATBOT.md`). Esta fase no los toca ni los incluye en sus commits.
 
 ## Decisiones (las marcadas con ⚠ son mías y conviene validarlas)
@@ -22,7 +22,7 @@ Fuera de alcance (proyectos aparte, ver "No incluido"): razón de mortalidad mat
 4. **Causas principales.** La barra mayor arriba (hoy se invierte la lista y sale abajo); número `n (%)` al final de cada barra; barras más compactas (unos 28 px por barra de una línea).
 5. **Resumen de IA.** Un único panel plegable al final de la pantalla, cerrado por defecto, con el aviso "Generado automáticamente por IA local; requiere validación del equipo de vigilancia".
 6. ⚠ **Filtros.** Se quita "Día de Reporte" de la barra (solo la interfaz; el estado interno no se toca) y la barra **deja de quedar fija**. No pude reproducir el botón cortado tras la barra fija; quitar el `sticky` elimina esa clase de problemas. Se puede reactivar.
-7. **Datos de prueba realistas.** Un generador nuevo (sin modificar el actual) y una carga por la API como análisis nuevo.
+7. **Datos de prueba realistas.** Reinicio controlado de los casos (con copia en CSV, sin tocar usuarios ni catálogos), un generador nuevo (sin modificar el actual) y su carga por la API.
 
 ## Componentes y cambios
 
@@ -60,12 +60,15 @@ Fuera de alcance (proyectos aparte, ver "No incluido"): razón de mortalidad mat
 
 Solo el JSX y las props que pasa a `KpiRow`, `FiltersBar` y el nuevo panel; los hooks y la lógica no cambian.
 
-## Datos de prueba realistas (tarea previa)
+## Datos de prueba realistas (tareas previas)
 
-- Nuevo `backend/scripts/generar_excels_realistas.py`: reutiliza las funciones de `generar_excels_prueba.py` y sobrescribe las columnas clave con `random.choices` ponderado (semilla fija).
-- Volumen: **60 muertes maternas (550)** y **3.000 casos de MME (549)** (relación 50:1); fechas entre 2025-01-01 y 2026-08-31; causas con distribución sesgada (trastornos hipertensivos y hemorragia primero); edades, zona, etnia y afiliación con pesos realistas; incluye las columnas sociodemográficas.
-- Salida en `data/pruebas/realista_*.xlsx`.
-- Carga por `POST /api/analisis/` con el usuario de pruebas del helper e2e (`e2e@vidamaterna.co`, que el propio helper crea si falta). No se borra ni se modifica ningún dato existente.
+1. **Reinicio controlado de casos** (`backend/scripts/reiniciar_datos_casos.py`), con el permiso explícito del usuario para borrar datos de prueba:
+   - Simulación por defecto; solo borra con `--confirmar`.
+   - Calcula las tablas afectadas (casos, análisis, importaciones y narrativas de IA, más todas las que dependan de ellas por clave foránea) y **aborta** si alguna es protegida: `api_usuario`, `cat_*`, `django_*`, `auth_*`.
+   - Antes de borrar exporta cada tabla a CSV en `data/local/backup_<fecha>/` (carpeta ya ignorada por git), porque no hay `pg_dump`.
+   - `TRUNCATE ... RESTART IDENTITY` en una sola transacción; después comprueba que los usuarios siguen intactos.
+2. **Generador realista** (`backend/scripts/generar_excels_realistas.py`, con tests): reutiliza las funciones de `generar_excels_prueba.py` y sobrescribe las columnas clave con `random.choices` ponderado (semilla fija). **60 muertes maternas (550) y 3.000 casos de MME (549)** (relación 50:1); fechas entre 2025-01-01 y 2026-08-31; causas con distribución sesgada (trastornos hipertensivos primero); edades, zona, etnia, población vulnerable y afiliación con pesos realistas y solo valores de los catálogos. Salida en `data/pruebas/realista_*.xlsx` (esa ruta sí se versiona).
+3. **Carga por la API** (`backend/scripts/cargar_excels_realistas.py`) con el usuario de pruebas de los e2e (`e2e@vidamaterna.co`, constantes públicas del helper).
 
 ## No incluido (proyectos aparte)
 
