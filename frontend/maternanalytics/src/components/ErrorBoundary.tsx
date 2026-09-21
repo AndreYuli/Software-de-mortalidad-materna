@@ -28,20 +28,9 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
     return (
       <div
         role="alert"
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px',
-          height: '100vh',
-          fontFamily: 'sans-serif',
-          color: '#334155',
-          textAlign: 'center',
-          padding: '0 16px',
-        }}
+
       >
-        <h1 style={{ fontSize: '20px' }}>Algo salió mal</h1>
+        <h1>Algo salió mal</h1>
         <p>Ocurrió un error inesperado al mostrar esta pantalla.</p>
         <button type="button" onClick={() => window.location.assign('/')}>
           Volver al inicio

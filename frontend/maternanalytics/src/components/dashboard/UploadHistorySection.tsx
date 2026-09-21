@@ -1,4 +1,3 @@
-import './UploadHistorySection.css'
 import { useUploadHistory } from '../../hooks/dashboard/useUploadHistory'
 import { SpinnerIcon } from '../icons'
 

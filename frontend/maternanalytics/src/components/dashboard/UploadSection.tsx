@@ -1,4 +1,3 @@
-import './UploadSection.css'
 import type { FileValidationError, FilePreview } from '../../utils/excelValidation'
 import { UploadCard } from './UploadCard'
 import { FilePreviewTable } from './FilePreviewTable'

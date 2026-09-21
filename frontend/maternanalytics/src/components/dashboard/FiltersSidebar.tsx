@@ -1,6 +1,5 @@
 import { MESES_ES } from '../../constants/dashboardConstants'
 import type { Segmento } from '../../hooks/dashboard/useDashboardMetrics'
-import './FiltersSidebar.css'
 
 const SEMANAS_ISO = Array.from({ length: 53 }, (_, i) => i + 1)
 const DIAS_MES = Array.from({ length: 31 }, (_, i) => i + 1)

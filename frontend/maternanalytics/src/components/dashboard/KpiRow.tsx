@@ -59,7 +59,7 @@ export function KpiRow({
         </div>
 
         <div className="register-metric register-metric-mortalidad">
-          <span className="register-icon"><BloodDropIcon style={{ width: '18px', height: '18px' }} /></span>
+          <span className="register-icon"><BloodDropIcon /></span>
           <div>
             <span className="register-label">Mortalidad materna 550</span>
             <span className="register-helper">Defunciones notificadas</span>
@@ -69,7 +69,7 @@ export function KpiRow({
         </div>
 
         <div className="register-metric register-metric-morbilidad">
-          <span className="register-icon"><HospitalIcon style={{ width: '18px', height: '18px' }} /></span>
+          <span className="register-icon"><HospitalIcon /></span>
           <div>
             <span className="register-label">Morbilidad materna extrema 549</span>
             <span className="register-helper">Casos no fatales / severos</span>

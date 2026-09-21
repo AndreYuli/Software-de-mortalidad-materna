@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import './Login.css'
 import { API_URL, describeNetworkError, extractErrorMessage, fetchWithTimeout } from '../../api'
 import { useForm } from 'react-hook-form'
 // Zod schema imported from external file

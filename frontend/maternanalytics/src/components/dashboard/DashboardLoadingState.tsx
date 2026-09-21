@@ -1,5 +1,3 @@
-import '../shared/Spinner.css'
-import './ChartState.css'
 
 export function DashboardLoadingState() {
   return (

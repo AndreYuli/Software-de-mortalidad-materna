@@ -3,7 +3,7 @@ import { Bar } from 'react-chartjs-2'
 import type { Scale } from 'chart.js'
 import { CHART_FONT_FAMILY } from '../../constants/chartTheme'
 import { ChartAiInsight } from './ChartAiInsight'
-import { wrapLabel, calculateChartHeight } from '../../utils/causasChartLabels'
+import { wrapLabel } from '../../utils/causasChartLabels'
 import { getCruceAiInsight } from '../../utils/aiChartInsights'
 import { getCruceLabels } from '../../utils/cruceLabels'
 import { useCruceVariables } from '../../hooks/dashboard/useCruceVariables'
@@ -60,17 +60,15 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
 
   const labels = useMemo(() => getCruceLabels(varSocioLabel, varClinicaLabel), [varSocioLabel, varClinicaLabel])
 
-  const chartHeight = useMemo(() => (data ? calculateChartHeight(data.categorias_socio) : 320), [data])
-
   return (
     <div className="chart-card-col-12">
       <h3 className="chart-card-title">Cruce de Variables ({evento})</h3>
-      <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '14px' }}>
+      <p>
         Compare una variable sociodemográfica con una clínica para identificar combinaciones de mayor riesgo.
       </p>
 
-      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
-        <div style={{ flex: '1 1 220px' }}>
+      <div>
+        <div>
           <label className="field-label" htmlFor={`cruce-socio-${evento}`}>
             Variable sociodemográfica
           </label>
@@ -90,7 +88,7 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
           </div>
         </div>
 
-        <div style={{ flex: '1 1 220px' }}>
+        <div>
           <label className="field-label" htmlFor={`cruce-clinica-${evento}`}>
             Variable clínica
           </label>
@@ -111,19 +109,19 @@ export function CruceVariablesSection({ analisisId, evento }: CruceVariablesSect
         </div>
       </div>
 
-      {loading && <p style={{ color: '#64748b', textAlign: 'center', padding: '24px' }}>Calculando cruce…</p>}
+      {loading && <p>Calculando cruce…</p>}
 
-      {!loading && error && <p style={{ color: '#b91c1c', textAlign: 'center', padding: '24px' }}>{error}</p>}
+      {!loading && error && <p>{error}</p>}
 
       {!loading && !error && (!data || data.total === 0) && (
-        <p style={{ color: '#64748b', textAlign: 'center', padding: '24px' }}>
+        <p>
           No hay suficientes datos con ambas variables registradas para este cruce.
         </p>
       )}
 
       {!loading && !error && data && data.total > 0 && (
         <>
-          <div style={{ height: `${chartHeight}px` }}>
+          <div>
             <Bar
               data={{
                 labels: data.categorias_socio.map((l) => wrapLabel(l)),

@@ -1,7 +1,7 @@
 import { Bar } from 'react-chartjs-2'
 import { CHART_FONT_FAMILY } from '../../constants/chartTheme'
 import { ChartAiInsight } from './ChartAiInsight'
-import { wrapLabel, calculateChartHeight } from '../../utils/causasChartLabels'
+import { wrapLabel } from '../../utils/causasChartLabels'
 
 const SOCIO_PALETTE = [
   '#6366f1',
@@ -57,13 +57,11 @@ function SociodemographicBarChart({
   valores: number[]
   total: number
 }) {
-  const chartHeight = calculateChartHeight(labels)
-
   if (!labels.length || total === 0) {
     return (
-      <div className="chart-card-col-12" style={{ textAlign: 'center', padding: '32px' }}>
+      <div className="chart-card-col-12">
         <h3 className="chart-card-title">{title}</h3>
-        <p style={{ color: '#64748b' }}>Sin datos suficientes para esta gráfica.</p>
+        <p>Sin datos suficientes para esta gráfica.</p>
       </div>
     )
   }
@@ -73,10 +71,10 @@ function SociodemographicBarChart({
   return (
     <div className="chart-card-col-12">
       <h3 className="chart-card-title">{title}</h3>
-      <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '10px' }}>
+      <p>
         Total: {total} casos con dato registrado
       </p>
-      <div style={{ height: `${chartHeight}px` }}>
+      <div>
         <Bar
           data={{
             labels: labels.map((l) => wrapLabel(l)),
@@ -133,9 +131,9 @@ export function SociodemographicChartsSection({ data, evento }: Sociodemographic
 
   if (!hasAnyData) {
     return (
-      <div className="chart-card-col-12" style={{ textAlign: 'center', padding: '32px' }}>
+      <div className="chart-card-col-12">
         <h3 className="chart-card-title">Factores Sociodemográficos ({evento})</h3>
-        <p style={{ color: '#64748b' }}>
+        <p>
           No hay datos sociodemográficos disponibles. Suba archivos con las columnas de zona, población vulnerable, etnia y tipo de afiliación.
         </p>
       </div>
@@ -144,7 +142,7 @@ export function SociodemographicChartsSection({ data, evento }: Sociodemographic
 
   return (
     <div className="sociodemographic-section">
-      <h3 className="chart-card-title" style={{ marginBottom: '16px' }}>
+      <h3 className="chart-card-title">
         Factores Sociodemográficos ({evento})
       </h3>
       <div className="sociodemographic-grid">

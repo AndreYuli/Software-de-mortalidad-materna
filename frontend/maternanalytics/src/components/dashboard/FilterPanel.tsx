@@ -1,4 +1,3 @@
-import './FilterPanel.css'
 import { MESES_ES } from '../../constants/dashboardConstants'
 
 export interface FilterPanelProps {

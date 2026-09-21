@@ -1,5 +1,4 @@
 import { useCallback, useMemo, useState } from 'react'
-import './StrategicDashboard.css'
 import { useAnalysisHomeData } from '../../hooks/dashboard/useAnalysisHomeData'
 import { useDashboardMetrics, type Segmento } from '../../hooks/dashboard/useDashboardMetrics'
 import { useDashboardCharts } from '../../hooks/dashboard/useDashboardCharts'

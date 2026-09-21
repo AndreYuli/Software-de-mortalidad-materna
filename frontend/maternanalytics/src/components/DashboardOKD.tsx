@@ -1,4 +1,3 @@
-import './dashboard/DashboardShell.css'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useMemo, useCallback, useState } from 'react'
 import { useDashboardData } from '../hooks/useDashboardData'

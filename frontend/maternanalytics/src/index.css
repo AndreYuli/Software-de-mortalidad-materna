@@ -1,43 +1,15 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@import "tailwindcss";
+
+@theme {
+    --font-sans: 'Google Sans', sans-serif;
+    /* Colores para resaltar elementos clave */
+    --color-brand-deep: #290764;      /* Títulos principales y números clave */
+    --color-brand-violet: #4b0453;    /* Subtítulos o íconos */
+    --color-brand-magenta: #89005e;   /* Botones principales y alertas de IA */
 }
 
-:root {
-  /* Login colors updated to match the purple theme (#662d90) */
-  --blue-900: #2b1141;
-  --blue-800: #3f195d;
-  --blue-700: #512277;
-  --blue-600: #662d90;
-  --blue-500: #8240b3;
-  --blue-400: #a164d0;
-  --blue-300: #c191e6;
-  --blue-200: #e0c5f5;
-  --blue-100: #f3e8fa;
-
-  --pink-500: #e8829f;
-
-  /* Dashboard colors updated to match the purple theme (#662d90) */
-  --brand-900: #2b1141;
-  --brand-700: #662d90;
-  --brand-500: #8240b3;
-}
-
-html, body {
-  height: 100%;
-  width: 100%;
-}
-
+/* Fondo principal limpio */
 body {
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: #f5f5f5;
+    background-color: #ffffff;
+    color: #1b1e28;
 }
-
-#root {
-  height: 100%;
-  width: 100%;
-}
-

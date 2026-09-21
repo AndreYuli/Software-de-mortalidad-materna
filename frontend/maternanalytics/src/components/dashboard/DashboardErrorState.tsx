@@ -1,4 +1,3 @@
-import './ChartState.css'
 
 export interface DashboardErrorStateProps {
   message: string

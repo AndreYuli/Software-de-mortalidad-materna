@@ -4,7 +4,7 @@ import type { Scale, TooltipItem } from 'chart.js'
 import '../../constants/chartTheme'
 import { ChartAiInsight } from './ChartAiInsight'
 import { getTopCausasAiInsight } from '../../utils/aiChartInsights'
-import { wrapLabel, calculateChartHeight } from '../../utils/causasChartLabels'
+import { wrapLabel } from '../../utils/causasChartLabels'
 
 export interface TopCausasChartData {
   labels: string[]
@@ -36,15 +36,13 @@ interface CausasBarChartProps {
 }
 
 function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasBarChartProps) {
-  const chartHeight = useMemo(() => calculateChartHeight(data.labels), [data.labels])
-
   return (
     <article className="chart-card-col-12 epidemiology-chart-card">
       <div className="chart-card-heading">
         <span className="chart-card-eyebrow">{eyebrow}</span>
         <h3 className="chart-card-title">{title}</h3>
       </div>
-      <div style={{ height: `${chartHeight}px` }}>
+      <div>
         {data.values.length > 0 ? (
           <Bar
             data={{
@@ -85,7 +83,7 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
             }}
           />
         ) : (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#888' }}>
+          <div>
             {emptyMessage}
           </div>
         )}

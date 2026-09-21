@@ -60,7 +60,7 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
         ref={inputRef}
         type="file"
         accept=".xlsx"
-        style={{ display: 'none' }}
+
         onChange={handleChange}
       />
 
@@ -119,7 +119,7 @@ export function UploadCard({ onFile, file, error, validating, onRemove, eventLab
             <div className="upload-file-details">
               <span className="upload-file-name" title={file.name}>{file.name}</span>
               <span className="upload-file-status">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '12px', height: '12px' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
                 Archivo válido y listo

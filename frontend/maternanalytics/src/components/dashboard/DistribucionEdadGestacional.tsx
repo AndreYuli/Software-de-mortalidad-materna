@@ -23,9 +23,9 @@ export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGe
 
   if (!data || data.labels.length === 0) {
     return (
-      <div className="chart-card-col-12" style={{ textAlign: 'center', padding: '40px' }}>
+      <div className="chart-card-col-12">
         <h3 className="chart-card-title">Distribución por Edad Gestacional</h3>
-        <p style={{ color: '#64748b' }}>No hay datos suficientes de edad gestacional para generar esta gráfica.</p>
+        <p>No hay datos suficientes de edad gestacional para generar esta gráfica.</p>
       </div>
     )
   }
@@ -33,10 +33,10 @@ export function DistribucionEdadGestacional({ data, evento }: DistribucionEdadGe
   return (
     <div className="chart-card-col-12">
       <h3 className="chart-card-title">Distribución por Edad Gestacional ({evento})</h3>
-      <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '10px' }}>
+      <p>
         Los partos pretérmino (antes de la semana 37) o postérmino (semana 42 en adelante) tienen mayor riesgo de morbilidad y mortalidad materna. El rango a término (37-41 semanas) es el de menor riesgo.
       </p>
-      <div style={{ height: '280px' }}>
+      <div>
         <Bar
           data={{
             labels: data.labels.map((l) => wrapLabel(l)),

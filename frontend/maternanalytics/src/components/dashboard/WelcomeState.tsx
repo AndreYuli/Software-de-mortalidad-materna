@@ -12,7 +12,7 @@ export function WelcomeState({ onGoToUpload }: WelcomeStateProps) {
     <div className="welcome-dashboard-shell">
       <div className="welcome-dashboard-card">
         <div className="welcome-icon-circle">
-          <DocumentIcon style={{ width: '48px', height: '48px' }} />
+          <DocumentIcon />
         </div>
         <h2 className="welcome-title">Análisis Epidemiológico</h2>
         <p className="welcome-microcopy">
@@ -28,14 +28,14 @@ export function WelcomeState({ onGoToUpload }: WelcomeStateProps) {
           <div className="upload-choices-panel">
             <button className="btn-choice-upload" onClick={() => onGoToUpload('mortalidad')}>
               <span className="btn-choice-upload-icon">
-                <BloodDropIcon style={{ width: '18px', height: '18px' }} />
+                <BloodDropIcon />
               </span>
               <span className="btn-choice-upload-label">Mortalidad</span>
               <span className="btn-choice-upload-sublabel">Evento 550</span>
             </button>
             <button className="btn-choice-upload" onClick={() => onGoToUpload('morbilidad')}>
               <span className="btn-choice-upload-icon">
-                <HospitalIcon style={{ width: '18px', height: '18px' }} />
+                <HospitalIcon />
               </span>
               <span className="btn-choice-upload-label">Morbilidad Extrema</span>
               <span className="btn-choice-upload-sublabel">Evento 549</span>

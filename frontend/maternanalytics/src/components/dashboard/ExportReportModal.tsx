@@ -57,44 +57,23 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
 
   return (
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.65)',
-        backdropFilter: 'blur(4px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '20px',
-      }}
+
       onClick={onClose}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Exportar reporte epidemiológico"
-        style={{
-          background: '#ffffff',
-          borderRadius: '18px',
-          width: '100%',
-          maxWidth: '520px',
-          padding: '28px',
-          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-          border: '1px solid #e2e8f0',
-        }}
+
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
+        <div>
           <div>
-            <h2 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800, color: 'var(--brand-900)' }}>
+            <h2>
               Exportar Reporte Epidemiológico
             </h2>
-            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>
+            <p>
               Selecciona el formato de exportación para los datos consolidados.
             </p>
           </div>
@@ -102,19 +81,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
             onClick={onClose}
             type="button"
             aria-label="Cerrar"
-            style={{
-              background: '#f1f5f9',
-              border: 'none',
-              borderRadius: '50%',
-              width: '32px',
-              height: '32px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#64748b',
-              fontWeight: 700,
-            }}
+
           >
             ✕
           </button>
@@ -122,52 +89,31 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
 
         {/* Info resumen */}
         <div
-          style={{
-            background: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '12px 16px',
-            marginBottom: '20px',
-            fontSize: '12.5px',
-            color: '#334155',
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '8px',
-          }}
+
         >
           <div>
-            <span style={{ color: '#64748b' }}>Periodo: </span>
+            <span>Periodo: </span>
             <b>{reportData.periodo.anio || 'Histórico'} {reportData.periodo.mes ? `(Mes ${reportData.periodo.mes})` : ''}</b>
           </div>
           <div>
-            <span style={{ color: '#64748b' }}>Segmento: </span>
+            <span>Segmento: </span>
             <b>{reportData.periodo.segmento.toUpperCase()}</b>
           </div>
           <div>
-            <span style={{ color: '#64748b' }}>Total Casos: </span>
+            <span>Total Casos: </span>
             <b>{reportData.kpis.casosTotales}</b>
           </div>
           <div>
-            <span style={{ color: '#64748b' }}>Letalidad: </span>
+            <span>Letalidad: </span>
             <b>{reportData.kpis.tasaLetalidad}</b>
           </div>
         </div>
 
         {/* Options */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+        <div>
           {/* Excel */}
           <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              padding: '14px 16px',
-              borderRadius: '12px',
-              border: selectedFormat === 'excel' ? '2px solid #10b981' : '1.5px solid #e2e8f0',
-              background: selectedFormat === 'excel' ? '#ecfdf5' : '#ffffff',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
+
           >
             <input
               type="radio"
@@ -175,14 +121,14 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               value="excel"
               checked={selectedFormat === 'excel'}
               onChange={() => setSelectedFormat('excel')}
-              style={{ width: '16px', height: '16px', accentColor: '#10b981' }}
+
             />
-            <div style={{ fontSize: '24px' }}>📊</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--brand-900)' }}>
+            <div>📊</div>
+            <div>
+              <div>
                 Libro de Excel (.xlsx) Multi-Hoja
               </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>
+              <div>
                 Incluye hojas estructuradas de KPIs, causas CIE-10, demoras, evolución mensual y edades.
               </div>
             </div>
@@ -190,17 +136,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
 
           {/* PDF */}
           <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              padding: '14px 16px',
-              borderRadius: '12px',
-              border: selectedFormat === 'pdf' ? '2px solid var(--brand-700)' : '1.5px solid #e2e8f0',
-              background: selectedFormat === 'pdf' ? '#eaf3f2' : '#ffffff',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
+
           >
             <input
               type="radio"
@@ -208,14 +144,14 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               value="pdf"
               checked={selectedFormat === 'pdf'}
               onChange={() => setSelectedFormat('pdf')}
-              style={{ width: '16px', height: '16px', accentColor: 'var(--brand-700)' }}
+
             />
-            <div style={{ fontSize: '24px' }}>📄</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--brand-900)' }}>
+            <div>📄</div>
+            <div>
+              <div>
                 Informe Ejecutivo en PDF (Membrete Médico)
               </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>
+              <div>
                 Documento formal formateado para impresión o guardado como PDF con análisis IA y tablas.
               </div>
             </div>
@@ -223,17 +159,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
 
           {/* CSV */}
           <label
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '14px',
-              padding: '14px 16px',
-              borderRadius: '12px',
-              border: selectedFormat === 'csv' ? '2px solid #64748b' : '1.5px solid #e2e8f0',
-              background: selectedFormat === 'csv' ? '#f8fafc' : '#ffffff',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-            }}
+
           >
             <input
               type="radio"
@@ -241,14 +167,14 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
               value="csv"
               checked={selectedFormat === 'csv'}
               onChange={() => setSelectedFormat('csv')}
-              style={{ width: '16px', height: '16px', accentColor: '#64748b' }}
+
             />
-            <div style={{ fontSize: '24px' }}>📁</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontSize: '13.5px', color: 'var(--brand-900)' }}>
+            <div>📁</div>
+            <div>
+              <div>
                 Datos Planos en CSV (.csv)
               </div>
-              <div style={{ fontSize: '12px', color: '#64748b' }}>
+              <div>
                 Exportación cruda para importación en R, Python, SPSS o visualizadores externos.
               </div>
             </div>
@@ -256,45 +182,23 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, on
         </div>
 
         {exportError && (
-          <p role="alert" style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#b91c1c' }}>
+          <p role="alert">
             {exportError}
           </p>
         )}
 
         {/* Buttons */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+        <div>
           <button
             onClick={onClose}
-            style={{
-              padding: '10px 18px',
-              borderRadius: '10px',
-              border: '1px solid #cbd5e1',
-              background: '#ffffff',
-              color: '#475569',
-              fontWeight: 600,
-              fontSize: '13px',
-              cursor: 'pointer',
-            }}
+
           >
             Cancelar
           </button>
           <button
             onClick={handleExport}
             disabled={isExporting}
-            style={{
-              padding: '10px 22px',
-              borderRadius: '10px',
-              border: 'none',
-              background: 'var(--brand-700)',
-              color: '#ffffff',
-              fontWeight: 700,
-              fontSize: '13px',
-              cursor: 'pointer',
-              boxShadow: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
+
           >
             {isExporting ? 'Generando...' : 'Descargar Reporte'}
           </button>

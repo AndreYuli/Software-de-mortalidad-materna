@@ -23,9 +23,9 @@ export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoP
 
   if (!data || data.labels.length === 0) {
     return (
-      <div className="chart-card-col-12" style={{ textAlign: 'center', padding: '40px' }}>
+      <div className="chart-card-col-12">
         <h3 className="chart-card-title">Distribución por Edad y Riesgo Obstétrico</h3>
-        <p style={{ color: '#64748b' }}>No hay datos suficientes de edad para generar esta gráfica.</p>
+        <p>No hay datos suficientes de edad para generar esta gráfica.</p>
       </div>
     )
   }
@@ -33,10 +33,10 @@ export function DistribucionEdadRiesgo({ data, evento }: DistribucionEdadRiesgoP
   return (
     <div className="chart-card-col-12">
       <h3 className="chart-card-title">Distribución por Edad y Riesgo Obstétrico ({evento})</h3>
-      <p style={{ fontSize: '13px', color: '#64748b', marginBottom: '10px' }}>
+      <p>
         Las mujeres menores de 19 años o de 35 años en adelante tienen mayor riesgo de morbilidad y mortalidad materna.
       </p>
-      <div style={{ height: '280px' }}>
+      <div>
         <Bar
           data={{
             labels: data.labels.map((l) => wrapLabel(l)),

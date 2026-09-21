@@ -1,4 +1,3 @@
-import './Sidebar.css'
 import type { ActiveView } from '../../hooks/navigation/useActiveView'
 import { LogoIcon, DashboardIcon, UploadIcon, LogoutIcon, CloseIcon } from '../icons'
 import { NavItem } from './NavItem'
