@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 from db.models_sqlalchemy import (
     CasoMorbilidad,
     CasoMortalidad,
+    CatConvivencia,
+    CatEscolaridad,
+    CatRegulacionFecundidad,
     CatSitioDefuncion,
     Paciente,
     SivigilaImportacion,
@@ -44,6 +47,14 @@ logger = logging.getLogger(__name__)
 
 
 _MAX_FILAS_EN_MENSAJE = 20
+
+# Columnas NOT NULL de antecedente_materno: se validan en la pasada 1 para dar el
+# número de fila en vez de fallar al insertar con un error de la base de datos.
+_CATALOGOS_OBLIGATORIOS_MORTALIDAD = (
+    (CatConvivencia, ['6.1 Convivencia']),
+    (CatEscolaridad, ['6.3 Escolaridad']),
+    (CatRegulacionFecundidad, ['6.4 Regulación Fecundidad', '6.4 Regulacion Fecundidad']),
+)
 
 
 def _verificar_causa_completa(
@@ -196,6 +207,15 @@ def _fase1_validar_filas(
                 numero_fila=numero_fila,
                 nombre_campo='5.1 Sitio de Defunción',
             )
+            for modelo, columnas in _CATALOGOS_OBLIGATORIOS_MORTALIDAD:
+                _resolve_catalog(
+                    db,
+                    modelo,
+                    _get_value(row, columnas),
+                    catalog_cache=catalog_cache,
+                    numero_fila=numero_fila,
+                    nombre_campo=columnas[0],
+                )
             fecha_def = _parse_date(_get_value(row, _MORTALIDAD_FECHA_DEFUNCION_COLS))
             causa = _require_text(
                 _get_value(row, ['10.1 Causa básica CIE-10']),

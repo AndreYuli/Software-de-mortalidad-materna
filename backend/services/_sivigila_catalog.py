@@ -15,7 +15,9 @@ from utils.text_utils import clean_text, is_empty, slugify
 
 logger = logging.getLogger(__name__)
 
-_CATALOG_STOPWORDS = {'de', 'del', 'la', 'el', 'las', 'los', 'y', 'e'}
+_CATALOG_STOPWORDS = {'de', 'del', 'la', 'el', 'las', 'los', 'y', 'e', 'metodos'}
+# Siglas de uso común en los Excel que el catálogo escribe completas.
+_CATALOG_SIGLAS = {'diu': 'dispositivo intrauterino'}
 
 
 def _normalizar_catalogo_slug(value: Any) -> str:
@@ -23,7 +25,8 @@ def _normalizar_catalogo_slug(value: Any) -> str:
     slug = slugify(value)
     if not slug:
         return ''
-    return ' '.join(token for token in slug.split() if token not in _CATALOG_STOPWORDS)
+    tokens = (_CATALOG_SIGLAS.get(token, token) for token in slug.split())
+    return ' '.join(token for token in tokens if token not in _CATALOG_STOPWORDS)
 
 
 def _catalog_comparables(obj: Any, code_field: str | None, extra_field: str | None) -> list[Any]:

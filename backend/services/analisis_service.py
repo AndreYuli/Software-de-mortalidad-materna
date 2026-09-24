@@ -39,16 +39,31 @@ from services._analisis_persistencia import _construir_df_desde_bd, _guardar_df_
 logger = logging.getLogger(__name__)
 
 
+_MAX_DETALLE_ERROR_BD = 400
+
+
 def _mensaje_error_bd(exc: Exception) -> str:
     """Traduce un error de base de datos a un mensaje comprensible para el usuario."""
     orig = getattr(exc, 'orig', None)
-    if getattr(orig, 'pgcode', None) == '42501':  # insufficient_privilege
+    pgcode = getattr(orig, 'pgcode', None)
+    if pgcode == '42501':  # insufficient_privilege
         return (
             'El usuario de la base de datos no tiene permisos sobre las tablas de la '
             'aplicación. Avise al administrador del servidor. '
             f'Detalle técnico: {str(orig).strip()}'
         )
-    return f'Error al guardar los datos en la base de datos: {exc}'
+    if pgcode == '23502':  # not_null_violation
+        diag = getattr(orig, 'diag', None)
+        tabla = getattr(diag, 'table_name', None) or 'desconocida'
+        columna = getattr(diag, 'column_name', None) or 'desconocida'
+        return (
+            f"Falta un dato obligatorio: la columna '{columna}' de la tabla '{tabla}' no "
+            'puede quedar vacía. Revise que el Excel tenga ese dato en todas las filas.'
+        )
+    detalle = str(exc)
+    if len(detalle) > _MAX_DETALLE_ERROR_BD:
+        detalle = detalle[:_MAX_DETALLE_ERROR_BD] + '…'
+    return f'Error al guardar los datos en la base de datos: {detalle}'
 
 
 def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, Any]:

@@ -3,6 +3,7 @@
 import pandas as pd
 import pytest
 
+from services._sivigila_catalog import _normalizar_catalogo_slug
 from services.analisis_service import _mensaje_error_bd
 from services.sivigila_service import _verificar_causa_completa
 
@@ -59,3 +60,44 @@ def test_error_de_permisos_de_postgres_se_traduce():
 def test_otro_error_de_bd_conserva_el_detalle():
     """Un error de BD desconocido mantiene su texto original."""
     assert 'boom' in _mensaje_error_bd(RuntimeError('boom'))
+
+
+def test_error_de_dato_obligatorio_nombra_tabla_y_columna():
+    """El NOT NULL de PostgreSQL (23502) indica qué columna faltó, sin volcar el SQL."""
+
+    class _DiagFalso:
+        table_name = 'antecedente_materno'
+        column_name = 'id_regulacion_fec'
+
+    class _OrigNotNullError(Exception):
+        pgcode = '23502'
+        diag = _DiagFalso()
+
+    class _ErrorSqlAlchemyNotNullError(Exception):
+        orig = _OrigNotNullError('el valor null viola la restricción not null')
+
+    mensaje = _mensaje_error_bd(_ErrorSqlAlchemyNotNullError())
+
+    assert "'id_regulacion_fec'" in mensaje
+    assert "'antecedente_materno'" in mensaje
+    assert 'INSERT' not in mensaje
+
+
+def test_error_de_bd_largo_se_recorta():
+    """Un volcado enorme de SQL/parámetros no llega completo al usuario."""
+    assert len(_mensaje_error_bd(RuntimeError('x' * 5000))) < 600
+
+
+@pytest.mark.parametrize(
+    ('excel', 'catalogo'),
+    [
+        ('No usó por acceso', 'No usó métodos por acceso'),
+        ('No usó por desconocimiento', 'No usó métodos por desconocimiento'),
+        ('No usó porque no deseaba', 'No usó métodos porque no deseaba'),
+        ('DIU', 'Dispositivo intrauterino'),
+        ('Quirúrgico', 'Quirúrgico'),
+    ],
+)
+def test_regulacion_fecundidad_del_excel_coincide_con_el_catalogo(excel, catalogo):
+    """Los valores del Excel de ejemplo se resuelven contra el catálogo de la BD."""
+    assert _normalizar_catalogo_slug(excel) == _normalizar_catalogo_slug(catalogo)
