@@ -1,11 +1,13 @@
-numpy==2.4.4
+# ponytail: numpy/pandas/scipy/scikit-learn pinned below their latest because the
+# deployment server's CPU lacks x86-64-v2 (sse4_2/popcnt); bump once that host is retired.
+numpy==1.26.4
 openpyxl==3.1.5
 et_xmlfile==2.0.0
-pandas==3.0.2
+pandas==2.2.3
 python-dotenv==1.1.1
 python-dateutil==2.9.0.post0
-scikit-learn==1.6.1
-scipy==1.15.1
+scikit-learn==1.5.2
+scipy==1.13.1
 tzdata==2026.2
 fastapi==0.111.0
 uvicorn==0.30.1

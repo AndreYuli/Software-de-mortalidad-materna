@@ -10,7 +10,7 @@ const DashboardOKD = lazy(() => import('./components/DashboardOKD'))
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <ErrorBoundary>
         <Suspense fallback={<div>Cargando VidaMaterna...</div>}>
           <Routes>
