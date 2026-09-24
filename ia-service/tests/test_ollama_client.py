@@ -62,6 +62,49 @@ def test_chatear_devuelve_texto_en_exito(mocker):
     assert texto == 'Respuesta del chat.'
 
 
+def test_generar_y_chatear_usan_api_openai_si_hay_llm_base_url(mocker):
+    from core.config import Config
+    from ollama_client import chatear
+
+    mocker.patch.object(Config, 'llm_base_url', 'https://api.ejemplo.com/v1/')
+    mocker.patch.object(Config, 'llm_api_key', 'clave-de-prueba')
+    post = mocker.patch(
+        'httpx.Client.post',
+        return_value=httpx.Response(
+            200,
+            json={'choices': [{'message': {'content': 'Hola desde el proveedor.'}}]},
+            request=httpx.Request(
+                'POST', 'https://api.ejemplo.com/v1/chat/completions'
+            ),
+        ),
+    )
+
+    assert generar('un prompt') == 'Hola desde el proveedor.'
+    assert chatear([{'role': 'user', 'content': 'hola'}]) == 'Hola desde el proveedor.'
+    url = post.call_args.args[0]
+    assert url == 'https://api.ejemplo.com/v1/chat/completions'
+    assert post.call_args.kwargs['headers']['Authorization'] == 'Bearer clave-de-prueba'
+
+
+def test_generar_openai_lanza_error_en_status_no_200(mocker):
+    from core.config import Config
+
+    mocker.patch.object(Config, 'llm_base_url', 'https://api.ejemplo.com/v1')
+    mocker.patch(
+        'httpx.Client.post',
+        return_value=httpx.Response(
+            410,
+            json={'detail': 'modelo retirado'},
+            request=httpx.Request(
+                'POST', 'https://api.ejemplo.com/v1/chat/completions'
+            ),
+        ),
+    )
+
+    with pytest.raises(OllamaUnavailableError):
+        generar('un prompt')
+
+
 def test_chatear_lanza_error_en_timeout(mocker):
     from ollama_client import chatear
 
