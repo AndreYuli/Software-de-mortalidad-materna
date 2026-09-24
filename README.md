@@ -1,202 +1,164 @@
-# Software de Mortalidad Materna
+# Software de Mortalidad Materna (MaternAnalytics)
 
-Sistema de análisis, visualización e interpretación con IA de datos de mortalidad y morbilidad materna extrema (SIVIGILA 549/550). Arquitectura de 3 servicios: **BACKEND** (FastAPI + PostgreSQL), **IA-SERVICE** (microservicio FastAPI aislado que genera narrativas con un LLM local vía Ollama) y **FRONTED** (React + TypeScript + Vite).
+Sistema de análisis, visualización e interpretación con IA de datos de mortalidad y morbilidad materna extrema (fichas SIVIGILA 549 y 550). Una persona de la Secretaría de Salud carga los archivos Excel, y el sistema los valida, los procesa y los muestra en un dashboard con indicadores, filtros, historial de cargas y narrativas generadas por IA local.
 
-## 📋 Requisitos Previos
+## Arquitectura
 
-- **Python 3.10+**
-- **Node.js 18+** y **pnpm** (o npm)
-- **PostgreSQL 14+** corriendo localmente
-- **[Ollama](https://ollama.com)** instalado, con el modelo `qwen2.5` descargado:
-  ```bash
-  ollama pull qwen2.5
-  ```
+Tres servicios más PostgreSQL y Ollama:
 
----
+| Servicio | Carpeta | Tecnología | Puerto |
+|---|---|---|---:|
+| Frontend | `frontend/maternanalytics/` | React 18, TypeScript, Vite | 5173 |
+| Backend | `backend/` | FastAPI, SQLAlchemy, pandas, scikit-learn, JWT | 8000 |
+| IA-SERVICE | `ia-service/` | FastAPI, httpx, Ollama (`qwen2.5`) | 8001 |
+| PostgreSQL | externo o Docker | PostgreSQL 16 | 5432 |
+| Ollama | externo o Docker | LLM local | 11434 |
 
-## 🗄️ Configuración y Creación de la Base de Datos Local (PostgreSQL)
+- Todos los endpoints de datos (`/api/analisis/*`, `/api/sivigila/*`) exigen un JWT válido. Solo son públicos el login, el registro y `/health`. Los archivos cargados (`backend/media/`) no se sirven públicamente.
+- El backend nunca envía datos crudos de pacientes al servicio de IA: solo indicadores ya agregados. Ver `backend/services/narrativa_service.py`.
+- Si Ollama o `ia-service` no están disponibles, el resto de la aplicación sigue funcionando y las narrativas se ocultan.
 
-Para que el backend funcione correctamente, debes crear la base de datos `sivigila_maternidad` y cargar su esquema inicial. Sigue estos sencillos pasos:
+Documentación detallada en [`docs/`](docs/): [arquitectura](docs/ARCHITECTURE.md), [producto](docs/PRODUCT.md), [diseño](docs/DESIGN.md), [reglas](docs/RULES.md), [decisiones](docs/DECISIONS.md), [tareas](docs/TASKS.md) y [changelog](docs/CHANGELOG.md).
 
-### Paso 1: Crear la Base de Datos en PostgreSQL
+## Estructura de carpetas
 
-Abre tu terminal o PowerShell y conéctate a PostgreSQL con tu usuario (generalmente `postgres`):
-
-```bash
-# Conectar a PostgreSQL con el usuario postgres
-psql -U postgres
+```text
+Software-de-mortalidad-materna/
+├── backend/            # API FastAPI (api/, core/, db/, schemas/, services/, utils/, scripts/, tests/)
+├── ia-service/         # Microservicio de narrativas (core/, prompts/, tests/)
+├── frontend/
+│   └── maternanalytics/
+│       ├── src/        # components/{auth,dashboard,icons,shared}, hooks/, utils/, api.ts, types.ts
+│       └── e2e/        # Pruebas end-to-end (Playwright)
+├── docs/               # Documentación vigente (docs/historico: planes y specs anteriores)
+├── notes/              # Auditorías y notas de trabajo (notes/local no se versiona)
+├── data/
+│   ├── referencia/     # Fichas SIVIGILA 549/550 y tabla de referencia CIE-10
+│   ├── pruebas/        # Excel sintéticos para probar la carga
+│   └── local/          # No se versiona
+├── scripts/            # iniciar_servicios.bat, ejecutar_pruebas_e2e.bat
+├── docker-compose.yml
+├── .env.example        # Variables para docker compose
+└── ruff.toml           # Estilo Python (comillas simples)
 ```
 
-Dentro de la consola interactiva de PostgreSQL, ejecuta:
+## Requisitos
 
-```sql
--- 1. Crear la base de datos
-CREATE DATABASE sivigila_maternidad;
+- **Python 3.11+**
+- **Node.js 18+** y **pnpm**
+- **PostgreSQL 14+** (o Docker)
+- **[Ollama](https://ollama.com)** con el modelo `qwen2.5`: `ollama pull qwen2.5`
+- Opcional: **Docker Desktop** para levantar todo con `docker compose`
 
--- 2. Conectarse a la base de datos creada
-\c sivigila_maternidad;
-```
+## Variables de entorno
 
-*(Opcional: Si usas **pgAdmin**, haz clic derecho sobre "Databases" > "Create" > "Database..." y nómbrala `sivigila_maternidad`).*
+**Backend** (`backend/.env`, copiar desde `backend/.env.example`):
 
-### Paso 2: Cargar el Esquema y Tablas SIVIGILA
+| Variable | Descripción | Por defecto |
+|---|---|---|
+| `DB_ENGINE`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `DB_HOST`, `DB_PORT` | Conexión a PostgreSQL | `postgresql`, `postgres`, `password`, `sivigila_maternidad`, `localhost`, `5432` |
+| `JWT_SECRET` | Clave de firma de los tokens. **Cámbiala fuera de desarrollo.** | valor de ejemplo |
+| `JWT_ALGORITHM`, `JWT_EXPIRATION_MINUTES` | Algoritmo y vigencia del token | `HS256`, `60` |
+| `IA_SERVICE_URL` | URL de `ia-service` | `http://localhost:8001` |
+| `CORS_ORIGINS` | Orígenes permitidos, separados por comas | `localhost:5173/5174` |
 
-Ejecuta el script SQL incluido en el proyecto ([`BACKEND/sivigila_maternidad_postgres.sql`](file:///C:/Users/lopez/Documents/UNIVERSIDAD/Software-de-mortalidad-materna/BACKEND/sivigila_maternidad_postgres.sql)) que contiene la estructura del dominio (tablas `paciente`, `caso_morbilidad`, `caso_mortalidad`, catálogos CIE-10 y vistas agregadas):
+**ia-service** (opcionales): `OLLAMA_HOST` (`http://localhost:11434`), `OLLAMA_MODEL` (`qwen2.5`), `OLLAMA_TIMEOUT_S` (`30`).
+
+**Frontend** (`frontend/maternanalytics/.env.local`, opcional): `VITE_API_URL` (por defecto `http://localhost:8000/api`).
+
+**Docker** (`.env` en la raíz, copiar desde `.env.example`): `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `CORS_ORIGINS`. Los archivos `.env` nunca se versionan.
+
+## Instalación y ejecución local
+
+### 1. Base de datos
 
 ```bash
-# Desde la raíz del proyecto (o dentro de la carpeta BACKEND)
-psql -U postgres -d sivigila_maternidad -f BACKEND/sivigila_maternidad_postgres.sql
+psql -U postgres -c "CREATE DATABASE sivigila_maternidad;"
+psql -U postgres -d sivigila_maternidad -f backend/sivigila_maternidad_postgres.sql
 ```
 
-*(Si estás en pgAdmin: abre el "Query Tool" sobre la base de datos `sivigila_maternidad`, abre el archivo `sivigila_maternidad_postgres.sql` y presiona F5 o Ejecutar).*
+Las tablas propias de la aplicación (`api_analisis`, `api_usuario`, `api_sivigilaimportacion`, `narrativa_ia`) se crean solas al arrancar el backend.
 
----
-
-## 🚀 Instalación y Configuración
-
-### 1. BACKEND (FastAPI + PostgreSQL)
+### 2. Backend
 
 ```bash
-cd BACKEND
+cd backend
 python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # Linux/Mac
+venv\Scripts\activate          # Windows  (Linux/Mac: source venv/bin/activate)
 pip install -r requirements.txt
-```
-
-Copia `.env.example` a `.env` y coloca tu contraseña de PostgreSQL local:
-
-```bash
-copy .env.example .env         # Windows
-# cp .env.example .env         # Linux/Mac
-```
-
-Asegúrate de que el archivo `.env` en `BACKEND/.env` contenga la cadena de conexión correcta:
-
-```env
-DATABASE_URL=postgresql://postgres:TU_CONTRASEÑA@localhost:5432/sivigila_maternidad
-JWT_SECRET=tu_clave_secreta_jwt_para_tokens
-IA_SERVICE_URL=http://localhost:8001
-MEDIA_ROOT=media/uploads
-```
-
-> **Nota:** Las tablas operativas de la aplicación (`api_analisis`, `api_usuario`, `api_sivigilaimportacion`, `narrativa_ia`) se crean automáticamente mediante SQLAlchemy la primera vez que arranca el servidor FastAPI.
-
-### 2. IA-SERVICE (microservicio de IA generativa)
-
-```bash
-cd IA-SERVICE
-python -m venv venv
-venv\Scripts\activate
-pip install -r requirements.txt
-```
-
-No requiere `.env` — por defecto apunta a Ollama en `http://localhost:11434` con el modelo `qwen2.5` (configurable en `IA-SERVICE/core/config.py` o variables de entorno `OLLAMA_HOST`/`OLLAMA_MODEL`/`OLLAMA_TIMEOUT_S`).
-
-### 3. FRONTED (React + TypeScript + Vite)
-
-```bash
-cd FRONTED/maternanalytics
-pnpm install
-```
-
-## ▶️ Ejecución (desarrollo)
-
-Se necesitan **4 procesos corriendo en paralelo**, cada uno en su propia terminal:
-
-```bash
-# Terminal 1 — Ollama
-ollama serve
-
-# Terminal 2 — IA-SERVICE (puerto 8001)
-cd IA-SERVICE
-venv\Scripts\activate
-uvicorn main:app --reload --port 8001
-
-# Terminal 3 — BACKEND (puerto 8000)
-cd BACKEND
-venv\Scripts\activate
+copy .env.example .env         # y edita DB_PASSWORD y JWT_SECRET
 uvicorn main:app --reload --port 8000
+```
 
-# Terminal 4 — FRONTED (puerto 5173)
-cd FRONTED/maternanalytics
+### 3. ia-service
+
+```bash
+cd ia-service
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8001
+```
+
+### 4. Frontend
+
+```bash
+cd frontend/maternanalytics
+pnpm install
 pnpm dev
 ```
 
-Abre **http://localhost:5173** en el navegador.
+Abre **http://localhost:5173**. Vite hace de proxy de `/api` hacia `localhost:8000`.
 
-Si Ollama o IA-SERVICE no están corriendo, el resto de la aplicación sigue funcionando con normalidad — las tarjetas de narrativa de IA simplemente se ocultan (degradación silenciosa, por diseño).
+En Windows, `scripts\iniciar_servicios.bat` abre las terminales de Ollama, ia-service, backend, frontend y ngrok (necesita los `venv` ya creados).
 
-## 🔑 Credenciales de prueba
+### Primer usuario
 
-No hay usuarios por defecto en la base de datos: hay que registrarlos. Puedes crear uno desde la pantalla de registro del frontend, o por API:
+No hay usuarios por defecto. Regístrate desde la pantalla de registro, o por API:
 
 ```bash
 curl -X POST http://localhost:8000/api/auth/register/ \
   -H "Content-Type: application/json" \
-  -d '{"nombre":"Usuario Prueba","email":"prueba@vidamaterna.co","password":"prueba123"}'
+  -d '{"nombre":"Tu Nombre","email":"tu@correo.co","password":"una-clave-segura"}'
 ```
 
-Ya existe un usuario de prueba creado en la base de datos local durante la verificación de este proyecto:
-
-- **Correo:** `prueba@vidamaterna.co`
-- **Contraseña:** `prueba123`
-
-(Válido solo si usas la misma base PostgreSQL local en la que se creó — en una base nueva, regístrate primero.)
-
-## 📁 Estructura del Proyecto
-
-```
-Software-de-mortalidad-materna/
-├── BACKEND/                    # API FastAPI + PostgreSQL
-│   ├── api/routers/            # Endpoints HTTP (auth, sivigila, analisis)
-│   ├── core/                   # Configuración y seguridad (JWT)
-│   ├── db/                     # Modelos SQLAlchemy y conexión
-│   ├── schemas/                # Schemas Pydantic
-│   ├── services/                # Lógica de negocio (procesamiento, clustering, IA)
-│   ├── tests/                  # pytest
-│   ├── media/uploads/          # Archivos Excel subidos
-│   ├── main.py                 # Punto de entrada FastAPI
-│   ├── requirements.txt
-│   └── sivigila_maternidad_postgres.sql
-├── IA-SERVICE/                 # Microservicio de IA generativa (FastAPI, aislado)
-│   ├── prompts/                # Plantillas de prompt por tipo de narrativa
-│   ├── core/                   # Configuración (Ollama host/modelo)
-│   ├── tests/                  # pytest
-│   ├── main.py                 # Endpoint POST /generar-narrativa
-│   ├── ollama_client.py
-│   └── requirements.txt
-└── FRONTED/maternanalytics/    # React + TypeScript + Vite
-    ├── src/
-    │   ├── components/         # Login, Register, DashboardOKD, AnalisisView, NarrativaIA
-    │   ├── api.ts               # Cliente HTTP tipado
-    │   └── types.ts             # Tipos de dominio compartidos
-    └── package.json
-```
-
-## 🧪 Tests
+## Docker
 
 ```bash
-# BACKEND
-cd BACKEND && venv\Scripts\activate && pytest tests/ -v
-
-# IA-SERVICE
-cd IA-SERVICE && venv\Scripts\activate && pytest tests/ -v
-
-# FRONTED
-cd FRONTED/maternanalytics && npx tsc --noEmit && pnpm test && pnpm run build
+copy .env.example .env         # define DB_USER, DB_PASSWORD, JWT_SECRET y CORS_ORIGINS
+docker compose up -d --build
+docker exec maternidad_ollama ollama pull qwen2.5    # solo la primera vez
 ```
 
-## 🛠️ Tecnologías
+Levanta PostgreSQL (carga el esquema SQL), Ollama, ia-service y backend, todos publicados solo en `127.0.0.1`. El frontend no está en el compose: se ejecuta aparte con `pnpm dev` (o se sirve construido con `pnpm build`).
 
-| Capa | Stack |
-|---|---|
-| BACKEND | FastAPI, SQLAlchemy, PostgreSQL, pandas, scikit-learn, JWT |
-| IA-SERVICE | FastAPI, httpx, Ollama (`qwen2.5`) |
-| FRONTED | React 18, TypeScript, Vite, Plotly.js, vitest |
+## Pruebas
 
-## 📝 Notas
+```bash
+# Backend (67 tests)
+cd backend && venv\Scripts\activate && pip install pytest pytest-mock && pytest tests/ -v
 
-- El backend nunca envía datos crudos de pacientes a IA-SERVICE — solo indicadores ya agregados (totales, promedios, distribuciones). Ver `BACKEND/services/narrativa_service.py::extraer_indicadores_para_narrativa`.
-- Las narrativas generadas se cachean en la tabla `narrativa_ia` (por análisis + tipo + filtros); el botón "Regenerar" fuerza una nueva llamada al LLM.
-- CORS ya está configurado en el backend para `http://localhost:5173`.
+# ia-service (18 tests)
+cd ia-service && venv\Scripts\activate && pytest tests/ -v
+
+# Frontend: tipos, lint, tests unitarios y build
+cd frontend/maternanalytics
+npx tsc --noEmit
+pnpm lint
+pnpm test
+pnpm build
+```
+
+**End-to-end (Playwright):** requiere el backend en marcha (Playwright levanta Vite) y los Excel de `frontend/maternanalytics/e2e/fixtures/` (no se versionan). Usa un usuario de pruebas real (`e2e@vidamaterna.co`, se crea solo; configurable con `E2E_EMAIL`/`E2E_PASSWORD`), porque los tokens falsos dan 401. Ejecuta `scripts\ejecutar_pruebas_e2e.bat`.
+
+**Estilo Python:** `ruff` con comillas simples, configurado en `backend/pyproject.toml` y `ruff.toml`. Se aplica con pre-commit: `pip install pre-commit ruff` y `pre-commit install --config backend/.pre-commit-config.yaml`.
+
+## Datos de referencia y de prueba
+
+- `data/referencia/`: fichas oficiales 549 y 550 (md y pdf) y `TablaReferencia_CIE10__1.xlsx`. Con la tabla se regenera el catálogo del frontend: `python backend/scripts/generate_cie10_reference.py`.
+- `data/pruebas/`: Excel sintéticos. Se regeneran con `python backend/scripts/generar_excels_prueba.py` y `generar_datos_sinteticos_fase0.py`.
+- No subas al repositorio archivos con datos reales de pacientes.
+
+## Acceso público (ngrok)
+
+Para compartir el frontend fuera de tu red se expone el puerto 5173 con [ngrok](https://ngrok.com) (`winget install Ngrok.Ngrok`, `ngrok config add-authtoken <token>` y un túnel `frontend` hacia `addr: 5173` en `%LOCALAPPDATA%\ngrok\ngrok.yml`). Después: `ngrok start --all` (ya incluido en `scripts\iniciar_servicios.bat`). Vite hace de proxy hacia el backend, así que solo se expone un puerto. En el plan gratuito solo puede haber un túnel activo (`ERR_NGROK_334` significa que ya hay otro `ngrok.exe`).

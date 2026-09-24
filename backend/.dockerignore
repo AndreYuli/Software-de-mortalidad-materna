@@ -1,0 +1,23 @@
+# Contexto de build de la imagen del backend (docker-compose: context ./backend).
+# Nada de esto debe quedar dentro de la imagen.
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Entornos virtuales y cachés
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Archivos cargados por usuarios (datos de pacientes): viven en el volumen backend_media
+media/
+
+# Herramientas de desarrollo
+.git/
+.idea/
+.playwright-cli/

@@ -1,0 +1,51 @@
+{
+  "name": "maternanalytics",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@tailwindcss/vite": "^4.3.3",
+    "chart.js": "^4.5.1",
+    "echarts": "^6.1.0",
+    "echarts-for-react": "^3.0.6",
+    "echarts-gl": "^2.1.0",
+    "lucide-react": "^1.47.0",
+    "react": "^18.3.1",
+    "react-chartjs-2": "^5.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.86.0",
+    "react-router-dom": "^7.18.2",
+    "tailwindcss": "^4.3.3",
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.5",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.67.0",
+    "@typescript-eslint/parser": "^8.67.0",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.2.1",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.5.0",
+    "jsdom": "^30.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.11",
+    "vitest-canvas-mock": "^1.1.5"
+  }
+}

@@ -1,0 +1,18 @@
+# Contexto de build de la imagen de ia-service (docker-compose: context ./ia-service).
+
+# Secretos y configuración local
+.env
+.env.*
+!.env.example
+
+# Entornos virtuales y cachés
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Herramientas de desarrollo
+.git/
+.idea/

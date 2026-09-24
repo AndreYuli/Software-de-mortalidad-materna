@@ -1,8 +1,0 @@
-/* ============================================================
-   Login.css — Punto de entrada principal
-   Importa los 3 módulos del componente Login
-   ============================================================ */
-
-@import './LoginLayout.css';
-@import './LoginDecorations.css';
-@import './LoginForm.css';

@@ -136,13 +136,20 @@ dist
 
 # Vite logs files
 vite.config.js.timestamp-*
+
+# playwright-cli session state (agent tooling, not project source)
+.playwright-cli/
+
+# Playwright test output
+playwright-report/
+test-results/
 vite.config.ts.timestamp-*
 
 # venv
 venv/
 .venv/
 env/venv/ 
-BACKEND/venv/ 
+backend/venv/ 
 # Python
 __pycache__/
 *.pyc
@@ -152,10 +159,10 @@ __pycache__/
 *.sqlite3
 
 # Archivos subidos
-BACKEND/media/
+backend/media/
 
 # Entornos virtuales
-BACKEND/venv/
+backend/venv/
 venv/
 
 
@@ -170,9 +177,17 @@ db.sqlite3
 # Superpowers brainstorming companion
 .superpowers/
 
-# Carpeta de ayudas, transcripciones, prompts y guias
-ayudas/
+# Notas locales: prompts, transcripciones de reuniones y guías antiguas
+notes/local/
 .claude/
 .idea/
 *.iml
 .pytest_cache/
+# Almacén local de pnpm (si se ejecuta pnpm en la raíz)
+.pnpm-store/
+
+# Datos: solo se versionan la referencia oficial y los Excel sintéticos (data/pruebas)
+!data/referencia/*.xlsx
+!data/pruebas/*.xlsx
+# Datos sin procedencia confirmada (posibles datos reales): nunca versionar
+data/local/
