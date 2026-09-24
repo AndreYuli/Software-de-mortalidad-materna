@@ -39,6 +39,18 @@ from services._analisis_persistencia import _construir_df_desde_bd, _guardar_df_
 logger = logging.getLogger(__name__)
 
 
+def _mensaje_error_bd(exc: Exception) -> str:
+    """Traduce un error de base de datos a un mensaje comprensible para el usuario."""
+    orig = getattr(exc, 'orig', None)
+    if getattr(orig, 'pgcode', None) == '42501':  # insufficient_privilege
+        return (
+            'El usuario de la base de datos no tiene permisos sobre las tablas de la '
+            'aplicación. Avise al administrador del servidor. '
+            f'Detalle técnico: {str(orig).strip()}'
+        )
+    return f'Error al guardar los datos en la base de datos: {exc}'
+
+
 def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, Any]:
     """Valida, persiste y genera el análisis de un archivo Excel subido.
 
@@ -82,10 +94,14 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
     try:
         persistencia = sivigila_service.persistir_dataframe(db, df_cleaned, tipo)
         df_bd = _construir_df_desde_bd(db, tipo)
+    except ValueError:
+        # Error de datos del Excel (fila/columna): se devuelve tal cual como 422.
+        db.rollback()
+        raise
     except Exception as exc:
         db.rollback()
         logger.exception('Error al procesar datos SIVIGILA')
-        raise RuntimeError(f'Error al persistir en base de datos: {exc}') from exc
+        raise RuntimeError(_mensaje_error_bd(exc)) from exc
 
     if df_bd is not None:
         df_acum = df_bd
@@ -125,7 +141,7 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
     except Exception as exc:
         db.rollback()
         logger.exception('Error al confirmar el análisis en base de datos')
-        raise RuntimeError(f'Error al persistir en base de datos: {exc}') from exc
+        raise RuntimeError(_mensaje_error_bd(exc)) from exc
 
     resultado_final: dict[str, Any] = {
         'id': analisis.id,

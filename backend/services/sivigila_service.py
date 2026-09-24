@@ -37,9 +37,50 @@ from services._sivigila_morbilidad import _escribir_relacionados_morbilidad
 from services._sivigila_mortalidad import _escribir_relacionados_mortalidad
 from utils.column_validators import _require_text
 from utils.date_parsers import _parse_date
+from utils.text_utils import clean_text
 from utils.type_parsers import _parse_int
 
 logger = logging.getLogger(__name__)
+
+
+_MAX_FILAS_EN_MENSAJE = 20
+
+
+def _verificar_causa_completa(
+    tipo: str,
+    registros: pd.DataFrame,
+    df_hashes: pd.Series,
+    existing_hashes: set[str],
+) -> None:
+    """Lanza ValueError listando todas las filas nuevas sin causa CIE-10.
+
+    Evita que la carga se detenga en la primera fila vacía y obligue al usuario
+    a corregir el Excel de a una fila por intento.
+
+    Args:
+        tipo: 'mortalidad' o 'morbilidad'.
+        registros: DataFrame limpio sin filas completamente vacías.
+        df_hashes: Serie con el hash de cada fila, indexada igual que registros.
+        existing_hashes: Hashes ya presentes en la BD (esas filas se omiten).
+
+    Raises:
+        ValueError: Si alguna fila no duplicada tiene la causa vacía.
+    """
+    columna = '10.1 Causa básica CIE-10' if tipo == 'mortalidad' else 'Causa principal CIE-10'
+    if columna not in registros:
+        return
+    vacias = registros[columna].map(clean_text).isna() & ~df_hashes.isin(existing_hashes)
+    filas = (registros.index[vacias] + 2).tolist()
+    if not filas:
+        return
+    muestra = ', '.join(str(f) for f in filas[:_MAX_FILAS_EN_MENSAJE])
+    if len(filas) > _MAX_FILAS_EN_MENSAJE:
+        muestra += f' … y {len(filas) - _MAX_FILAS_EN_MENSAJE} más'
+    raise ValueError(
+        f"La columna '{columna}' está vacía en {len(filas)} fila(s) del Excel: {muestra}. "
+        'Es obligatoria: complete el código CIE-10 o elimine esas filas y vuelva a cargar '
+        'el archivo.'
+    )
 
 
 def _fase1_validar_filas(
@@ -69,6 +110,8 @@ def _fase1_validar_filas(
     pass1_data: dict[int, _DatosPasada1] = {}
     numeros_id: set[str] = set()
     event_hashes: list[str] = []
+
+    _verificar_causa_completa(tipo, registros, df_hashes, existing_hashes)
 
     for index, row in registros.iterrows():
         numero_fila = index + 2

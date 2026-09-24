@@ -19,7 +19,7 @@ _CATALOG_STOPWORDS = {'de', 'del', 'la', 'el', 'las', 'los', 'y', 'e'}
 
 
 def _normalizar_catalogo_slug(value: Any) -> str:
-    """Convierte texto de catálogo a una forma comparable ignorando artículos y conectores frecuentes."""
+    """Convierte texto de catálogo a una forma comparable sin artículos ni conectores frecuentes."""
     slug = slugify(value)
     if not slug:
         return ''
@@ -159,7 +159,10 @@ def _resolve_catalog(
     texto = None if vacio else clean_text(value)
     if vacio or texto is None:
         if required:
-            raise ValueError(f'Fila {numero_fila}: el campo {nombre_campo} es obligatorio.')
+            raise ValueError(
+                f"Fila {numero_fila}: la columna '{nombre_campo}' está vacía y es obligatoria. "
+                'Complete el valor o elimine la fila y vuelva a cargar el archivo.'
+            )
     else:
         obj = _resolve_catalog_by_id(db, model, value, catalog_cache)
         if obj is None:
@@ -174,7 +177,9 @@ def _resolve_catalog(
         resultado = obj
         if resultado is None and required:
             raise ValueError(
-                f'Fila {numero_fila}: no se encontró catálogo para {nombre_campo}={texto!r}.'
+                f"Fila {numero_fila}: el valor {texto!r} de la columna '{nombre_campo}' "
+                'no existe en el catálogo. Revise que esté escrito como en el formato '
+                'oficial de SIVIGILA.'
             )
     return resultado
 

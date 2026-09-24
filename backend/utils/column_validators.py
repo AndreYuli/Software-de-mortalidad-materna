@@ -43,7 +43,10 @@ def _require_text(value: Any, nombre_campo: str, numero_fila: int) -> str:
     """
     resultado = clean_text(value)
     if resultado is None:
-        raise ValueError(f'Fila {numero_fila}: el campo {nombre_campo} es obligatorio.')
+        raise ValueError(
+            f"Fila {numero_fila}: la columna '{nombre_campo}' está vacía y es obligatoria. "
+            'Complete el valor o elimine la fila y vuelva a cargar el archivo.'
+        )
     return resultado
 
 
