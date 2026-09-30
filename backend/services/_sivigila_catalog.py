@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 _CATALOG_STOPWORDS = {'de', 'del', 'la', 'el', 'las', 'los', 'y', 'e', 'metodos'}
 # Siglas de uso común en los Excel que el catálogo escribe completas.
-_CATALOG_SIGLAS = {'diu': 'dispositivo intrauterino'}
+_CATALOG_SIGLAS = {'diu': 'dispositivo intrauterino', '24h': '24 horas', '24hs': '24 horas'}
 
 
 def _normalizar_catalogo_slug(value: Any) -> str:

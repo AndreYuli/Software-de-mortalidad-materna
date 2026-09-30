@@ -12,6 +12,7 @@ from db.models_sqlalchemy import (
     CasoMortalidad,
     CatConvivencia,
     CatEscolaridad,
+    CatMomentoMuerte,
     CatRegulacionFecundidad,
     CatSitioDefuncion,
     Paciente,
@@ -48,12 +49,13 @@ logger = logging.getLogger(__name__)
 
 _MAX_FILAS_EN_MENSAJE = 20
 
-# Columnas NOT NULL de antecedente_materno: se validan en la pasada 1 para dar el
-# número de fila en vez de fallar al insertar con un error de la base de datos.
+# Columnas NOT NULL de antecedente_materno y del momento de la muerte: se validan en la
+# pasada 1 para dar el número de fila en vez de fallar al insertar con un error de la BD.
 _CATALOGOS_OBLIGATORIOS_MORTALIDAD = (
     (CatConvivencia, ['6.1 Convivencia']),
     (CatEscolaridad, ['6.3 Escolaridad']),
     (CatRegulacionFecundidad, ['6.4 Regulación Fecundidad', '6.4 Regulacion Fecundidad']),
+    (CatMomentoMuerte, _MORTALIDAD_MOMENTO_MUERTE_COLS),
 )
 
 

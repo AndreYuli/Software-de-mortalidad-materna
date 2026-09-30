@@ -95,9 +95,11 @@ def test_error_de_bd_largo_se_recorta():
         ('No usó por desconocimiento', 'No usó métodos por desconocimiento'),
         ('No usó porque no deseaba', 'No usó métodos porque no deseaba'),
         ('DIU', 'Dispositivo intrauterino'),
+        ('Puerperio > 24h', 'Puerperio > 24 horas'),
+        ('Puerperio < 24h', 'Puerperio < 24 horas'),
         ('Quirúrgico', 'Quirúrgico'),
     ],
 )
-def test_regulacion_fecundidad_del_excel_coincide_con_el_catalogo(excel, catalogo):
-    """Los valores del Excel de ejemplo se resuelven contra el catálogo de la BD."""
+def test_valor_del_excel_coincide_con_el_catalogo(excel, catalogo):
+    """Variantes habituales del Excel (sin 'métodos', DIU, 24h) resuelven al catálogo de la BD."""
     assert _normalizar_catalogo_slug(excel) == _normalizar_catalogo_slug(catalogo)
