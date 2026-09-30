@@ -1,9 +1,9 @@
-from fastapi.testclient import TestClient
 from unittest.mock import patch
 
+from core.config import Config
+from fastapi.testclient import TestClient
 from main import app
 from ollama_client import OllamaUnavailableError
-from core.config import Config
 
 client = TestClient(app)
 

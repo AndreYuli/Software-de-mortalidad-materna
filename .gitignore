@@ -168,6 +168,7 @@ venv/
 
 # Base de datos SQLite3
 db.sqlite3
+*.db
 
 # Archivos Excel
 *.xlsx

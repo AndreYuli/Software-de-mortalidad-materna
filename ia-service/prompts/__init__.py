@@ -1,6 +1,7 @@
 """Dispatcher de plantillas de prompt por tipo de narrativa."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from prompts import clustering, demoras, resumen_ejecutivo, tendencias
 

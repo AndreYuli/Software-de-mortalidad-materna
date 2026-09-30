@@ -461,9 +461,15 @@ def chat_analisis(
             'demoras',
             'causas_cie10',
             'criterios_inclusion',
+            'severidad_fallas',
+            'momento_ocurrencia',
+            'momento_muerte',
+            'tiempo_remision',
+            'institucion_referencia',
             'distribucion_sociodemografica',
             'obstetrico_edad',
             'distribucion_edad_riesgo',
+            'distribucion_edad_gestacional',
         ]
         contexto = {k: analisis_completo[k] for k in claves_contexto if k in analisis_completo}
 

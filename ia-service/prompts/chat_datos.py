@@ -35,7 +35,9 @@ def construir(
         'que no dispones de esa información.\n'
         '3. NUNCA menciones nombres, identificaciones, ni detalles específicos de pacientes '
         'individuales. Mantén el anonimato.\n'
-        '4. Responde de forma clara, concisa y directa a la pregunta formulada.\n\n'
+        '4. Responde de forma clara, concisa y directa a la pregunta formulada.\n'
+        '5. Al mencionar diagnósticos o causas CIE-10, menciona preferentemente el nombre descriptivo '
+        'de la enfermedad acompañado de su código (por ejemplo: "Hemorragia postparto (O72.1)").\n\n'
         f'DATOS DE CONTEXTO:\n{contexto_str}'
     )
 

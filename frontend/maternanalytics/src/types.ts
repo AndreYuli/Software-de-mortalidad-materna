@@ -23,7 +23,9 @@ export interface EstadisticasBasicas {
 
 export interface CausaCie10 {
   codigo: string
+  nombre?: string
   casos: number
+  porcentaje?: number
 }
 
 export interface DemoraDetalle {

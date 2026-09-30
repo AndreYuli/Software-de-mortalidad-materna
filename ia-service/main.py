@@ -1,8 +1,7 @@
 """Punto de entrada del microservicio de IA generativa."""
 
-from fastapi import FastAPI, HTTPException, status
-
 from core.config import Config
+from fastapi import FastAPI, HTTPException, status
 from ollama_client import OllamaUnavailableError, chatear, generar
 from prompts import chat_datos, construir_prompt
 from schemas import ChatRequest, ChatResponse, NarrativaRequest, NarrativaResponse

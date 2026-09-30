@@ -111,3 +111,44 @@ Documento continuo para registrar y diagnosticar todos los errores reportados du
    - Se implementó cálculo defensivo de `total_criterios`: si en el Excel viene vacío, `0` o fuera de rango, el backend calcula la sumatoria real de los criterios clínicos marcados en la fila (mínimo 1, máximo 14).
    - Se sanearon los campos de `manejo_hospitalario`: si `dias_estancia_uci` o `dias_estancia_hosp` son `< 1`, o `unidades_transfundidas < 3`, se asignan como `None` (`NULL` en SQL) en lugar de valores inválidos que violen las restricciones de base de datos.
 - **Estado:** ✅ Resuelto.
+
+---
+
+## [Error #5] Chatbot IA no mostraba nombres descriptivos de causas CIE-10 (mostraba códigos con dos puntos vacíos)
+
+- **Fecha:** 2026-09-29
+- **Consulta del usuario al Asistente IA:**
+  > *"Según la sección 'causas_cie10' del contexto de datos, las causas principales de morbilidad en este análisis son: 1. O72.1 (35,29%): 2. O99.4 (29,41%): 3. O14.1 (26,47%): 4. O15.1 (2,94%): 5. O08.0 (2,94%): 6. O14.0 (2,94%) ... me mostro los numeros mas no los nombres"*
+
+### Causa Raíz
+1. En `backend/services/procesador_base.py` (`_analizar_causas_cie10`), el backend construía la lista `top_causas` conteniendo únicamente las llaves `codigo`, `casos` y `porcentaje`, sin asociar la descripción clínica del código CIE-10.
+2. El system prompt de `ia-service/prompts/chat_datos.py` prohíbe taxativamente inventar datos que no estén en el JSON recibido (`Regla 1: NO inventes cifras ni datos que no estén en el contexto`).
+3. En consecuencia, el modelo intentaba redactar la lista de causas dejando los dos puntos para el nombre, pero al no tener los nombres en su contexto, omitía la descripción textual.
+
+### Solución Aplicada
+1. Se centralizó la tabla oficial de 12.634 diagnósticos CIE-10 en `data/referencia/cie10_nombres.json`.
+2. Se creó el módulo `backend/utils/cie10.py` con la función `obtener_nombre_cie10()`.
+3. Se actualizó `backend/services/procesador_base.py` para enriquecer cada elemento de `top_causas` con el campo `'nombre'`.
+4. Se agregó instrucción explícita en `ia-service/prompts/chat_datos.py` (Regla 5) para indicar diagnósticos con nombre descriptivo acompañado del código.
+- **Estado:** ✅ Resuelto.
+
+---
+
+## [Error #6] Chatbot IA indicaba no tener información sobre pacientes en UCI o cirugía
+
+- **Fecha:** 2026-09-29
+- **Consulta del usuario al Asistente IA:**
+  > *"¿Cuántas pacientes requirieron ingreso a UCI o cirugía?"*
+  > *Respuesta:* *"No tengo información específica sobre el número de pacientes que requirieron ingreso a UCI o cirugía en el contexto de datos proporcionado..."*
+
+### Causa Raíz
+1. En `backend/api/routers/analisis.py`, la lista `claves_contexto` definía un subconjunto restringido de indicadores para inyectar en el prompt de la IA.
+2. Se omitió la clave `severidad_fallas` (calculada por `MorbilidadProcessor.analizar_severidad_fallas()`), la cual contiene el conteo de pacientes con `Ingreso UCI`, `Cirugía adicional`, `Transfusión` y fallas orgánicas.
+3. También faltaban claves agregadas como `momento_ocurrencia`, `distribucion_edad_gestacional`, `momento_muerte`, `tiempo_remision` e `institucion_referencia`.
+
+### Solución Aplicada
+1. En `backend/api/routers/analisis.py`, se expandió `claves_contexto` incluyendo `severidad_fallas`, `momento_ocurrencia`, `momento_muerte`, `tiempo_remision`, `institucion_referencia` y `distribucion_edad_gestacional`.
+2. En `backend/services/narrativa_service.py`, se integró `severidad_fallas` en el resumen ejecutivo cuando está disponible.
+3. Se agregaron pruebas automáticas de regresión en `backend/tests/test_analisis_router_chat.py`.
+- **Estado:** ✅ Resuelto.
+

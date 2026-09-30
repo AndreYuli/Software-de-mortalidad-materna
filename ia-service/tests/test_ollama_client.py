@@ -2,7 +2,6 @@
 
 import httpx
 import pytest
-
 from ollama_client import OllamaUnavailableError, generar
 
 

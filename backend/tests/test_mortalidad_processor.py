@@ -102,7 +102,7 @@ def test_analizar_distribucion_edad_gestacional_agrupa_por_categorias_clinicas()
 
 
 def test_resuelve_catalogo_con_variantes_de_articulo_en_sitio_defuncion():
-    """Debe aceptar variantes como 'Durante traslado' cuando el catálogo usa 'Durante el traslado'."""
+    """Debe aceptar variantes como 'Durante traslado' frente a 'Durante el traslado'."""
     resultado = _resolve_catalog_by_fields(
         _FakeDB(),
         _FakeCatalog,

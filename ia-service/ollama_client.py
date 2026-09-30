@@ -1,7 +1,6 @@
 """Cliente HTTP hacia la API local de Ollama."""
 
 import httpx
-
 from core.config import Config
 
 

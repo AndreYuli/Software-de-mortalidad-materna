@@ -127,7 +127,7 @@ def extraer_indicadores_para_narrativa(
     if tipo_narrativa == 'resumen_ejecutivo':
         if analisis_completo is None:
             raise ValueError('Se requiere analisis_completo para resumen_ejecutivo')
-        claves = ['estadisticas_basicas', 'causas_cie10', 'criterios_inclusion']
+        claves = ['estadisticas_basicas', 'causas_cie10', 'criterios_inclusion', 'severidad_fallas']
         return {k: analisis_completo[k] for k in claves if k in analisis_completo}
 
     if tipo_narrativa == 'demoras':

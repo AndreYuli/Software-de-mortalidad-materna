@@ -4,6 +4,8 @@ from typing import Any
 
 import pandas as pd
 
+from utils.cie10 import obtener_nombre_cie10
+
 
 class ProcesadorBase:
     """Clase base con utilidades compartidas para procesamiento de datos."""
@@ -103,6 +105,7 @@ class ProcesadorBase:
         top_causas: list[dict[str, Any]] = [
             {
                 'codigo': str(k),
+                'nombre': obtener_nombre_cie10(str(k)),
                 'casos': int(v),
                 'porcentaje': float(v / total_casos * 100) if total_casos > 0 else 0.0,
             }

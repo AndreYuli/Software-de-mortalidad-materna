@@ -136,3 +136,50 @@ def test_chat_analisis_devuelve_503_si_ia_service_no_disponible(
     # Verify
     assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     assert response.json()['detail'] == 'IA caída'
+
+
+def test_chat_analisis_incluye_severidad_fallas_y_causas_cie10_en_contexto(
+    client, db_session, mock_analisis_service, mock_chatear_ia
+):
+    """El contexto del chatbot debe incluir severidad_fallas y causas_cie10 si existen."""
+    from datetime import datetime, timezone
+
+    from db.models_sqlalchemy import Analisis
+
+    analisis = Analisis(
+        tipo='morbilidad',
+        fecha_carga=datetime.now(timezone.utc),
+        nombre_archivo='test_morb.xlsx',
+        archivo_hash='def5678',
+        archivo='media/test_morb.xlsx',
+        total_registros=10,
+        resumen={},
+    )
+    db_session.add(analisis)
+    db_session.commit()
+    db_session.refresh(analisis)
+
+    mock_analisis_service.calcular_completo.return_value = {
+        'estadisticas_basicas': {'total_casos': 10},
+        'severidad_fallas': {
+            'severidad': [{'nombre': 'Ingreso UCI', 'casos': 4}],
+            'fallas': [],
+        },
+        'causas_cie10': {
+            'top_causas': [{'codigo': 'O72.1', 'nombre': 'Hemorragia postparto', 'casos': 5}],
+        },
+    }
+    mock_chatear_ia.return_value = {'respuesta': 'Hubo 4 ingresos a UCI.', 'modelo': 'qwen2.5'}
+
+    response = client.post(
+        f'/api/analisis/{analisis.id}/chat/',
+        json={'pregunta': '¿Cuántas pacientes fueron a UCI?', 'historial': []},
+    )
+
+    assert response.status_code == status.HTTP_200_OK
+    args, _ = mock_chatear_ia.call_args
+    contexto = args[3]
+    assert 'severidad_fallas' in contexto
+    assert contexto['severidad_fallas']['severidad'][0]['casos'] == 4
+    assert 'causas_cie10' in contexto
+    assert contexto['causas_cie10']['top_causas'][0]['nombre'] == 'Hemorragia postparto'

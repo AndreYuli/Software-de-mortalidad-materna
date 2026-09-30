@@ -53,3 +53,6 @@ def test_analizar_causas_cie10_top_causas():
     assert resultado['total_causas_unicas'] == 3
     top = {c['codigo']: c['casos'] for c in resultado['top_causas']}
     assert top['O141'] == 3
+    # Debe enriquecer el nombre descriptivo de la causa CIE-10
+    nombres = {c['codigo']: c.get('nombre') for c in resultado['top_causas']}
+    assert 'Preeclampsia' in nombres['O141']

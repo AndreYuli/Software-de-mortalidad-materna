@@ -1,7 +1,6 @@
 """Tests de las plantillas de prompt: no truenan con datos vacíos o parciales."""
 
 import pytest
-
 from prompts import construir_prompt
 
 _TIPOS = ['resumen_ejecutivo', 'demoras', 'clustering', 'tendencias']
