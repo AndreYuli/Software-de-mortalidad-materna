@@ -98,10 +98,12 @@ export function getTopCausasAiInsight(
   labels: string[],
   values: number[],
   isMorbilidad: boolean = false,
+  totalEvento?: number,
 ): string | null {
   if (!values || values.length === 0 || !labels || labels.length === 0) return null
 
-  const total = values.reduce((a, b) => a + b, 0)
+  // El gráfico recorta al Top 10: el porcentaje va sobre el total real del evento.
+  const total = totalEvento || values.reduce((a, b) => a + b, 0)
   if (total === 0) return 'Sin casos registrados en las causas principales.'
 
   const topName = labels[0] || 'Causa principal'

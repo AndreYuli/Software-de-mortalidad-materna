@@ -108,12 +108,12 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
 
 export function TrendChartsRow({ topCausasMortalidad, topCausasMorbilidad }: TrendChartsRowProps) {
   const topCausasMortalidadInsight = useMemo(
-    () => getTopCausasAiInsight(topCausasMortalidad.labels, topCausasMortalidad.values, false),
+    () => getTopCausasAiInsight(topCausasMortalidad.labels, topCausasMortalidad.values, false, topCausasMortalidad.total),
     [topCausasMortalidad],
   )
 
   const topCausasMorbilidadInsight = useMemo(
-    () => getTopCausasAiInsight(topCausasMorbilidad.labels, topCausasMorbilidad.values, true),
+    () => getTopCausasAiInsight(topCausasMorbilidad.labels, topCausasMorbilidad.values, true, topCausasMorbilidad.total),
     [topCausasMorbilidad],
   )
 

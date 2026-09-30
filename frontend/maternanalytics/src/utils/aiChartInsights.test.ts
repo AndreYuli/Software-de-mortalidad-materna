@@ -37,6 +37,12 @@ describe('aiChartInsights', () => {
     expect(result).not.toMatch(/\d+\.\d+%/)
   })
 
+  it('top causas usa el total real del evento cuando el Top 10 lo recorta', () => {
+    const result = getTopCausasAiInsight(['A', 'B', 'C'], [1, 1, 1], false, 12)
+    expect(result).toContain('(8%')
+    expect(result).toContain('25%')
+  })
+
   it('genera resumen de edad con grupo mayoritario', () => {
     const labels = ['<20', '20-29', '30-39', '≥40']
     const mort = [10, 50, 30, 10]
