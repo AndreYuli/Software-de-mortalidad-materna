@@ -39,4 +39,8 @@ def obtener_nombre_cie10(codigo: str | None) -> str:
         return ''
     data = _cargar_cie10()
     clave = str(codigo).replace('.', '').strip().upper()
-    return data.get(clave, str(codigo).strip())
+    if clave in data:
+        return data[clave]
+    if len(clave) == 3 and (clave + 'X') in data:
+        return data[clave + 'X']
+    return str(codigo).strip()
