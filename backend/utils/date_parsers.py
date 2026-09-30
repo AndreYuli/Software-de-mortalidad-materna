@@ -60,7 +60,10 @@ def _parse_date(value: Any) -> date | None:
         if serial is not None:
             resultado = serial
         else:
-            fecha = pd.to_datetime(value, errors='coerce', dayfirst=True)
+            # ISO primero: con dayfirst=True '2026-02-12' se leía como 2 de diciembre.
+            fecha = pd.to_datetime(value, errors='coerce', format='ISO8601')
+            if pd.isna(fecha):
+                fecha = pd.to_datetime(value, errors='coerce', dayfirst=True)
             anio_1970 = not pd.isna(fecha) and fecha.year == 1970
             epoch_falso = anio_1970 and '1970' not in val_str and '70' not in val_str
             if pd.isna(fecha) or epoch_falso:

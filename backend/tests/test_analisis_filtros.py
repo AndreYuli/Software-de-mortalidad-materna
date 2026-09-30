@@ -3,7 +3,7 @@
 import pandas as pd
 
 from services._analisis_filtros import _filtrar_por_fecha, _ultima_semana_reportada
-from utils.date_parsers import parse_fecha_robusta
+from utils.date_parsers import _parse_date, parse_fecha_robusta
 
 
 def _df_morbilidad_con_fechas() -> pd.DataFrame:
@@ -74,3 +74,12 @@ def test_parse_fecha_robusta_mezcla_iso_y_dia_primero():
     """Las fechas ISO se leen tal cual y las dd/mm/aaaa siguen leyéndose con día primero."""
     fechas = parse_fecha_robusta(pd.Series(['2026-02-12', '12/02/2026', '15/03/2026']))
     assert fechas.dt.strftime('%Y-%m-%d').tolist() == ['2026-02-12', '2026-02-12', '2026-03-15']
+
+
+def test_parse_date_no_invierte_dia_y_mes_en_fechas_iso():
+    """Al guardar, '2026-02-12' es el 12 de febrero y 'dd/mm/aaaa' sigue día primero."""
+    assert _parse_date('2026-02-12').isoformat() == '2026-02-12'
+    assert _parse_date('2026-08-09 00:00:00').isoformat() == '2026-08-09'
+    assert _parse_date('12/02/2026').isoformat() == '2026-02-12'
+    assert _parse_date(44000).isoformat() == '2020-06-18'
+    assert _parse_date('') is None
