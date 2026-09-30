@@ -3,6 +3,7 @@
 import pandas as pd
 
 from services._analisis_filtros import _filtrar_por_fecha, _ultima_semana_reportada
+from utils.date_parsers import parse_fecha_robusta
 
 
 def _df_morbilidad_con_fechas() -> pd.DataFrame:
@@ -61,3 +62,15 @@ def test_ultima_semana_reportada_none_sin_fechas_validas():
     """Sin fechas válidas debe devolver None en vez de lanzar una excepción."""
     df = pd.DataFrame({'Fecha de egreso': [None, None], 'N° identificación': [1, 2]})
     assert _ultima_semana_reportada(df, 'morbilidad') is None
+
+
+def test_ultima_semana_reportada_no_invierte_dia_y_mes_en_fechas_iso():
+    """'2026-02-12' (ISO, como la BD) es el 12 de febrero (semana 7), no el 2 de diciembre."""
+    df = pd.DataFrame({'5.2 Fecha de defunción': ['2026-02-12', '2026-01-24']})
+    assert _ultima_semana_reportada(df, 'mortalidad') == {'anio': 2026, 'semana': 7}
+
+
+def test_parse_fecha_robusta_mezcla_iso_y_dia_primero():
+    """Las fechas ISO se leen tal cual y las dd/mm/aaaa siguen leyéndose con día primero."""
+    fechas = parse_fecha_robusta(pd.Series(['2026-02-12', '12/02/2026', '15/03/2026']))
+    assert fechas.dt.strftime('%Y-%m-%d').tolist() == ['2026-02-12', '2026-02-12', '2026-03-15']

@@ -116,7 +116,14 @@ def parse_fecha_robusta(serie: pd.Series) -> pd.Series:
 
         with warnings.catch_warnings():
             warnings.filterwarnings('ignore', category=UserWarning, message='.*Parsing dates.*')
-            fechas = pd.to_datetime(serie_clean, dayfirst=True, errors='coerce')
+            # Las fechas ISO (AAAA-MM-DD, como las entrega la BD) se leen primero en estricto:
+            # con dayfirst=True se invertían día y mes ('2026-02-12' → 2 de diciembre).
+            fechas = pd.to_datetime(serie_clean, format='ISO8601', errors='coerce')
+            resto = fechas.isna() & serie_clean.notna()
+            if resto.any():
+                fechas = fechas.fillna(
+                    pd.to_datetime(serie_clean[resto], dayfirst=True, errors='coerce')
+                )
 
         if is_excel_serial.any():
             excel_days = s_numeric[is_excel_serial].astype(int)
