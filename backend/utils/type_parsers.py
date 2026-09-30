@@ -25,8 +25,8 @@ def _parse_decimal(value: Any) -> float | None:
     return resultado
 
 
-def _parse_bool(value: Any) -> int:
-    """Interpreta un valor de celda SIVIGILA como 0 o 1.
+def _parse_bool(value: Any) -> bool:
+    """Interpreta un valor de celda SIVIGILA como booleano (True o False).
 
     En el estándar SIVIGILA: 1 = Sí, 2 = No, 0 = Sin dato.
 
@@ -34,19 +34,19 @@ def _parse_bool(value: Any) -> int:
         value: Valor de celda (bool, numérico, o cadena como 'Sí'/'X'/'1').
 
     Returns:
-        1 si el valor representa afirmativo; 0 en caso contrario.
+        True si el valor representa afirmativo; False en caso contrario.
     """
     if is_empty(value):
-        return 0
+        return False
     if isinstance(value, bool):
-        return 1 if value else 0
+        return value
     if isinstance(value, (int, float)):
         try:
-            return 1 if int(value) == 1 else 0
+            return int(value) == 1
         except (ValueError, OverflowError):
-            return 0
+            return False
     val_slug = slugify(value)
-    return 1 if val_slug in {'1', '10', 'si', 's', 'true', 'x', 'yes', 'y'} else 0
+    return val_slug in {'1', '10', 'si', 's', 'true', 'x', 'yes', 'y'}
 
 
 def es_valor_positivo(valor: Any) -> bool:

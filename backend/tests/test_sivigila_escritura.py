@@ -177,3 +177,26 @@ def test_parse_multiplicidad_distingue_unico_de_multiple():
     assert _parse_multiplicidad(1.0) == 0
     assert _parse_multiplicidad(2.0) == 1
     assert _parse_multiplicidad(None) is None
+
+
+def test_columnas_booleanas_en_modelos_sqlalchemy():
+    """Las columnas tipo BOOLEAN de PostgreSQL deben mapearse con Boolean en SQLAlchemy.
+
+    Si se mapean como Integer, PostgreSQL rechaza las inserciones con
+    `DatatypeMismatch: columna es de tipo boolean pero la expresión es integer`.
+    """
+    from sqlalchemy import Boolean
+
+    from db.models_sqlalchemy import (
+        AntecedenteRiesgo,
+        CausaMuerte,
+        ComplicacionEmbarazo,
+        CriteriosEnfermedad,
+        Referencia,
+    )
+
+    assert isinstance(AntecedenteRiesgo.__table__.c.sin_antecedentes.type, Boolean)
+    assert isinstance(ComplicacionEmbarazo.__table__.c.preeclampsia.type, Boolean)
+    assert isinstance(CausaMuerte.__table__.c.demora_1.type, Boolean)
+    assert isinstance(Referencia.__table__.c.remitida.type, Boolean)
+    assert isinstance(CriteriosEnfermedad.__table__.c.eclampsia.type, Boolean)

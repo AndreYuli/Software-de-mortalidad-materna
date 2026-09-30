@@ -62,6 +62,8 @@ class _Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """URL de conexión completa ensamblada desde los campos de base de datos."""
+        if self.db_engine.startswith('sqlite'):
+            return f'sqlite:///{self.db_name}.db' if self.db_name else 'sqlite:///:memory:'
         resultado: str = (
             f'{self.db_engine}://{self.db_user}:{self.db_password}'
             f'@{self.db_host}:{self.db_port}/{self.db_name}'

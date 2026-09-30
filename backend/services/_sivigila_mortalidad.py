@@ -197,10 +197,10 @@ def _escribir_relacionados_mortalidad(
     for campo, columnas in mapa_riesgos.items():
         riesgos_data[campo] = _parse_bool(_get_value(row, columnas))
 
-    if riesgos_data.get('sin_antecedentes') == 1:
+    if bool(riesgos_data.get('sin_antecedentes')):
         for k in riesgos_data:
             if k != 'sin_antecedentes':
-                riesgos_data[k] = 0
+                riesgos_data[k] = False
 
     riesgos_data['desc_otros_factores'] = _get_value(
         row,

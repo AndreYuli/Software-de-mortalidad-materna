@@ -39,17 +39,51 @@ Documento continuo para registrar y diagnosticar todos los errores reportados du
   > *El servidor tardó demasiado en responder. Intenta de nuevo.*
 
 ### Causa Raíz
-1. **Volumen de datos masivo (~20,000 registros):**
+1. **Volumen de datos masivo (~20,000 registros = ~120,000 inserciones SQL):**
    - El archivo `dummy_mortalidad.xlsx` contiene 19,989 registros.
-   - Durante la subida, el backend realiza múltiples tareas pesadas de forma secuencial:
-     - Validación, cálculo de hashes y resolución de catálogos para 19,989 filas.
-     - Inserción/actualización en base de datos PostgreSQL de miles de registros relacionados (pacientes, antecedentes, causas, demoras).
-     - Escritura en disco de un archivo Excel acumulado de gran tamaño con `openpyxl`.
-2. **Límite de tiempo en el frontend (`fetchWithTimeout`):**
-   - El cliente web tiene límites de espera (`REQUEST_TIMEOUT_MS = 30s`, `UPLOAD_TIMEOUT_MS = 180s`, `completo = 90s`).
-   - Si la operación en el servidor supera ese tiempo (o si el worker de Uvicorn queda saturado por la CPU/disco sin responder a tiempo las solicitudes entrantes), el frontend cancela la petición mediante `AbortController` y lanza este mensaje.
+   - Por cada registro, el backend crea e inserta individualmente vía ORM:
+     - 1 Paciente
+     - 1 Caso de Mortalidad
+     - 1 Antecedente Materno
+     - 1 Causa de Defunción
+     - 1 Registro de Demora
+     - 1 Registro de Importación (hashes)
+   - Esto genera **más de 100,000 a 120,000 sentencias SQL individuales** dentro de una única petición HTTP síncrona.
+   - Además, al finalizar se genera en disco un archivo Excel consolidado de 20,000 filas con openpyxl.
+2. **Corte por límites de tiempo (Timeouts en cadena):**
+   - **Servidor Apache (servidor de producción/universidad):** El proxy Apache tiene un `ProxyTimeout` por defecto de **60 segundos**. Si la respuesta tarda más de 1 minuto, Apache corta la conexión con Gateway Timeout.
+   - **Cliente Web (Frontend):** `UPLOAD_TIMEOUT_MS = 180_000` (3 minutos). Si se supera ese tiempo, React lanza:
+     > *El servidor tardó demasiado en responder. Intenta de nuevo.*
 
 ### Opciones de Solución / Mitigación
-1. **Ajuste de tiempos de espera (Timeouts):** Ampliar `UPLOAD_TIMEOUT_MS` si se van a cargar archivos de decenas de miles de registros de forma habitual.
-2. **Optimización de persistencia en lotes (Batch inserts):** Agrupar inserciones SQL masivas (`bulk_insert_mappings` o `executemany`) y optimizar la generación del Excel acumulado.
-3. **Cargar datasets de prueba más ligeros:** Para pruebas locales y visuales, usar conjuntos de datos de 500 a 2,000 registros donde la respuesta es casi inmediata.
+1. **Para pruebas inmediatas:** Reducir `dummy_mortalidad.xlsx` a un tamaño manejable (ej. 1,000 o 2,000 registros, o usar `data/pruebas/realista_mortalidad_550.xlsx` con 60 registros) para que cargue en 5-10 segundos.
+2. **Configuración en servidor:** Añadir `timeout=300` a la directiva `ProxyPass` en `/etc/apache2/sites-enabled/000-default.conf`.
+3. **Optimización de Backend:** Migrar la persistencia de ORM fila por fila a inserciones por lotes (`bulk_insert_mappings` o `db.bulk_save_objects`).
+
+---
+
+## [Error #3] DatatypeMismatch en columnas booleanas de PostgreSQL (sin_antecedentes integer vs boolean)
+
+- **Fecha:** 2026-09-29
+- **Archivo involucrado:** `backend/media/uploads/2026/08/sivigila_mortalidad_10_casos.xlsx`
+- **Mensaje exacto:**
+  > *Error al guardar los datos en la base de datos: (psycopg2.errors.DatatypeMismatch) la columna «sin_antecedentes» es de tipo boolean pero la expresión es de tipo integer LINE 1: ...actores, gingivitis_periodontitis) VALUES (90104, 0, 0, 0, 0... ^ HINT: Necesitará reescribir la expresión o aplicarle una conversión de tipo. [SQL: INSERT INTO antecedente_riesgo (id_caso, sin_antecedente…*
+
+### Causa Raíz
+1. **Discrepancia entre esquema PostgreSQL y modelos SQLAlchemy:**
+   - En el esquema de base de datos (`backend/sivigila_maternidad_postgres.sql`), las tablas `antecedente_riesgo`, `complicacion_embarazo`, `causa_muerte`, `criterios_enfermedad`, `criterios_falla_organica`, `criterios_manejo` y `referencia` tienen sus columnas indicadoras definidas como `BOOLEAN NOT NULL DEFAULT FALSE`.
+   - Sin embargo, en `backend/db/models_sqlalchemy.py` todas estas columnas estaban tipadas como `Column(Integer)`.
+   - Además, `_parse_bool` en `backend/utils/type_parsers.py` retornaba enteros `0` o `1`.
+2. **Comportamiento en PostgreSQL vs SQLite:**
+   - SQLite acepta enteros como sustitutos de booleanos sin quejarse.
+   - PostgreSQL es estrictamente tipado y rechaza la inserción de un `integer` (0 o 1) en una columna `boolean` sin casteo explícito, lanzando `psycopg2.errors.DatatypeMismatch`.
+
+### Solución Aplicada
+1. Se actualizó `backend/db/models_sqlalchemy.py`:
+   - Se importó `Boolean`.
+   - Se corrigieron los tipos a `Column(Boolean, ...)` en todas las tablas afectadas (`AntecedenteRiesgo`, `ComplicacionEmbarazo`, `CausaMuerte`, `Referencia`, `AntecedentesObstetricos`, `CriteriosEnfermedad`, `CriteriosFallaOrganica`, `CriteriosManejo`).
+2. Se actualizó `backend/utils/type_parsers.py`:
+   - `_parse_bool` ahora retorna tipos booleanos nativos (`True` o `False`).
+3. Se actualizó `backend/services/_sivigila_mortalidad.py` para trabajar directamente con `bool`.
+4. Se agregó test de regresión en `backend/tests/test_sivigila_escritura.py` (`test_columnas_booleanas_en_modelos_sqlalchemy`).
+- **Estado:** ✅ Resuelto.
