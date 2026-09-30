@@ -171,57 +171,69 @@ def _escribir_relacionados_morbilidad(
         **kw,
     )
 
+    crit_enf_data = {
+        'eclampsia': _parse_bool(_get_value(row, ['Eclampsia'])),
+        'sepsis_sistemica_severa': _parse_bool(_get_value(row, ['Sepsis sistémica severa'])),
+        'hemorragia_obstetrica': _parse_bool(_get_value(row, ['Hemorragia obstétrica severa'])),
+        'preeclampsia': _parse_bool(_get_value(row, ['Preeclampsia'])),
+        'ruptura_uterina': _parse_bool(_get_value(row, ['Ruptura uterina'])),
+        'aborto_septico': _parse_bool(_get_value(row, ['Aborto séptico'])),
+        'embarazo_ectopico': _parse_bool(_get_value(row, ['Embarazo ectópico'])),
+        'autoinmune': _parse_bool(_get_value(row, ['7.1.8 Autoinmune', 'Autoinmune'])),
+        'hematologica': _parse_bool(_get_value(row, ['Hematológica'])),
+        'oncologica': _parse_bool(_get_value(row, ['Oncológica'])),
+        'endocrino_metabolicas': _parse_bool(_get_value(row, ['Endocrino/metabólicas'])),
+        'renales': _parse_bool(_get_value(row, ['Renales'])),
+        'gastrointestinales': _parse_bool(_get_value(row, ['Gastrointestinales'])),
+        'tromboembolicos': _parse_bool(_get_value(row, ['Eventos tromboembólicos'])),
+        'cardiocerebrovasculares': _parse_bool(_get_value(row, ['Cardiocerebrovasculares'])),
+        'otras_enfermedades': _parse_bool(_get_value(row, ['Otras'])),
+    }
+    _upsert_single_related(db, CriteriosEnfermedad, {'id_caso': caso.id_caso}, crit_enf_data, **kw)
+
+    crit_falla_data = {
+        'falla_cardiaca': _parse_bool(_get_value(row, ['Falla cardíaca'])),
+        'falla_vascular': _parse_bool(_get_value(row, ['Falla vascular'])),
+        'falla_renal': _parse_bool(_get_value(row, ['Falla renal'])),
+        'falla_hepatica': _parse_bool(_get_value(row, ['Falla hepática'])),
+        'falla_metabolica': _parse_bool(_get_value(row, ['Falla metabólica'])),
+        'falla_cerebral': _parse_bool(_get_value(row, ['Falla cerebral'])),
+        'falla_respiratoria': _parse_bool(_get_value(row, ['Falla respiratoria'])),
+        'falla_coagulacion': _parse_bool(_get_value(row, ['Falla coagulación'])),
+    }
     _upsert_single_related(
-        db,
-        CriteriosEnfermedad,
-        {'id_caso': caso.id_caso},
-        {
-            'eclampsia': _parse_bool(_get_value(row, ['Eclampsia'])),
-            'sepsis_sistemica_severa': _parse_bool(_get_value(row, ['Sepsis sistémica severa'])),
-            'hemorragia_obstetrica': _parse_bool(_get_value(row, ['Hemorragia obstétrica severa'])),
-            'preeclampsia': _parse_bool(_get_value(row, ['Preeclampsia'])),
-            'ruptura_uterina': _parse_bool(_get_value(row, ['Ruptura uterina'])),
-            'aborto_septico': _parse_bool(_get_value(row, ['Aborto séptico'])),
-            'embarazo_ectopico': _parse_bool(_get_value(row, ['Embarazo ectópico'])),
-            'autoinmune': _parse_bool(_get_value(row, ['7.1.8 Autoinmune', 'Autoinmune'])),
-            'hematologica': _parse_bool(_get_value(row, ['Hematológica'])),
-            'oncologica': _parse_bool(_get_value(row, ['Oncológica'])),
-            'endocrino_metabolicas': _parse_bool(_get_value(row, ['Endocrino/metabólicas'])),
-            'renales': _parse_bool(_get_value(row, ['Renales'])),
-            'gastrointestinales': _parse_bool(_get_value(row, ['Gastrointestinales'])),
-            'tromboembolicos': _parse_bool(_get_value(row, ['Eventos tromboembólicos'])),
-            'cardiocerebrovasculares': _parse_bool(_get_value(row, ['Cardiocerebrovasculares'])),
-            'otras_enfermedades': _parse_bool(_get_value(row, ['Otras'])),
-        },
-        **kw,
+        db, CriteriosFallaOrganica, {'id_caso': caso.id_caso}, crit_falla_data, **kw
     )
 
-    _upsert_single_related(
-        db,
-        CriteriosFallaOrganica,
-        {'id_caso': caso.id_caso},
-        {
-            'falla_cardiaca': _parse_bool(_get_value(row, ['Falla cardíaca'])),
-            'falla_vascular': _parse_bool(_get_value(row, ['Falla vascular'])),
-            'falla_renal': _parse_bool(_get_value(row, ['Falla renal'])),
-            'falla_hepatica': _parse_bool(_get_value(row, ['Falla hepática'])),
-            'falla_metabolica': _parse_bool(_get_value(row, ['Falla metabólica'])),
-            'falla_cerebral': _parse_bool(_get_value(row, ['Falla cerebral'])),
-            'falla_respiratoria': _parse_bool(_get_value(row, ['Falla respiratoria'])),
-            'falla_coagulacion': _parse_bool(_get_value(row, ['Falla coagulación'])),
-        },
-        **kw,
+    ingreso_uci = _parse_bool(_get_value(row, ['Ingreso UCI']))
+    cirugia_adicional = _parse_bool(_get_value(row, ['Cirugía adicional']))
+    transfusion = _parse_bool(_get_value(row, ['Transfusión']))
+
+    criterios_marcados = (
+        sum(1 for v in crit_enf_data.values() if v)
+        + sum(1 for v in crit_falla_data.values() if v)
+        + (1 if ingreso_uci else 0)
+        + (1 if cirugia_adicional else 0)
+        + (1 if transfusion else 0)
     )
+
+    total_raw = _parse_int(_get_value(row, ['Total criterios']))
+    if total_raw is not None and 1 <= total_raw <= 14:
+        total_criterios = total_raw
+    elif criterios_marcados > 0:
+        total_criterios = min(criterios_marcados, 14)
+    else:
+        total_criterios = 1
 
     _upsert_single_related(
         db,
         CriteriosManejo,
         {'id_caso': caso.id_caso},
         {
-            'ingreso_uci': _parse_bool(_get_value(row, ['Ingreso UCI'])),
-            'cirugia_adicional': _parse_bool(_get_value(row, ['Cirugía adicional'])),
-            'transfusion': _parse_bool(_get_value(row, ['Transfusión'])),
-            'total_criterios': _parse_int(_get_value(row, ['Total criterios'])),
+            'ingreso_uci': ingreso_uci,
+            'cirugia_adicional': cirugia_adicional,
+            'transfusion': transfusion,
+            'total_criterios': total_criterios,
             'accidente': _parse_bool(_get_value(row, ['Accidente'])),
             'intoxicacion_accidental': _parse_bool(_get_value(row, ['Intoxicación accidental'])),
             'intento_suicida': _parse_bool(_get_value(row, ['Intento suicida'])),
@@ -232,17 +244,37 @@ def _escribir_relacionados_morbilidad(
         **kw,
     )
 
+    dias_hosp = _parse_int(_get_value(row, ['Días estancia hospitalaria']))
+    if dias_hosp is not None and dias_hosp < 1:
+        dias_hosp = None
+
+    dias_uci = _parse_int(_get_value(row, ['Días estancia UCI']))
+    if dias_uci is not None and dias_uci < 1:
+        dias_uci = None
+
+    unidades_trans = _parse_int(_get_value(row, _MORBILIDAD_TRANSFUNDIDAS_COLS))
+    if unidades_trans is not None and unidades_trans < 3:
+        unidades_trans = None
+
+    cir1 = _parse_cirugia_codigo(_get_value(row, ['Cirugía adicional 1']))
+    if cir1 is not None and not (1 <= cir1 <= 4):
+        cir1 = None
+
+    cir2 = _parse_cirugia_codigo(_get_value(row, ['Cirugía adicional 2']))
+    if cir2 is not None and not (1 <= cir2 <= 4):
+        cir2 = None
+
     _upsert_single_related(
         db,
         ManejoHospitalario,
         {'id_caso': caso.id_caso},
         {
-            'dias_estancia_hosp': _parse_int(_get_value(row, ['Días estancia hospitalaria'])),
-            'dias_estancia_uci': _parse_int(_get_value(row, ['Días estancia UCI'])),
-            'unidades_transfundidas': _parse_int(_get_value(row, _MORBILIDAD_TRANSFUNDIDAS_COLS)),
-            'cirugia_1': _parse_cirugia_codigo(_get_value(row, ['Cirugía adicional 1'])),
+            'dias_estancia_hosp': dias_hosp,
+            'dias_estancia_uci': dias_uci,
+            'unidades_transfundidas': unidades_trans,
+            'cirugia_1': cir1,
             'cirugia_1_cual': clean_text(_get_value(row, ['¿Cuál otra cirugía 1?'])),
-            'cirugia_2': _parse_cirugia_codigo(_get_value(row, ['Cirugía adicional 2'])),
+            'cirugia_2': cir2,
             'cirugia_2_cual': clean_text(_get_value(row, ['¿Cuál otra cirugía 2?'])),
         },
         **kw,

@@ -113,7 +113,7 @@ export function getTopCausasAiInsight(
 
   const concepto = isMorbilidad ? 'causa de morbilidad' : 'causa de mortalidad'
 
-  return `El principal ${concepto} identificado es "${topName}", acumulando ${topVal} casos (${topPct}% del grupo evaluado). Las 3 primeras categorías concentran de forma combinada el ${top3Pct}% de todos los eventos (${top3Val} casos).`
+  return `La principal ${concepto} identificada es "${topName}", acumulando ${topVal} casos (${topPct}% del grupo evaluado). Las 3 primeras categorías concentran de forma combinada el ${top3Pct}% de todos los eventos (${top3Val} casos).`
 }
 
 // 3. Distribución por Edad

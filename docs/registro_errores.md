@@ -87,3 +87,27 @@ Documento continuo para registrar y diagnosticar todos los errores reportados du
 3. Se actualizó `backend/services/_sivigila_mortalidad.py` para trabajar directamente con `bool`.
 4. Se agregó test de regresión en `backend/tests/test_sivigila_escritura.py` (`test_columnas_booleanas_en_modelos_sqlalchemy`).
 - **Estado:** ✅ Resuelto.
+
+---
+
+## [Error #4] CheckViolation en criterios_manejo (restricción chk_total_crit)
+
+- **Fecha:** 2026-09-29
+- **Archivo involucrado:** `backend/media/uploads/2026/08/TEST_TASK15_Morbilidad.xlsx`
+- **Mensaje exacto:**
+  > *Error al guardar los datos en la base de datos: (psycopg2.errors.CheckViolation) el nuevo registro para la relación «criterios_manejo» viola la restricción «check» «chk_total_crit» DETAIL: La fila que falla contiene (12, 40012, t, t, f, 0, f, f, f, f, f, null).*
+
+### Causa Raíz
+1. **Regla oficial SIVIGILA 549 y restricción PostgreSQL:**
+   - La tabla `criterios_manejo` tiene la restricción `CONSTRAINT chk_total_crit CHECK (total_criterios BETWEEN 1 AND 14)`.
+   - Según el protocolo de vigilancia del INS para Morbilidad Materna Extrema (Ficha 549), un caso debe presentar al menos 1 criterio de gravedad para ser clasificado como tal.
+2. **Datos inconsistentes en el Excel:**
+   - En el archivo subido, filas como la fila 8 tenían criterios de gravedad marcados como positivos (por ejemplo, Sepsis, Ruptura uterina, Ingreso UCI y Cirugía adicional), pero la columna *"Total criterios"* venía con valor `0`.
+   - Al insertar directamente ese `0`, PostgreSQL rechazó la fila por violar la restricción `chk_total_crit`.
+   - Asimismo, campos de estancia hospitalaria (`dias_estancia_uci`) con valor `0` violaban restricciones tipo `CHECK (dias_estancia_uci >= 1)` en vez de registrarse como `NULL` (sin estancia en UCI).
+
+### Solución Aplicada
+1. En `backend/services/_sivigila_morbilidad.py`:
+   - Se implementó cálculo defensivo de `total_criterios`: si en el Excel viene vacío, `0` o fuera de rango, el backend calcula la sumatoria real de los criterios clínicos marcados en la fila (mínimo 1, máximo 14).
+   - Se sanearon los campos de `manejo_hospitalario`: si `dias_estancia_uci` o `dias_estancia_hosp` son `< 1`, o `unidades_transfundidas < 3`, se asignan como `None` (`NULL` en SQL) en lugar de valores inválidos que violen las restricciones de base de datos.
+- **Estado:** ✅ Resuelto.
