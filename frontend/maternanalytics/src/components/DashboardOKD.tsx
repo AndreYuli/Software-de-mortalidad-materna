@@ -1,49 +1,55 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useMemo, useCallback, useState } from 'react'
-import { useDashboardData } from '../hooks/useDashboardData'
-import { Sidebar, type DashboardFileStatus, type FileIndicator } from './dashboard/Sidebar'
-import type { DashboardOutletContext } from './dashboard/DashboardViewRoute'
-import type { ActiveView } from '../hooks/navigation/useActiveView'
-import { Menu } from 'lucide-react'
-import { clearSession } from '../api'
-import { ChatWidget } from './chat/ChatWidget'
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useMemo, useCallback, useState } from "react";
+import { useDashboardData } from "../hooks/useDashboardData";
+import {
+  Sidebar,
+  type DashboardFileStatus,
+  type FileIndicator,
+} from "./dashboard/Sidebar";
+import type { DashboardOutletContext } from "./dashboard/DashboardViewRoute";
+import type { ActiveView } from "../hooks/navigation/useActiveView";
+import { Menu } from "lucide-react";
+import { clearSession } from "../api";
+import { ChatWidget } from "./chat/ChatWidget";
 
-export type { DashboardFileStatus, FileIndicator }
+export type { DashboardFileStatus, FileIndicator };
 
 export interface DashboardOKDProps {
-  onLogout?: () => void
+  onLogout?: () => void;
 }
 
 export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
-  const data = useDashboardData()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const data = useDashboardData();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   // Sincronizar la vista activa con la ruta URL actual
   const activeView: ActiveView = useMemo(() => {
-    if (location.pathname.includes('mortalidad')) return 'mortalidad'
-    if (location.pathname.includes('morbilidad')) return 'morbilidad'
-    if (location.pathname.includes('historial')) return 'historial'
-    return 'analisis'
-  }, [location.pathname])
+    if (location.pathname.includes("mortalidad")) return "mortalidad";
+    if (location.pathname.includes("morbilidad")) return "morbilidad";
+    if (location.pathname.includes("historial")) return "historial";
+    if (location.pathname.includes("contexto")) return "contexto";
+    return "analisis";
+  }, [location.pathname]);
 
   const handleNavigate = useCallback(
     (view: ActiveView) => {
-      if (view === 'mortalidad') navigate('/cargar-mortalidad')
-      else if (view === 'morbilidad') navigate('/cargar-morbilidad')
-      else if (view === 'historial') navigate('/historial')
-      else navigate('/dashboard')
-      setIsMobileNavOpen(false)
+      if (view === "mortalidad") navigate("/cargar-mortalidad");
+      else if (view === "morbilidad") navigate("/cargar-morbilidad");
+      else if (view === "historial") navigate("/historial");
+      else if (view === "contexto") navigate("/contexto");
+      else navigate("/dashboard");
+      setIsMobileNavOpen(false);
     },
     [navigate],
-  )
+  );
 
   const handleLogout = useCallback(() => {
-    clearSession()
-    if (onLogout) onLogout()
-    else navigate('/login')
-  }, [navigate, onLogout])
+    clearSession();
+    if (onLogout) onLogout();
+    else navigate("/login");
+  }, [navigate, onLogout]);
 
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -57,7 +63,11 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
       )}
 
       <Sidebar
-        user={{ username: data.username, email: data.email, avatarLetter: data.avatarLetter }}
+        user={{
+          username: data.username,
+          email: data.email,
+          avatarLetter: data.avatarLetter,
+        }}
         activeView={activeView}
         onNavigate={handleNavigate}
         fileStatus={{
@@ -93,20 +103,27 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
 
         <main className="flex-1">
           <div className="mx-auto w-full max-w-7xl p-4 lg:p-8">
-            <Outlet context={{ data, onNavigate: handleNavigate } satisfies DashboardOutletContext} />
+            <Outlet
+              context={
+                {
+                  data,
+                  onNavigate: handleNavigate,
+                } satisfies DashboardOutletContext
+              }
+            />
           </div>
         </main>
       </div>
 
-      {data.selectedAnalisisId && activeView === 'analisis' && (
-        <ChatWidget 
-          analisisId={data.selectedAnalisisId} 
-          filtros={{ 
-            year: data.filterYear || undefined, 
-            month: data.filterMonth || undefined 
-          }} 
+      {data.selectedAnalisisId && activeView === "analisis" && (
+        <ChatWidget
+          analisisId={data.selectedAnalisisId}
+          filtros={{
+            year: data.filterYear || undefined,
+            month: data.filterMonth || undefined,
+          }}
         />
       )}
     </div>
-  )
+  );
 }

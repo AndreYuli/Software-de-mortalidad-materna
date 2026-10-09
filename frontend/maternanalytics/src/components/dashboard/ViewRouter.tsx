@@ -1,18 +1,23 @@
-import type { ActiveView } from '../../hooks/navigation/useActiveView'
-import type { DashboardData } from '../../hooks/useDashboardData'
-import { AnalysisHomeSection } from './AnalysisHomeSection'
-import { UploadSection } from './UploadSection'
-import { UploadHistorySection } from './UploadHistorySection'
+import type { ActiveView } from "../../hooks/navigation/useActiveView";
+import type { DashboardData } from "../../hooks/useDashboardData";
+import {
+  COLUMNAS_MORTALIDAD,
+  COLUMNAS_MORBILIDAD,
+} from "../../constants/dashboardConstants";
+import { AnalysisHomeSection } from "./AnalysisHomeSection";
+import { UploadSection } from "./UploadSection";
+import { UploadHistorySection } from "./UploadHistorySection";
+import { ContextView } from "./ContextView";
 
 export interface ViewRouterProps {
-  activeView: ActiveView
-  data: DashboardData
-  onNavigate: (view: ActiveView) => void
+  activeView: ActiveView;
+  data: DashboardData;
+  onNavigate: (view: ActiveView) => void;
 }
 
 export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
   switch (activeView) {
-    case 'analisis':
+    case "analisis":
       return (
         <AnalysisHomeSection
           latestMortalidad={data.latestMortalidad}
@@ -35,9 +40,9 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           onSegmentoChange={data.setSegmento}
           tabs={data.tabs}
         />
-      )
+      );
 
-    case 'mortalidad':
+    case "mortalidad":
       return (
         <UploadSection
           title="Cargar Datos de Mortalidad Materna"
@@ -51,12 +56,14 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           analyzeError={data.mortalidadAnalyzeError}
           analyzing={data.analyzing}
           actionLabel="Iniciar análisis"
+          requiredColumns={COLUMNAS_MORTALIDAD}
+          tipo="mortalidad"
           onFile={data.handleMortalidadFile}
           onAnalyze={data.handleAnalyzeMortalidad}
         />
-      )
+      );
 
-    case 'morbilidad':
+    case "morbilidad":
       return (
         <UploadSection
           title="Cargar Datos de Morbilidad Materna Extrema"
@@ -70,13 +77,18 @@ export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
           analyzeError={data.morbilidadAnalyzeError}
           analyzing={data.analyzing}
           actionLabel="Iniciar análisis"
+          requiredColumns={COLUMNAS_MORBILIDAD}
+          tipo="morbilidad"
           onFile={data.handleMorbilidadFile}
           onAnalyze={data.handleAnalyzeMorbilidad}
         />
-      )
+      );
 
-    case 'historial':
-      return <UploadHistorySection />
+    case "historial":
+      return <UploadHistorySection />;
+
+    case "contexto":
+      return <ContextView onNavigate={onNavigate} />;
 
     default: {
       const _exhaustiveCheck: never = activeView;

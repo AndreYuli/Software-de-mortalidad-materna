@@ -8,6 +8,7 @@ export const COLUMNAS_MORTALIDAD = [
   '8.1 No. CPN', '8.2 Semana inicio CPN', '9.1 Momento de la muerte',
   '9.2 Semana gestación', '9.4 Tipo de parto', '10.1 Causa básica CIE-10',
   '10.3.1 Demora 1', '10.3.2 Demora 2', '10.3.3 Demora 3', '10.3.4 Demora 4',
+  'Fecha de Nacimiento',
 ]
 
 export const COLUMNAS_MORBILIDAD = [
@@ -19,6 +20,7 @@ export const COLUMNAS_MORBILIDAD = [
   'Preeclampsia', 'Ruptura uterina', 'Ingreso UCI', 'Cirugía adicional',
   'Transfusión', 'Total criterios', 'Causa principal CIE-10',
   'Días estancia hospitalaria', 'Días estancia UCI',
+  'Fecha de Nacimiento', 'Fecha de egreso',
 ]
 
 export const ALIAS_COLUMNAS: Record<'morbilidad' | 'mortalidad', Record<string, string[]>> = {
@@ -33,11 +35,92 @@ export const ALIAS_COLUMNAS: Record<'morbilidad' | 'mortalidad', Record<string, 
     'Causa principal CIE-10': ['Causa principal cie10', 'Causa principal CIE10'],
     'Días estancia hospitalaria': ['Dias estancia hospitalaria'],
     'Días estancia UCI': ['Dias estancia UCI'],
+    'Fecha de Nacimiento': [
+      'Fecha de nacimiento',
+      'Fecha nacimiento',
+      'Fecha de nacimiento (dd/mm/aaaa)',
+      'Fecha nacimiento (dd/mm/aaaa)',
+    ],
+    'Fecha de egreso': [
+      'Fecha egreso',
+      'Fecha de egreso (dd/mm/aaaa)',
+      'Fecha egreso (dd/mm/aaaa)',
+    ],
   },
   mortalidad: {
     'B. Tipo ID': ['B. Tipo de ID', 'B Tipo ID'],
     'C. Número ID': ['C. Numero ID', 'C Número ID'],
     '8.1 No. CPN': ['8.1 N° CPN', '8.1 Nº CPN', '8.1 Numero CPN'],
+    'Fecha de Nacimiento': [
+      'Fecha de nacimiento',
+      'Fecha nacimiento',
+      'Fecha de nacimiento (dd/mm/aaaa)',
+      'Fecha nacimiento (dd/mm/aaaa)',
+    ],
+  },
+}
+
+// Plantilla oficial descargable (archivos en public/plantillas).
+export const PLANTILLAS: Record<'morbilidad' | 'mortalidad', { archivo: string; nombre: string }> = {
+  mortalidad: { archivo: 'plantilla_mortalidad_550.xlsx', nombre: 'Ficha 550 · Mortalidad Materna' },
+  morbilidad: { archivo: 'plantilla_morbilidad_549.xlsx', nombre: 'Ficha 549 · Morbilidad Materna Extrema' },
+}
+
+// Tipo de dato y opciones de cada campo requerido, según la hoja DICCIONARIO de la ficha oficial.
+export type InfoCampo = { tipo: string; opciones?: string }
+export const TIPOS_CAMPO: Record<'morbilidad' | 'mortalidad', Record<string, InfoCampo>> = {
+  mortalidad: {
+    'A. Nombres y Apellidos': { tipo: 'Texto' },
+    'B. Tipo ID': { tipo: 'Categórica', opciones: 'CC / CE / P / PA / PPT' },
+    'C. Número ID': { tipo: 'Texto', opciones: 'sin espacios ni caracteres especiales' },
+    'Fecha de Nacimiento': { tipo: 'Fecha', opciones: 'dd/mm/aaaa' },
+    '5.1 Sitio de Defunción': { tipo: 'Categórica', opciones: 'IPS (hospital/clínica) · IPS (centro/puesto salud) · Lugar de trabajo · Vía pública · Durante traslado · Domicilio · Otro' },
+    '6.1 Convivencia': { tipo: 'Categórica', opciones: 'Cónyuge · Familia · Sola · Otro' },
+    '6.3 Escolaridad': { tipo: 'Categórica', opciones: 'Ninguna · Primaria · Secundaria · Superior · Sin información' },
+    '6.4 Regulación Fecundidad': { tipo: 'Categórica', opciones: 'No usó (desconocimiento/acceso/no deseaba) · Natural · DIU · Hormonal · Barrera · Quirúrgico · Otro' },
+    '6.5 Gestaciones': { tipo: 'Número entero', opciones: '1 – 20' },
+    '6.6 Partos Vaginales': { tipo: 'Número entero', opciones: '0 – 20' },
+    '6.7 Cesáreas': { tipo: 'Número entero', opciones: '0 – 20' },
+    '6.8 Muertos': { tipo: 'Número entero', opciones: '0 – 20' },
+    '6.9 Vivos': { tipo: 'Número entero', opciones: '0 – 20' },
+    '6.10 Abortos': { tipo: 'Número entero', opciones: '0 – 20' },
+    '8.1 No. CPN': { tipo: 'Número entero', opciones: '1 – 45' },
+    '8.2 Semana inicio CPN': { tipo: 'Número entero', opciones: '1 – 45' },
+    '9.1 Momento de la muerte': { tipo: 'Categórica', opciones: 'Gestación · Parto · Puerperio <24h · Puerperio >24h' },
+    '9.2 Semana gestación': { tipo: 'Número entero' },
+    '9.4 Tipo de parto': { tipo: 'Categórica', opciones: 'Vaginal · Cesárea · Instrumentado · Ignorado' },
+    '10.1 Causa básica CIE-10': { tipo: 'Código CIE-10', opciones: 'no acepta códigos que inicien en P' },
+    '10.3.1 Demora 1': { tipo: 'Booleana', opciones: 'Sí / No' },
+    '10.3.2 Demora 2': { tipo: 'Booleana', opciones: 'Sí / No' },
+    '10.3.3 Demora 3': { tipo: 'Booleana', opciones: 'Sí / No' },
+    '10.3.4 Demora 4': { tipo: 'Booleana', opciones: 'Sí / No' },
+  },
+  morbilidad: {
+    'Nombres y apellidos': { tipo: 'Texto' },
+    'Tipo de ID': { tipo: 'Categórica', opciones: 'CC / CE / P / PPT' },
+    'N° identificación': { tipo: 'Número', opciones: 'sin puntos ni espacios' },
+    'Fecha de Nacimiento': { tipo: 'Fecha', opciones: 'dd/mm/aaaa' },
+    'N° gestaciones': { tipo: 'Número entero', opciones: '0 – 19' },
+    'Partos vaginales': { tipo: 'Número entero', opciones: '0 – 19' },
+    'Cesáreas': { tipo: 'Número entero', opciones: '0 – 19' },
+    'Abortos': { tipo: 'Número entero', opciones: '0 – 19' },
+    'N° controles prenatales': { tipo: 'Número entero', opciones: '0 – 50' },
+    'Semanas inicio CPN': { tipo: 'Número entero', opciones: '0 – 40' },
+    'Edad gestacional ocurrencia (sem)': { tipo: 'Número entero', opciones: '1 – 50' },
+    'Momento ocurrencia': { tipo: 'Categórica', opciones: 'Antes · Durante · Después' },
+    'Eclampsia': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Sepsis sistémica severa': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Hemorragia obstétrica severa': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Preeclampsia': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Ruptura uterina': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Ingreso UCI': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Cirugía adicional': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Transfusión': { tipo: 'Booleana', opciones: 'Sí / No' },
+    'Total criterios': { tipo: 'Número entero', opciones: '1 – 14 (suma de criterios en Sí)' },
+    'Causa principal CIE-10': { tipo: 'Código CIE-10' },
+    'Días estancia hospitalaria': { tipo: 'Número entero', opciones: '≥ 1' },
+    'Días estancia UCI': { tipo: 'Número entero', opciones: '≥ 1 (obligatorio si Ingreso UCI = Sí)' },
+    'Fecha de egreso': { tipo: 'Fecha', opciones: 'dd/mm/aaaa' },
   },
 }
 

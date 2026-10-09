@@ -1,5 +1,6 @@
 """Lógica de negocio para carga y consulta de análisis de mortalidad y morbilidad."""
 
+import io
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
@@ -81,8 +82,12 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
         ValueError: Si el archivo no es válido o faltan columnas requeridas.
         RuntimeError: Si falla la persistencia en base de datos.
     """
-    archivo.file.seek(0)
-    columnas = _leer_columnas_excel(archivo.file, tipo)
+    # Starlette expone UploadFile.file como SpooledTemporaryFile, que en Python <3.11
+    # no implementa .seekable(); openpyxl lo requiere y la lectura fallaría. Cargamos el
+    # binario en un BytesIO rebobinable, compatible con todas las versiones y reutilizable
+    # entre la lectura de columnas y la del DataFrame.
+    buffer = io.BytesIO(archivo.file.read())
+    columnas = _leer_columnas_excel(buffer, tipo)
     if columnas is None:
         raise ValueError('No se pudo leer el archivo Excel.')
 
@@ -91,10 +96,11 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
         raise ValueError(f'Faltan columnas requeridas: {faltantes}')
 
     try:
-        df = _leer_dataframe_excel(archivo.file, tipo)
+        df = _leer_dataframe_excel(buffer, tipo)
     except Exception as exc:
         logger.exception('Error leyendo el contenido del archivo Excel')
-        raise ValueError(f'No se pudo leer el contenido del archivo: {exc}') from exc
+        raise ValueError(
+            f'No se pudo leer el contenido del archivo: {exc}') from exc
 
     df_cleaned, _ = preparar_dataframe_analisis(df)
 
@@ -107,7 +113,8 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
     )
 
     try:
-        persistencia = sivigila_service.persistir_dataframe(db, df_cleaned, tipo)
+        persistencia = sivigila_service.persistir_dataframe(
+            db, df_cleaned, tipo)
         df_bd = _construir_df_desde_bd(db, tipo)
     except ValueError:
         # Error de datos del Excel (fila/columna): se devuelve tal cual como 422.
@@ -127,10 +134,12 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
             if path.exists():
                 dataframes.append(pd.read_excel(path, engine='openpyxl'))
         dataframes.append(df_cleaned)
-        df_acum = pd.concat(dataframes, ignore_index=True) if len(dataframes) > 1 else dataframes[0]
+        df_acum = pd.concat(dataframes, ignore_index=True) if len(
+            dataframes) > 1 else dataframes[0]
 
     # --- Fase 2: I/O de disco (fuera de la transacción) ---
-    ruta, hash_, resumen, total = _guardar_df_como_excel(df_acum, archivo.filename)
+    ruta, hash_, resumen, total = _guardar_df_como_excel(
+        df_acum, archivo.filename)
 
     # --- Fase 3: transacción mínima — siempre inserta una fila nueva ---
     # Cada subida es un evento de carga distinto (ver historial de cargas);
@@ -181,7 +190,8 @@ def listar_unicos(db: Session) -> list[Analisis]:
         Lista de análisis únicos ordenados por fecha descendente.
     """
     subq = (
-        db.query(Analisis.tipo, func.max(Analisis.fecha_carga).label('max_fecha'))
+        db.query(Analisis.tipo, func.max(
+            Analisis.fecha_carga).label('max_fecha'))
         .group_by(Analisis.tipo)
         .subquery()
     )

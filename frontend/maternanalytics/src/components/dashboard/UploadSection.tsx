@@ -1,22 +1,29 @@
-import type { FileValidationError, FilePreview } from '../../utils/excelValidation'
-import { UploadCard } from './UploadCard'
-import { FilePreviewTable } from './FilePreviewTable'
-import { CheckIcon, ErrorIcon, SpinnerIcon, SendIcon } from '../icons'
+import type {
+  FileValidationError,
+  FilePreview,
+  TipoEvento,
+} from "../../utils/excelValidation";
+import { UploadCard } from "./UploadCard";
+import { UploadTemplateInfo } from "./UploadTemplateInfo";
+import { FilePreviewTable } from "./FilePreviewTable";
+import { CheckIcon, ErrorIcon, SpinnerIcon, SendIcon } from "../icons";
 
 interface UploadSectionProps {
-  title: string
-  description: string
-  eventLabel: string
-  file: File | null // 1. Tipado nativo consistente con 'onFile'
-  error: FileValidationError | null
-  preview: FilePreview | null
-  validating: boolean
-  done: boolean
-  analyzeError: string | null
-  analyzing: boolean
-  actionLabel: string
-  onFile: (file: File | null) => void
-  onAnalyze: () => void
+  title: string;
+  description: string;
+  eventLabel: string;
+  file: File | null; // 1. Tipado nativo consistente con 'onFile'
+  error: FileValidationError | null;
+  preview: FilePreview | null;
+  validating: boolean;
+  done: boolean;
+  analyzeError: string | null;
+  analyzing: boolean;
+  actionLabel: string;
+  requiredColumns: string[];
+  tipo: TipoEvento;
+  onFile: (file: File | null) => void;
+  onAnalyze: () => void;
 }
 
 export function UploadSection({
@@ -30,25 +37,35 @@ export function UploadSection({
   analyzeError,
   analyzing,
   actionLabel,
+  requiredColumns,
+  tipo,
   onFile,
   onAnalyze,
   eventLabel,
 }: UploadSectionProps) {
   // 2. Prevenir re-envíos si el análisis ya finalizó exitosamente (done)
-  const isEmptyFile = Boolean(file && !error && preview && preview.totalRows === 0)
-  const isDisabled = !file || Boolean(error) || validating || analyzing || done || isEmptyFile
+  const isEmptyFile = Boolean(
+    file && !error && preview && preview.totalRows === 0,
+  );
+  const isDisabled =
+    !file || Boolean(error) || validating || analyzing || done || isEmptyFile;
 
   const handleRemove = () => {
-    onFile(null)
-  }
+    onFile(null);
+  };
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       {/* Cabecera */}
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-bold leading-tight text-brand-deep">{title}</h1>
+        <h1 className="text-2xl font-bold leading-tight text-brand-deep">
+          {title}
+        </h1>
         <p className="text-sm text-slate-500">{description}</p>
       </header>
+
+      {/* Información de campos requeridos + plantilla descargable */}
+      <UploadTemplateInfo requiredColumns={requiredColumns} tipo={tipo} />
 
       {/* Drop Zone + Tarjeta de Archivo */}
       <UploadCard
@@ -65,22 +82,38 @@ export function UploadSection({
 
       {/* Mensaje de Éxito (A11y mejorado con role="status") */}
       {done && (
-        <div className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status" aria-live="polite">
+        <div
+          className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"
+          role="status"
+          aria-live="polite"
+        >
           <CheckIcon className="size-5 shrink-0" />
-          <span>Análisis guardado correctamente. Puedes verlo en «Dashboard Analítico» o en «Historial de Cargas».</span>
+          <span>
+            Análisis guardado correctamente. Puedes verlo en «Dashboard
+            Analítico» o en «Historial de Cargas».
+          </span>
         </div>
       )}
 
       {isEmptyFile && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <div
+          className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
           <ErrorIcon className="size-5 shrink-0" />
-          <span>El archivo tiene los encabezados correctos pero no contiene registros.</span>
+          <span>
+            El archivo tiene los encabezados correctos pero no contiene
+            registros.
+          </span>
         </div>
       )}
 
       {/* Error de Análisis (A11y mejorado con role="alert") */}
       {analyzeError && (
-        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        <div
+          className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
           <ErrorIcon className="size-5 shrink-0" />
           <span>{analyzeError}</span>
         </div>
@@ -106,5 +139,5 @@ export function UploadSection({
         )}
       </button>
     </div>
-  )
+  );
 }
