@@ -269,6 +269,7 @@ CREATE TABLE caso_morbilidad (
     id_paciente     INT         NOT NULL,
     fecha_egreso    DATE        NULL,
     creado_en       TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    secretaria_codigo VARCHAR(60) NULL,
     CONSTRAINT fk_morb_paciente
         FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente)
 );
@@ -442,6 +443,7 @@ CREATE TABLE caso_mortalidad (
     id_sitio_defuncion  SMALLINT    NOT NULL,
     fecha_defuncion     DATE        NULL,
     creado_en           TIMESTAMP   DEFAULT CURRENT_TIMESTAMP,
+    secretaria_codigo   VARCHAR(60) NULL,
     CONSTRAINT fk_mort_paciente
         FOREIGN KEY (id_paciente) REFERENCES paciente(id_paciente),
     CONSTRAINT fk_mort_sitio
@@ -630,6 +632,7 @@ CREATE INDEX idx_ds_caso_mort ON datos_sociodemograficos(caso_mortalidad_id);
 -- 5.1 Vista completa de mortalidad materna ----------------------------
 CREATE OR REPLACE VIEW v_mortalidad_completa AS
 SELECT  c.id_caso,
+        c.secretaria_codigo,
         p.nombres_apellidos,
         ti.codigo            AS tipo_id,
         p.numero_id,
@@ -695,6 +698,7 @@ LEFT JOIN cat_tipo_afiliacion         ta       ON ta.id       = ds.id_tipo_afili
 -- 5.2 Vista completa de morbilidad materna extrema --------------------
 CREATE OR REPLACE VIEW v_morbilidad_completa AS
 SELECT  c.id_caso,
+        c.secretaria_codigo,
         p.nombres_apellidos,
         ti.codigo  AS tipo_id,
         p.numero_id,

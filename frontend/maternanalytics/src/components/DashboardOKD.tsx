@@ -11,6 +11,7 @@ import type { ActiveView } from "../hooks/navigation/useActiveView";
 import { Menu } from "lucide-react";
 import { clearSession } from "../api";
 import { ChatWidget } from "./chat/ChatWidget";
+import { SecretariaBadge } from "./dashboard/SecretariaBadge";
 
 export type { DashboardFileStatus, FileIndicator };
 
@@ -67,6 +68,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
           username: data.username,
           email: data.email,
           avatarLetter: data.avatarLetter,
+          secretaria: data.secretaria,
         }}
         activeView={activeView}
         onNavigate={handleNavigate}
@@ -99,6 +101,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
           <span className="text-lg font-bold text-brand-deep">
             Vida<span className="text-brand-magenta">Materna</span>
           </span>
+          <SecretariaBadge secretaria={data.secretaria} className="ml-auto" />
         </header>
 
         <main className="flex-1">

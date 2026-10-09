@@ -11,7 +11,7 @@ import { useAnalysisList, type AnalisisSummary } from './analysis/useAnalysisLis
 export type { ActiveView, AnalisisSummary }
 
 export function useDashboardData() {
-  const { username, email, avatarLetter } = useAuthUser()
+  const { username, email, avatarLetter, secretaria } = useAuthUser()
   const navigate = useNavigate()
   const filters = useDashboardFilters()
   // Pestanas y segmento viven aqui (layout) para conservarse al cambiar de ruta.
@@ -65,6 +65,7 @@ export function useDashboardData() {
     username,
     email,
     avatarLetter,
+    secretaria,
     segmento,
     setSegmento,
     tabs,

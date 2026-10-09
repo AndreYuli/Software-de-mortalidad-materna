@@ -54,7 +54,8 @@ _MAX_FILAS_EN_MENSAJE = 20
 _CATALOGOS_OBLIGATORIOS_MORTALIDAD = (
     (CatConvivencia, ['6.1 Convivencia']),
     (CatEscolaridad, ['6.3 Escolaridad']),
-    (CatRegulacionFecundidad, ['6.4 Regulación Fecundidad', '6.4 Regulacion Fecundidad']),
+    (CatRegulacionFecundidad, [
+     '6.4 Regulación Fecundidad', '6.4 Regulacion Fecundidad']),
     (CatMomentoMuerte, _MORTALIDAD_MOMENTO_MUERTE_COLS),
 )
 
@@ -82,7 +83,8 @@ def _verificar_causa_completa(
     columna = '10.1 Causa básica CIE-10' if tipo == 'mortalidad' else 'Causa principal CIE-10'
     if columna not in registros:
         return
-    vacias = registros[columna].map(clean_text).isna() & ~df_hashes.isin(existing_hashes)
+    vacias = registros[columna].map(
+        clean_text).isna() & ~df_hashes.isin(existing_hashes)
     filas = (registros.index[vacias] + 2).tolist()
     if not filas:
         return
@@ -161,14 +163,17 @@ def _fase1_validar_filas(
                 numero_fila=numero_fila,
                 catalog_cache=catalog_cache,
             )
-            fecha_egreso = _parse_date(_get_value(row, _MORBILIDAD_FECHA_EGRESO_COLS))
+            fecha_egreso = _parse_date(_get_value(
+                row, _MORBILIDAD_FECHA_EGRESO_COLS))
             causa = _require_text(
                 _get_value(row, ['Causa principal CIE-10']),
                 'Causa principal CIE-10',
                 numero_fila,
             ).upper()
-            momento = _resolve_momento_ocurrencia(_get_value(row, ['Momento ocurrencia']))
-            edad_gestacional = _parse_int(_get_value(row, ['Edad gestacional ocurrencia (sem)']))
+            momento = _resolve_momento_ocurrencia(
+                _get_value(row, ['Momento ocurrencia']))
+            edad_gestacional = _parse_int(_get_value(
+                row, ['Edad gestacional ocurrencia (sem)']))
             event_hash = _hash_payload(
                 {
                     'tipo': 'morbilidad',
@@ -195,8 +200,10 @@ def _fase1_validar_filas(
                     'A. Nombres y apellidos del paciente',
                     'Nombres y apellidos',
                 ],
-                tipo_id_cols=['B. Tipo ID', 'Tipo de ID', 'Tipo de identificación'],
-                numero_id_cols=['C. Número ID', 'N° identificación', 'Número de identificación'],
+                tipo_id_cols=['B. Tipo ID', 'Tipo de ID',
+                              'Tipo de identificación'],
+                numero_id_cols=['C. Número ID',
+                                'N° identificación', 'Número de identificación'],
                 row=row,
                 numero_fila=numero_fila,
                 catalog_cache=catalog_cache,
@@ -218,7 +225,8 @@ def _fase1_validar_filas(
                     numero_fila=numero_fila,
                     nombre_campo=columnas[0],
                 )
-            fecha_def = _parse_date(_get_value(row, _MORTALIDAD_FECHA_DEFUNCION_COLS))
+            fecha_def = _parse_date(_get_value(
+                row, _MORTALIDAD_FECHA_DEFUNCION_COLS))
             causa = _require_text(
                 _get_value(row, ['10.1 Causa básica CIE-10']),
                 '10.1 Causa básica CIE-10',
@@ -301,6 +309,7 @@ def _fase3_upsert_casos(
     caches: SivigilaCaches,
     db: Session,
     resumen: dict[str, Any],
+    secretaria_codigo: str | None,
 ) -> dict[int, tuple[Any, bool]]:
     """Crea o actualiza casos clínicos en la BD.
 
@@ -311,6 +320,7 @@ def _fase3_upsert_casos(
         caches: Cachés masivos cargados desde BD.
         db: Sesión de base de datos.
         resumen: Dict de contadores que se actualiza en lugar.
+        secretaria_codigo: Tenant que se estampa en los casos nuevos.
 
     Returns:
         Dict que mapea índice de fila a (instancia_caso, caso_creado).
@@ -322,14 +332,17 @@ def _fase3_upsert_casos(
         ident = pdata.ident
         paciente = caches.paciente_cache[ident['numero_id']]
         importacion = caches.import_cache.get(pdata.event_hash)
-        caso = caches.caso_by_id.get(importacion.caso_id) if importacion else None
+        caso = caches.caso_by_id.get(
+            importacion.caso_id) if importacion else None
 
         if tipo == 'morbilidad':
             if caso is None:
                 clave_busqueda = (paciente.id_paciente, pdata.fecha_egreso)
-                caso_potencial = caches.caso_by_paciente_fecha.get(clave_busqueda)
+                caso_potencial = caches.caso_by_paciente_fecha.get(
+                    clave_busqueda)
                 if caso_potencial:
-                    causa_existente = caches.causa_cache.get(caso_potencial.id_caso)
+                    causa_existente = caches.causa_cache.get(
+                        caso_potencial.id_caso)
                     if causa_existente and causa_existente.causa_principal_cie10 == pdata.causa:
                         caso = caso_potencial
             caso_creado = caso is None
@@ -338,6 +351,7 @@ def _fase3_upsert_casos(
                     id_paciente=paciente.id_paciente,
                     fecha_egreso=pdata.fecha_egreso,
                     creado_en=datetime.now(timezone.utc),
+                    secretaria_codigo=secretaria_codigo,
                 )
                 db.add(caso)
                 caches.caso_by_paciente_fecha[clave_busqueda] = caso
@@ -349,9 +363,11 @@ def _fase3_upsert_casos(
         else:
             if caso is None:
                 clave_busqueda = (paciente.id_paciente, pdata.fecha_def)
-                caso_potencial = caches.caso_by_paciente_fecha.get(clave_busqueda)
+                caso_potencial = caches.caso_by_paciente_fecha.get(
+                    clave_busqueda)
                 if caso_potencial:
-                    causa_existente = caches.causa_cache.get(caso_potencial.id_caso)
+                    causa_existente = caches.causa_cache.get(
+                        caso_potencial.id_caso)
                     if causa_existente and causa_existente.causa_basica_cie10 == pdata.causa:
                         caso = caso_potencial
             caso_creado = caso is None
@@ -361,12 +377,15 @@ def _fase3_upsert_casos(
                     id_sitio_defuncion=pdata.sitio.id,
                     fecha_defuncion=pdata.fecha_def,
                     creado_en=datetime.now(timezone.utc),
+                    secretaria_codigo=secretaria_codigo,
                 )
                 db.add(caso)
-                caches.caso_by_paciente_fecha[(paciente.id_paciente, pdata.fecha_def)] = caso
+                caches.caso_by_paciente_fecha[(
+                    paciente.id_paciente, pdata.fecha_def)] = caso
                 resumen['casos_creados'] += 1
             else:
-                _actualizar_caso_mortalidad(db, caso, pdata.sitio, pdata.fecha_def)
+                _actualizar_caso_mortalidad(
+                    db, caso, pdata.sitio, pdata.fecha_def)
                 resumen['casos_actualizados'] += 1
 
         row_cases[index] = (caso, caso_creado)
@@ -374,7 +393,9 @@ def _fase3_upsert_casos(
     return row_cases
 
 
-def persistir_dataframe(db: Session, df: pd.DataFrame, tipo: str) -> dict[str, Any]:
+def persistir_dataframe(
+    db: Session, df: pd.DataFrame, tipo: str, secretaria_codigo: str | None
+) -> dict[str, Any]:
     """Persiste un DataFrame de mortalidad o morbilidad en la base de datos.
 
     Usa cuatro pasadas (hashes → validación → pacientes → casos → relacionados)
@@ -384,6 +405,8 @@ def persistir_dataframe(db: Session, df: pd.DataFrame, tipo: str) -> dict[str, A
         db: Sesión de base de datos.
         df: DataFrame ya limpio con los datos del Excel.
         tipo: 'mortalidad' o 'morbilidad'.
+        secretaria_codigo: Tenant de la carga. Se estampa en cada caso y en cada
+            importación, y acota la detección de duplicados a esa secretaría.
 
     Returns:
         Dict con conteos de registros procesados, pacientes y casos.
@@ -402,8 +425,11 @@ def persistir_dataframe(db: Session, df: pd.DataFrame, tipo: str) -> dict[str, A
 
     try:
         df_hashes = registros.apply(lambda r: _row_hash(tipo, r), axis=1)
-        query = db.query(SivigilaImportacion.row_hash)
-        hashes_bd = query.filter(SivigilaImportacion.row_hash.in_(df_hashes.tolist())).all()
+        query = db.query(SivigilaImportacion.row_hash).filter(
+            SivigilaImportacion.secretaria_codigo == secretaria_codigo
+        )
+        hashes_bd = query.filter(
+            SivigilaImportacion.row_hash.in_(df_hashes.tolist())).all()
         existing_hashes = set(row[0] for row in hashes_bd)
     except Exception:
         logger.warning(
@@ -429,12 +455,15 @@ def persistir_dataframe(db: Session, df: pd.DataFrame, tipo: str) -> dict[str, A
     if not non_dup_indices:
         return resumen
 
-    caches = _precargar_caches_sivigila(db, tipo, numeros_id, event_hashes)
+    caches = _precargar_caches_sivigila(
+        db, tipo, numeros_id, event_hashes, secretaria_codigo)
 
     _fase2_upsert_pacientes(non_dup_indices, pass1_data, caches, db, resumen)
     db.flush()
 
-    row_cases = _fase3_upsert_casos(tipo, non_dup_indices, pass1_data, caches, db, resumen)
+    row_cases = _fase3_upsert_casos(
+        tipo, non_dup_indices, pass1_data, caches, db, resumen, secretaria_codigo
+    )
     db.flush()
 
     for index in non_dup_indices:
@@ -470,6 +499,7 @@ def persistir_dataframe(db: Session, df: pd.DataFrame, tipo: str) -> dict[str, A
             pdata.event_hash,
             caso.id_caso,
             pdata.ident,
+            secretaria_codigo,
         )
 
     return resumen

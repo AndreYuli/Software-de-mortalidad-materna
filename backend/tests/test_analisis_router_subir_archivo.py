@@ -1,6 +1,7 @@
 """Test de regresión: POST /api/analisis/ debe traducir ValueError a 422, no 500."""
 
 import io
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -14,7 +15,8 @@ from main import app
 def client(db_session):
     """Cliente HTTP con la dependencia de BD sobreescrita por la sesión de prueba."""
     app.dependency_overrides[get_db] = lambda: db_session
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        secretaria_codigo=None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -29,7 +31,8 @@ def test_subir_archivo_devuelve_422_si_faltan_columnas(client, mocker):
     response = client.post(
         '/api/analisis/',
         data={'tipo': 'mortalidad'},
-        files={'archivo': ('test.xlsx', io.BytesIO(b'contenido'), 'application/vnd.ms-excel')},
+        files={'archivo': ('test.xlsx', io.BytesIO(
+            b'contenido'), 'application/vnd.ms-excel')},
     )
 
     assert response.status_code == 422

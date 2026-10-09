@@ -1,6 +1,7 @@
 """Historial de cargas: período (año, mes, semana ISO), búsqueda y filtros en el servidor."""
 
 from datetime import datetime
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -32,18 +33,23 @@ def _carga(db, nombre, tipo, fecha_utc):
 def cargas(db_session):
     """Cinco cargas repartidas en tipos, semanas, meses y años."""
     _carga(
-        db_session, 'mortalidad_sem37.xlsx', 'mortalidad', datetime(2026, 9, 15, 15, 0)
+        db_session, 'mortalidad_sem37.xlsx', 'mortalidad', datetime(
+            2026, 9, 15, 15, 0)
     )  # sem 38
     _carga(
-        db_session, 'morbilidad_sem37.xlsx', 'morbilidad', datetime(2026, 9, 10, 15, 0)
+        db_session, 'morbilidad_sem37.xlsx', 'morbilidad', datetime(
+            2026, 9, 10, 15, 0)
     )  # sem 37
     _carga(
-        db_session, 'mortalidad_agosto.xlsx', 'mortalidad', datetime(2026, 8, 20, 15, 0)
+        db_session, 'mortalidad_agosto.xlsx', 'mortalidad', datetime(
+            2026, 8, 20, 15, 0)
     )  # sem 34
     _carga(
-        db_session, 'morbilidad_agosto.xlsx', 'morbilidad', datetime(2026, 8, 27, 15, 0)
+        db_session, 'morbilidad_agosto.xlsx', 'morbilidad', datetime(
+            2026, 8, 27, 15, 0)
     )  # sem 35
-    _carga(db_session, 'mortalidad_2025.xlsx', 'mortalidad', datetime(2025, 12, 3, 15, 0))  # sem 49
+    _carga(db_session, 'mortalidad_2025.xlsx', 'mortalidad',
+           datetime(2025, 12, 3, 15, 0))  # sem 49
     return db_session
 
 
@@ -55,15 +61,18 @@ def _nombres(items):
 def test_periodo_de_carga_usa_hora_de_colombia_y_semana_iso():
     """El período se calcula en hora de Colombia y con semana ISO."""
     # Domingo 13-sep-2026 22:00 en Bogotá == lunes 14-sep 03:00 UTC: sigue en la semana 37
-    assert analisis_service.periodo_de_carga(datetime(2026, 9, 14, 3, 0)) == (2026, 9, 37)
+    assert analisis_service.periodo_de_carga(
+        datetime(2026, 9, 14, 3, 0)) == (2026, 9, 37)
     # Lunes 14-sep 15:00 UTC (10:00 en Bogotá) ya es la semana 38
-    assert analisis_service.periodo_de_carga(datetime(2026, 9, 14, 15, 0)) == (2026, 9, 38)
+    assert analisis_service.periodo_de_carga(
+        datetime(2026, 9, 14, 15, 0)) == (2026, 9, 38)
 
 
 def test_periodo_de_carga_cruza_el_ano_en_hora_local():
     """Una carga de fin de año en UTC puede pertenecer aún al año anterior en Colombia."""
     # 1-ene-2027 03:00 UTC == 31-dic-2026 22:00 en Bogotá: pertenece a 2026
-    assert analisis_service.periodo_de_carga(datetime(2027, 1, 1, 3, 0))[:2] == (2026, 12)
+    assert analisis_service.periodo_de_carga(
+        datetime(2027, 1, 1, 3, 0))[:2] == (2026, 12)
 
 
 def test_sin_filtros_devuelve_todo_ordenado_por_fecha_desc(cargas):
@@ -90,7 +99,8 @@ def test_filtra_por_tipo(cargas):
     ('filtros', 'esperado'),
     [
         ({'year': 2025}, ['mortalidad_2025.xlsx']),
-        ({'year': 2026, 'month': 8}, ['morbilidad_agosto.xlsx', 'mortalidad_agosto.xlsx']),
+        ({'year': 2026, 'month': 8}, [
+         'morbilidad_agosto.xlsx', 'mortalidad_agosto.xlsx']),
         ({'year': 2026, 'week': 37}, ['morbilidad_sem37.xlsx']),
         ({'month': 9, 'tipo': 'mortalidad'}, ['mortalidad_sem37.xlsx']),
         ({'year': 2024}, []),
@@ -107,8 +117,10 @@ def test_filtra_por_periodo(cargas, filtros, esperado):
     ('q', 'esperado'),
     [
         ('agosto', {'morbilidad_agosto.xlsx', 'mortalidad_agosto.xlsx'}),
-        ('MORBILIDAD_SEM', {'morbilidad_sem37.xlsx'}),  # sin distinguir mayúsculas
-        ('550', {'mortalidad_sem37.xlsx', 'mortalidad_agosto.xlsx', 'mortalidad_2025.xlsx'}),
+        # sin distinguir mayúsculas
+        ('MORBILIDAD_SEM', {'morbilidad_sem37.xlsx'}),
+        ('550', {'mortalidad_sem37.xlsx',
+         'mortalidad_agosto.xlsx', 'mortalidad_2025.xlsx'}),
         ('549', {'morbilidad_sem37.xlsx', 'morbilidad_agosto.xlsx'}),
         ('inexistente', set()),
     ],
@@ -136,7 +148,8 @@ def test_el_total_y_la_paginacion_respetan_los_filtros(cargas):
     assert total == total2 == 3
     assert len(pagina1) == 2
     assert _nombres(pagina2) == ['mortalidad_2025.xlsx']
-    assert analisis_service.listar_historial(cargas, page=5, per_page=2)[0] == []
+    assert analisis_service.listar_historial(
+        cargas, page=5, per_page=2)[0] == []
 
 
 def test_anios_disponibles_mas_reciente_primero(cargas):
@@ -151,14 +164,16 @@ def test_anios_disponibles_mas_reciente_primero(cargas):
 def client(cargas):
     """Cliente HTTP con BD y autenticación sustituidas."""
     app.dependency_overrides[get_db] = lambda: cargas
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        secretaria_codigo=None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
 
 def test_endpoint_incluye_periodo_en_cada_item_y_anios_disponibles(client):
     """El endpoint devuelve año, mes y semana por carga y los años disponibles."""
-    r = client.get('/api/analisis/historial/', params={'year': 2026, 'week': 37})
+    r = client.get('/api/analisis/historial/',
+                   params={'year': 2026, 'week': 37})
     assert r.status_code == 200
     body = r.json()
     assert body['total'] == 1
@@ -171,7 +186,8 @@ def test_endpoint_incluye_periodo_en_cada_item_y_anios_disponibles(client):
 
 def test_endpoint_sin_resultados_devuelve_lista_vacia(client):
     """Sin coincidencias el endpoint responde 200 con lista vacía."""
-    body = client.get('/api/analisis/historial/', params={'q': 'nada que coincida'}).json()
+    body = client.get('/api/analisis/historial/',
+                      params={'q': 'nada que coincida'}).json()
     assert body['items'] == []
     assert body['total'] == 0
     assert body['total_pages'] == 0
@@ -179,8 +195,10 @@ def test_endpoint_sin_resultados_devuelve_lista_vacia(client):
 
 @pytest.mark.parametrize(
     'params',
-    [{'tipo': 'otro'}, {'month': 13}, {'month': 0}, {'week': 54}, {'year': 1999}, {'q': 'x' * 101}],
+    [{'tipo': 'otro'}, {'month': 13}, {'month': 0}, {
+        'week': 54}, {'year': 1999}, {'q': 'x' * 101}],
 )
 def test_endpoint_rechaza_filtros_invalidos(client, params):
     """Los filtros fuera de rango o de tipo desconocido responden 422."""
-    assert client.get('/api/analisis/historial/', params=params).status_code == 422
+    assert client.get('/api/analisis/historial/',
+                      params=params).status_code == 422

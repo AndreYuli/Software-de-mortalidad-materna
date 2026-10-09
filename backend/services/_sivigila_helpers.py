@@ -113,7 +113,8 @@ def _row_hash(tipo: str, row: Any) -> str:
         Cadena hexadecimal SHA-256 de 64 caracteres.
     """
     col_names: list[str] = sorted(str(c) for c in row.index.tolist())
-    normalizado: dict[str, Any] = {col: _normalize_hash_value(row[col]) for col in col_names}
+    normalizado: dict[str, Any] = {
+        col: _normalize_hash_value(row[col]) for col in col_names}
     hash_generado: str = _hash_payload({'tipo': tipo, 'row': normalizado})
     return hash_generado
 
@@ -139,6 +140,7 @@ def _precargar_caches_sivigila(
     tipo: str,
     numeros_id: set[str],
     event_hashes: list[str],
+    secretaria_codigo: str | None,
 ) -> SivigilaCaches:
     """Carga masiva de cachés desde BD para minimizar queries individuales.
 
@@ -147,6 +149,9 @@ def _precargar_caches_sivigila(
         tipo: 'mortalidad' o 'morbilidad'.
         numeros_id: Conjunto de números de ID de pacientes a precargar.
         event_hashes: Lista de hashes de eventos a buscar en importaciones.
+        secretaria_codigo: Tenant actual. Las importaciones y los casos se filtran por él
+            para que el emparejamiento/deduplicación no cruce secretarías. El paciente es
+            una identidad compartida y se precarga global.
 
     Returns:
         SivigilaCaches con todos los cachés precargados.
@@ -154,7 +159,7 @@ def _precargar_caches_sivigila(
     paciente_cache: dict[str, Paciente] = {}
     if numeros_id:
         for i in range(0, len(numeros_id), _CHUNK_SIZE):
-            chunk: list[str] = list(numeros_id)[i : i + _CHUNK_SIZE]
+            chunk: list[str] = list(numeros_id)[i: i + _CHUNK_SIZE]
             for p in db.query(Paciente).filter(Paciente.numero_id.in_(chunk)).all():
                 paciente_cache[p.numero_id] = p
 
@@ -162,10 +167,14 @@ def _precargar_caches_sivigila(
     if event_hashes:
         unique_events: list[str] = list(set(event_hashes))
         for i in range(0, len(unique_events), _CHUNK_SIZE):
-            chunk = unique_events[i : i + _CHUNK_SIZE]
+            chunk = unique_events[i: i + _CHUNK_SIZE]
             for imp in (
                 db.query(SivigilaImportacion)
-                .filter(SivigilaImportacion.tipo == tipo, SivigilaImportacion.event_hash.in_(chunk))
+                .filter(
+                    SivigilaImportacion.tipo == tipo,
+                    SivigilaImportacion.event_hash.in_(chunk),
+                    SivigilaImportacion.secretaria_codigo == secretaria_codigo,
+                )
                 .all()
             ):
                 import_cache[imp.event_hash] = imp
@@ -178,17 +187,23 @@ def _precargar_caches_sivigila(
     caso_by_paciente_fecha: dict[tuple[int, Any], Any] = {}
     causa_cache: dict[int, Any] = {}
     patient_ids: list[int] = [p.id_paciente for p in paciente_cache.values()]
-    existing_caso_ids: list[int] = [imp.caso_id for imp in import_cache.values()]
+    existing_caso_ids: list[int] = [
+        imp.caso_id for imp in import_cache.values()]
 
     if patient_ids:
         for i in range(0, len(patient_ids), _CHUNK_SIZE):
             for c in (
                 db.query(caso_model)
-                .filter(caso_model.id_paciente.in_(patient_ids[i : i + _CHUNK_SIZE]))
+                .filter(
+                    caso_model.id_paciente.in_(
+                        patient_ids[i: i + _CHUNK_SIZE]),
+                    caso_model.secretaria_codigo == secretaria_codigo,
+                )
                 .all()
             ):
                 caso_by_id[c.id_caso] = c
-                caso_by_paciente_fecha[(c.id_paciente, getattr(c, fecha_field))] = c
+                caso_by_paciente_fecha[(
+                    c.id_paciente, getattr(c, fecha_field))] = c
                 if c.id_caso not in existing_caso_ids:
                     existing_caso_ids.append(c.id_caso)
 
@@ -196,7 +211,7 @@ def _precargar_caches_sivigila(
         for i in range(0, len(existing_caso_ids), _CHUNK_SIZE):
             for cau in (
                 db.query(causa_model)
-                .filter(causa_model.id_caso.in_(existing_caso_ids[i : i + _CHUNK_SIZE]))
+                .filter(causa_model.id_caso.in_(existing_caso_ids[i: i + _CHUNK_SIZE]))
                 .all()
             ):
                 causa_cache[cau.id_caso] = cau
@@ -219,7 +234,7 @@ def _precargar_caches_sivigila(
             for i in range(0, len(existing_caso_ids), _CHUNK_SIZE):
                 for row in (
                     db.query(model.id_caso)
-                    .filter(model.id_caso.in_(existing_caso_ids[i : i + _CHUNK_SIZE]))
+                    .filter(model.id_caso.in_(existing_caso_ids[i: i + _CHUNK_SIZE]))
                     .all()
                 ):
                     related_cache[model].add(row[0])

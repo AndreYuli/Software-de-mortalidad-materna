@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 
 from api.dependencies import get_current_user
 from db.database import get_db
-from db.models_sqlalchemy import Analisis
+from db.models_sqlalchemy import Analisis, Usuario
 from schemas.analisis_schema import AnalisisResponse, CargaUpdate, ChatRequest, ClusteringRequest
 from services import analisis_service, narrativa_service
 from services.ia_client import IAServiceUnavailableError, chatear_ia
 
-router = APIRouter(prefix='/api', tags=['analisis'], dependencies=[Depends(get_current_user)])
+router = APIRouter(
+    prefix='/api', tags=['analisis'], dependencies=[Depends(get_current_user)])
 
 
 @contextmanager
@@ -22,28 +23,32 @@ def _errores_servicio() -> Generator[None, None, None]:
     try:
         yield
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except RuntimeError as exc:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
 
-def _get_analisis_or_404(pk: int, db: Session) -> Analisis:
-    """Busca un análisis por ID o lanza 404.
+def _get_analisis_or_404(pk: int, db: Session, usuario: Usuario) -> Analisis:
+    """Busca un análisis por ID dentro de la secretaría del usuario o lanza 404.
 
     Args:
         pk: ID del análisis.
         db: Sesión de base de datos.
+        usuario: Usuario autenticado; su secretaría acota el acceso.
 
     Returns:
         Instancia del análisis encontrado.
 
     Raises:
-        HTTPException: 404 si el análisis no existe.
+        HTTPException: 404 si el análisis no existe o pertenece a otra secretaría.
     """
     analisis = db.get(Analisis, pk)
-    if not analisis:
+    if not analisis or analisis.secretaria_codigo != usuario.secretaria_codigo:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='Análisis no encontrado.',
@@ -56,6 +61,7 @@ def subir_archivo(
     tipo: str = Form(...),
     archivo: UploadFile = File(...),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Recibe un archivo Excel, lo valida, lo persiste y genera el análisis.
 
@@ -73,12 +79,16 @@ def subir_archivo(
         HTTPException: 500 si falla la persistencia.
     """
     with _errores_servicio():
-        resultado_persistencia = analisis_service.procesar_subida(tipo=tipo, archivo=archivo, db=db)
+        resultado_persistencia = analisis_service.procesar_subida(
+            tipo=tipo, archivo=archivo, db=db, secretaria_codigo=usuario.secretaria_codigo
+        )
     return resultado_persistencia
 
 
 @router.get('/analisis/', response_model=list[AnalisisResponse])
-def listar_analisis(db: Session = Depends(get_db)) -> list[AnalisisResponse]:
+def listar_analisis(
+    db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)
+) -> list[AnalisisResponse]:
     """Lista el análisis más reciente de cada tipo (mortalidad y morbilidad).
 
     Args:
@@ -87,7 +97,8 @@ def listar_analisis(db: Session = Depends(get_db)) -> list[AnalisisResponse]:
     Returns:
         Lista de análisis únicos ordenados por fecha de carga descendente.
     """
-    lista_analisis = analisis_service.listar_unicos(db=db)
+    lista_analisis = analisis_service.listar_unicos(
+        db=db, secretaria_codigo=usuario.secretaria_codigo)
     return lista_analisis
 
 
@@ -101,6 +112,7 @@ def historial_analisis(
     month: int | None = Query(default=None, ge=1, le=12),
     week: int | None = Query(default=None, ge=1, le=53),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Lista el historial de cargas paginado, con búsqueda y filtros.
 
@@ -119,7 +131,8 @@ def historial_analisis(
         los filtros), 'page', 'per_page', 'total_pages' y 'anios_disponibles'.
     """
     items, total = analisis_service.listar_historial(
-        db=db, page=page, per_page=per_page, q=q, tipo=tipo, year=year, month=month, week=week
+        db=db, page=page, per_page=per_page, q=q, tipo=tipo, year=year, month=month, week=week,
+        secretaria_codigo=usuario.secretaria_codigo,
     )
     total_pages = (total + per_page - 1) // per_page if total > 0 else 0
     respuesta_items = []
@@ -145,13 +158,14 @@ def historial_analisis(
         'page': page,
         'per_page': per_page,
         'total_pages': total_pages,
-        'anios_disponibles': analisis_service.anios_historial(db),
+        'anios_disponibles': analisis_service.anios_historial(db, usuario.secretaria_codigo),
     }
 
 
 @router.patch('/analisis/{pk}/', response_model=AnalisisResponse)
 def actualizar_analisis(
-    pk: int, datos: CargaUpdate, db: Session = Depends(get_db)
+    pk: int, datos: CargaUpdate, db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> AnalisisResponse:
     """Corrige el nombre de archivo y/o la fecha de una carga del historial.
 
@@ -163,7 +177,7 @@ def actualizar_analisis(
     Returns:
         La carga actualizada.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     with _errores_servicio():
         actualizado = analisis_service.actualizar_carga(
             db, analisis, nombre_archivo=datos.nombre_archivo, fecha_carga=datos.fecha_carga
@@ -172,14 +186,18 @@ def actualizar_analisis(
 
 
 @router.delete('/analisis/{pk}/', status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_analisis(pk: int, db: Session = Depends(get_db)) -> None:
+def eliminar_analisis(
+    pk: int, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)
+) -> None:
     """Elimina una carga del historial junto con sus narrativas de IA."""
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     analisis_service.eliminar_carga(db, analisis)
 
 
 @router.get('/analisis/{pk}/', response_model=AnalisisResponse)
-def detalle_analisis(pk: int, db: Session = Depends(get_db)) -> AnalisisResponse:
+def detalle_analisis(
+    pk: int, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)
+) -> AnalisisResponse:
     """Devuelve los metadatos de un análisis específico.
 
     Args:
@@ -192,7 +210,7 @@ def detalle_analisis(pk: int, db: Session = Depends(get_db)) -> AnalisisResponse
     Raises:
         HTTPException: 404 si no existe.
     """
-    analisis_recuperado = _get_analisis_or_404(pk, db)
+    analisis_recuperado = _get_analisis_or_404(pk, db, usuario)
     return analisis_recuperado
 
 
@@ -204,6 +222,7 @@ def analisis_completo(
     week: str | None = Query(default=None),
     day: str | None = Query(default=None),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Devuelve el análisis estadístico completo con filtros opcionales.
 
@@ -223,7 +242,7 @@ def analisis_completo(
         HTTPException: 404 si el archivo físico no existe.
         HTTPException: 500 si ocurre un error al procesar.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     with _errores_servicio():
         resultado = analisis_service.calcular_completo(
             analisis=analisis,
@@ -241,6 +260,7 @@ def clustering(
     pk: int,
     req: ClusteringRequest,
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Ejecuta un algoritmo de clustering sobre los datos del análisis.
 
@@ -256,7 +276,7 @@ def clustering(
         HTTPException: 404 si el análisis no existe.
         HTTPException: 500 si ocurre un error en el clustering.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     with _errores_servicio():
         resultado = analisis_service.ejecutar_clustering(
             analisis=analisis, tipo_clustering=req.tipo_clustering, n_clusters=req.n_clusters, db=db
@@ -265,7 +285,9 @@ def clustering(
 
 
 @router.get('/analisis/{pk}/heatmap/')
-def heatmap(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
+def heatmap(
+    pk: int, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)
+) -> dict[str, Any]:
     """Genera el heatmap de correlación para un análisis de morbilidad.
 
     Args:
@@ -280,7 +302,7 @@ def heatmap(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
         HTTPException: 404 si el análisis no existe.
         HTTPException: 500 si ocurre un error al procesar.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     if analisis.tipo != 'morbilidad':
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -292,7 +314,9 @@ def heatmap(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
 
 
 @router.get('/analisis/{pk}/extra-columna/')
-def extra_columna(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
+def extra_columna(
+    pk: int, db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)
+) -> dict[str, Any]:
     """Devuelve la distribución de una columna adicional para mortalidad.
 
     Args:
@@ -307,14 +331,15 @@ def extra_columna(pk: int, db: Session = Depends(get_db)) -> dict[str, Any]:
         HTTPException: 404 si el análisis no existe.
         HTTPException: 500 si ocurre un error al procesar.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     if analisis.tipo != 'mortalidad':
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Extra columna solo está disponible para análisis de mortalidad.',
         )
     with _errores_servicio():
-        resultado = analisis_service.calcular_extra_columna(analisis=analisis, columna_idx=0, db=db)
+        resultado = analisis_service.calcular_extra_columna(
+            analisis=analisis, columna_idx=0, db=db)
     return resultado
 
 
@@ -326,8 +351,10 @@ def cruce_variables(
         description='Variable sociodemográfica: zona_residencia, poblacion_vulnerable, etnia, '
         'tipo_afiliacion',
     ),
-    var_clinica: str = Query(..., description='Variable clínica (depende del tipo de análisis)'),
+    var_clinica: str = Query(...,
+                             description='Variable clínica (depende del tipo de análisis)'),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Cruza una variable sociodemográfica con una clínica, devolviendo conteos.
 
@@ -345,7 +372,7 @@ def cruce_variables(
         HTTPException: 422 si las variables no son válidas.
         HTTPException: 500 si ocurre un error al procesar.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     with _errores_servicio():
         resultado = analisis_service.calcular_cruce(
             analisis=analisis,
@@ -366,6 +393,7 @@ def obtener_narrativa_ia(
     n_clusters: int = Query(default=3, ge=2, le=20),
     regenerar: bool = Query(default=False),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Obtiene (o genera) la narrativa de IA para un análisis y tipo dados.
 
@@ -385,12 +413,13 @@ def obtener_narrativa_ia(
     Raises:
         HTTPException: 404 si el análisis no existe, 503 si IA-SERVICE no está disponible.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     filtros: dict[str, Any] = {'year': year, 'month': month}
 
     with _errores_servicio():
         if tipo_narrativa == 'clustering':
-            filtros.update({'tipo_clustering': tipo_clustering, 'n_clusters': n_clusters})
+            filtros.update({'tipo_clustering': tipo_clustering,
+                           'n_clusters': n_clusters})
             clustering_resultado = analisis_service.ejecutar_clustering(
                 analisis,
                 tipo_clustering,
@@ -402,7 +431,8 @@ def obtener_narrativa_ia(
                 clustering_resultado,
             )
         else:
-            analisis_completo = analisis_service.calcular_completo(analisis, year, month, db)
+            analisis_completo = analisis_service.calcular_completo(
+                analisis, year, month, db)
             indicadores = narrativa_service.extraer_indicadores_para_narrativa(
                 tipo_narrativa,
                 analisis_completo,
@@ -434,6 +464,7 @@ def chat_analisis(
     year: str | None = Query(default=None),
     month: str | None = Query(default=None),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Envía una pregunta al chatbot de IA sobre los datos del análisis.
 
@@ -450,9 +481,10 @@ def chat_analisis(
     Raises:
         HTTPException: 503 si el servicio de IA no responde.
     """
-    analisis = _get_analisis_or_404(pk, db)
+    analisis = _get_analisis_or_404(pk, db, usuario)
     with _errores_servicio():
-        analisis_completo = analisis_service.calcular_completo(analisis, year, month, db)
+        analisis_completo = analisis_service.calcular_completo(
+            analisis, year, month, db)
 
         # Subconjunto de datos agregados para el contexto del chatbot
         claves_contexto = [
@@ -471,9 +503,11 @@ def chat_analisis(
             'distribucion_edad_riesgo',
             'distribucion_edad_gestacional',
         ]
-        contexto = {k: analisis_completo[k] for k in claves_contexto if k in analisis_completo}
+        contexto = {k: analisis_completo[k]
+                    for k in claves_contexto if k in analisis_completo}
 
-        historial_dicts = [{'rol': h.rol, 'contenido': h.contenido} for h in req.historial]
+        historial_dicts = [{'rol': h.rol, 'contenido': h.contenido}
+                           for h in req.historial]
 
         try:
             return chatear_ia(req.pregunta, historial_dicts, analisis.tipo, contexto)

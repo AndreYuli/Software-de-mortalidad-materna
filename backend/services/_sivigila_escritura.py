@@ -141,11 +141,15 @@ _MORBILIDAD_TERMINACION_COLS = [
     'Terminacion de la gestacion',
 ]
 _MORBILIDAD_ESTADO_RN_COLS = ['Estado recién nacido', 'Estado recien nacido']
-_MORBILIDAD_PESO_RN_COLS = ['Peso RN (g)', 'Peso RN gramos', 'Peso RN', 'Peso recién nacido']
+_MORBILIDAD_PESO_RN_COLS = [
+    'Peso RN (g)', 'Peso RN gramos', 'Peso RN', 'Peso recién nacido']
 _MORBILIDAD_TRANSFUNDIDAS_COLS = ['Unidades transfundidas']
-_MORBILIDAD_GRUPO_CAUSA_COLS = ['Causa principal agrupada', 'Grupo causa', 'Grupo de causa']
-_MORBILIDAD_INSTITUCION_REF_1_COLS = ['Institución referencia 1', 'Institucion referencia 1']
-_MORBILIDAD_INSTITUCION_REF_2_COLS = ['Institución referencia 2', 'Institucion referencia 2']
+_MORBILIDAD_GRUPO_CAUSA_COLS = [
+    'Causa principal agrupada', 'Grupo causa', 'Grupo de causa']
+_MORBILIDAD_INSTITUCION_REF_1_COLS = [
+    'Institución referencia 1', 'Institucion referencia 1']
+_MORBILIDAD_INSTITUCION_REF_2_COLS = [
+    'Institución referencia 2', 'Institucion referencia 2']
 _MORBILIDAD_TIEMPO_REMISION_COLS = [
     'Tiempo remisión (horas)',
     'Tiempo remisión (h)',
@@ -221,9 +225,11 @@ def _resolve_momento_ocurrencia(value: Any) -> str | None:
     resultado: str | None = None
     if not is_empty(value):
         if isinstance(value, (int, float)):
-            resultado = {1: 'Antes', 2: 'Durante', 3: 'Despues', 4: 'Despues'}.get(int(value))
+            resultado = {1: 'Antes', 2: 'Durante',
+                         3: 'Despues', 4: 'Despues'}.get(int(value))
         else:
-            mapa_momento = {'antes': 'Antes', 'durante': 'Durante', 'despues': 'Despues'}
+            mapa_momento = {'antes': 'Antes',
+                            'durante': 'Durante', 'despues': 'Despues'}
             resultado = mapa_momento.get(slugify(value))
     return resultado
 
@@ -242,7 +248,8 @@ def _normalize_estado_rn(value: Any) -> str | None:
         if isinstance(value, (int, float)):
             resultado = {1: 'Vivo', 2: 'Muerto'}.get(int(value))
         else:
-            resultado = {'vivo': 'Vivo', 'muerto': 'Muerto'}.get(slugify(value))
+            resultado = {'vivo': 'Vivo', 'muerto': 'Muerto'}.get(
+                slugify(value))
     return resultado
 
 
@@ -299,6 +306,7 @@ def _registrar_importacion(
     event_hash: str,
     caso_id: int,
     identificacion: dict[str, Any],
+    secretaria_codigo: str | None,
 ) -> None:
     """Registra una fila de importación SIVIGILA para control de duplicados.
 
@@ -309,6 +317,7 @@ def _registrar_importacion(
         event_hash: Hash de identidad clínica del evento.
         caso_id: ID del caso mortalidad o morbilidad asociado.
         identificacion: Dict con numero_id y tipo_codigo del paciente.
+        secretaria_codigo: Tenant de la fila; aísla el control de duplicados por secretaría.
     """
     db.add(
         SivigilaImportacion(
@@ -319,6 +328,7 @@ def _registrar_importacion(
             numero_id=identificacion['numero_id'],
             tipo_identificacion=identificacion['tipo_codigo'],
             creado_en=datetime.now(timezone.utc),
+            secretaria_codigo=secretaria_codigo,
         )
     )
 
@@ -374,8 +384,10 @@ def _resolver_identificacion(
     Returns:
         Dict con nombres, tipo_obj, tipo_codigo, numero_id y fecha_nacimiento.
     """
-    nombres = _require_text(_get_value(row, nombres_cols), nombres_cols[0], numero_fila)
-    tipo_id_valor = _normalizar_tipo_identificacion(_get_value(row, tipo_id_cols))
+    nombres = _require_text(_get_value(row, nombres_cols),
+                            nombres_cols[0], numero_fila)
+    tipo_id_valor = _normalizar_tipo_identificacion(
+        _get_value(row, tipo_id_cols))
     tipo_obj = _resolve_catalog(
         db,
         CatTipoId,

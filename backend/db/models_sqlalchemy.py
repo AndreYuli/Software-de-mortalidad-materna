@@ -41,6 +41,9 @@ class Analisis(Base):
     fecha_carga = Column(DateTime, nullable=False)
     total_registros = Column(Integer, nullable=False)
     resumen = Column(JSON, nullable=False)
+    # Tenant: código de la secretaría dueña de la carga. Ningún usuario de otra
+    # secretaría debe ver este análisis ni los casos que agrupa.
+    secretaria_codigo = Column(String(60), index=True, nullable=True)
 
 
 class NarrativaIA(Base):
@@ -56,10 +59,12 @@ class NarrativaIA(Base):
     """
 
     __tablename__ = 'narrativa_ia'
-    __table_args__ = (UniqueConstraint('analisis_id', 'tipo_narrativa', 'filtros_hash'),)
+    __table_args__ = (UniqueConstraint(
+        'analisis_id', 'tipo_narrativa', 'filtros_hash'),)
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    analisis_id = Column(Integer, ForeignKey('api_analisis.id'), nullable=False)
+    analisis_id = Column(Integer, ForeignKey(
+        'api_analisis.id'), nullable=False)
     tipo_narrativa = Column(String(30), nullable=False)
     filtros_hash = Column(String(64), nullable=False)
     contenido = Column(Text, nullable=False)
@@ -90,6 +95,9 @@ class SivigilaImportacion(Base):
     numero_id = Column(String(30), nullable=False)
     tipo_identificacion = Column(String(5), nullable=False)
     creado_en = Column(DateTime, nullable=False)
+    # La detección de duplicados es por secretaría: dos secretarías pueden reportar
+    # filas idénticas sin que una opaque la carga de la otra.
+    secretaria_codigo = Column(String(60), index=True, nullable=True)
 
 
 class Usuario(Base):
@@ -109,6 +117,11 @@ class Usuario(Base):
     email = Column(String(254), unique=True, index=True)
     password_hash = Column(String(255), nullable=False)
     fecha_registro = Column(DateTime, nullable=False)
+    # Afiliación institucional del usuario. `secretaria_codigo` es el tenant que
+    # aísla sus datos; `departamento` y `secretaria` guardan el nombre visible.
+    departamento = Column(String(100), nullable=True)
+    secretaria = Column(String(150), nullable=True)
+    secretaria_codigo = Column(String(60), index=True, nullable=True)
 
 
 # --- Tablas de catálogo ---
@@ -274,14 +287,18 @@ class DatosSociodemograficos(Base):
     __tablename__ = 'datos_sociodemograficos'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    caso_morbilidad_id = Column(Integer, ForeignKey('caso_morbilidad.id_caso'), nullable=True)
-    caso_mortalidad_id = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), nullable=True)
-    id_zona_residencia = Column(Integer, ForeignKey('cat_zona_residencia.id'), nullable=True)
+    caso_morbilidad_id = Column(Integer, ForeignKey(
+        'caso_morbilidad.id_caso'), nullable=True)
+    caso_mortalidad_id = Column(Integer, ForeignKey(
+        'caso_mortalidad.id_caso'), nullable=True)
+    id_zona_residencia = Column(Integer, ForeignKey(
+        'cat_zona_residencia.id'), nullable=True)
     id_poblacion_vulnerable = Column(
         Integer, ForeignKey('cat_poblacion_vulnerable.id'), nullable=True
     )
     id_etnia = Column(Integer, ForeignKey('cat_etnia.id'), nullable=True)
-    id_tipo_afiliacion = Column(Integer, ForeignKey('cat_tipo_afiliacion.id'), nullable=True)
+    id_tipo_afiliacion = Column(Integer, ForeignKey(
+        'cat_tipo_afiliacion.id'), nullable=True)
 
 
 # --- Tablas de paciente y casos ---
@@ -292,7 +309,8 @@ class Paciente(Base):
 
     __tablename__ = 'paciente'
 
-    id_paciente = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_paciente = Column(Integer, primary_key=True,
+                         autoincrement=True, index=True)
     nombres_apellidos = Column(String(200), nullable=False)
     id_tipo_id = Column(Integer, ForeignKey('cat_tipo_id.id'))
     numero_id = Column(String(30), nullable=False)
@@ -309,6 +327,7 @@ class CasoMorbilidad(Base):
     id_paciente = Column(Integer, ForeignKey('paciente.id_paciente'))
     fecha_egreso = Column(Date, nullable=True)
     creado_en = Column(DateTime, nullable=True)
+    secretaria_codigo = Column(String(60), index=True, nullable=True)
 
 
 class Referencia(Base):
@@ -316,7 +335,8 @@ class Referencia(Base):
 
     __tablename__ = 'referencia'
 
-    id_referencia = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_referencia = Column(Integer, primary_key=True,
+                           autoincrement=True, index=True)
     id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
     remitida = Column(Boolean, nullable=False, default=False)
     institucion_ref_1 = Column(String(200), nullable=True)
@@ -329,7 +349,8 @@ class AntecedentesObstetricos(Base):
 
     __tablename__ = 'antecedentes_obstetricos'
 
-    id_antecedente = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_antecedente = Column(Integer, primary_key=True,
+                            autoincrement=True, index=True)
     id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
     num_gestaciones = Column(Integer, nullable=True)
     partos_vaginales = Column(Integer, nullable=True)
@@ -340,10 +361,12 @@ class AntecedentesObstetricos(Base):
     muertos = Column(Integer, nullable=True)
     vivos = Column(Integer, nullable=True)
     fecha_ultima_gestacion = Column(Date, nullable=True)
-    id_regulacion_fecundidad = Column(Integer, ForeignKey('cat_regulacion_fecundidad.id'))
+    id_regulacion_fecundidad = Column(
+        Integer, ForeignKey('cat_regulacion_fecundidad.id'))
     num_controles_prenatales = Column(Integer, nullable=True)
     semanas_inicio_cpn = Column(Integer, nullable=True)
-    id_terminacion_gestacion = Column(Integer, ForeignKey('cat_terminacion_gestacion.id'))
+    id_terminacion_gestacion = Column(
+        Integer, ForeignKey('cat_terminacion_gestacion.id'))
     edad_gestacional_sem = Column(Integer, nullable=True)
     momento_ocurrencia = Column(String(7), nullable=True)
     estado_recien_nacido = Column(String(6), nullable=True)
@@ -356,7 +379,8 @@ class CriteriosEnfermedad(Base):
 
     __tablename__ = 'criterios_enfermedad'
 
-    id_criterio_enf = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_criterio_enf = Column(Integer, primary_key=True,
+                             autoincrement=True, index=True)
     id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
     eclampsia = Column(Boolean, nullable=False, default=False)
     sepsis_sistemica_severa = Column(Boolean, nullable=False, default=False)
@@ -381,7 +405,8 @@ class CriteriosFallaOrganica(Base):
 
     __tablename__ = 'criterios_falla_organica'
 
-    id_criterio_falla = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_criterio_falla = Column(
+        Integer, primary_key=True, autoincrement=True, index=True)
     id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
     falla_cardiaca = Column(Boolean, nullable=False, default=False)
     falla_vascular = Column(Boolean, nullable=False, default=False)
@@ -398,7 +423,8 @@ class CriteriosManejo(Base):
 
     __tablename__ = 'criterios_manejo'
 
-    id_criterio_manejo = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_criterio_manejo = Column(
+        Integer, primary_key=True, autoincrement=True, index=True)
     id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
     ingreso_uci = Column(Boolean, nullable=False, default=False)
     cirugia_adicional = Column(Boolean, nullable=False, default=False)
@@ -417,7 +443,8 @@ class ManejoHospitalario(Base):
 
     __tablename__ = 'manejo_hospitalario'
 
-    id_manejo = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_manejo = Column(Integer, primary_key=True,
+                       autoincrement=True, index=True)
     id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
     dias_estancia_hosp = Column(Integer, nullable=True)
     dias_estancia_uci = Column(Integer, nullable=True)
@@ -433,7 +460,8 @@ class CausasMorbilidad(Base):
 
     __tablename__ = 'causas_morbilidad'
 
-    id_causa = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    id_causa = Column(Integer, primary_key=True,
+                      autoincrement=True, index=True)
     id_caso = Column(Integer, ForeignKey('caso_morbilidad.id_caso'))
     causa_principal_cie10 = Column(String(10), nullable=False)
     id_grupo_causa = Column(Integer, ForeignKey('cat_grupo_causa.id'))
@@ -455,6 +483,7 @@ class CasoMortalidad(Base):
     id_sitio_defuncion = Column(Integer, ForeignKey('cat_sitio_defuncion.id'))
     fecha_defuncion = Column(Date, nullable=True)
     creado_en = Column(DateTime, nullable=True)
+    secretaria_codigo = Column(String(60), index=True, nullable=True)
 
 
 class AntecedenteMaterno(Base):
@@ -462,11 +491,13 @@ class AntecedenteMaterno(Base):
 
     __tablename__ = 'antecedente_materno'
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey(
+        'caso_mortalidad.id_caso'), primary_key=True)
     id_convivencia = Column(Integer, ForeignKey('cat_convivencia.id'))
     otro_convivencia = Column(String(100), nullable=True)
     id_escolaridad = Column(Integer, ForeignKey('cat_escolaridad.id'))
-    id_regulacion_fec = Column(Integer, ForeignKey('cat_regulacion_fecundidad.id'))
+    id_regulacion_fec = Column(
+        Integer, ForeignKey('cat_regulacion_fecundidad.id'))
     gestaciones = Column(Integer, nullable=True)
     partos_vaginales = Column(Integer, nullable=True)
     cesareas = Column(Integer, nullable=True)
@@ -480,7 +511,8 @@ class AntecedenteRiesgo(Base):
 
     __tablename__ = 'antecedente_riesgo'
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey(
+        'caso_mortalidad.id_caso'), primary_key=True)
     sin_antecedentes = Column(Boolean, nullable=False, default=False)
     hipertension_cronica = Column(Boolean, nullable=False, default=False)
     cardiopatias = Column(Boolean, nullable=False, default=False)
@@ -500,7 +532,8 @@ class AntecedenteRiesgo(Base):
     tabaquismo = Column(Boolean, nullable=False, default=False)
     alcoholismo = Column(Boolean, nullable=False, default=False)
     sustancias_psicoactivas = Column(Boolean, nullable=False, default=False)
-    deficiencias_socioeconomicas = Column(Boolean, nullable=False, default=False)
+    deficiencias_socioeconomicas = Column(
+        Boolean, nullable=False, default=False)
     sifilis = Column(Boolean, nullable=False, default=False)
     hepatitis_b = Column(Boolean, nullable=False, default=False)
     otros_factores_riesgo = Column(Boolean, nullable=False, default=False)
@@ -513,7 +546,8 @@ class ComplicacionEmbarazo(Base):
 
     __tablename__ = 'complicacion_embarazo'
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey(
+        'caso_mortalidad.id_caso'), primary_key=True)
     preeclampsia = Column(Boolean, nullable=False, default=False)
     eclampsia = Column(Boolean, nullable=False, default=False)
     sindrome_hellp = Column(Boolean, nullable=False, default=False)
@@ -540,11 +574,13 @@ class ControlPrenatal(Base):
 
     __tablename__ = 'control_prenatal'
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey(
+        'caso_mortalidad.id_caso'), primary_key=True)
     num_cpn = Column(Integer, nullable=True)
     semana_inicio_cpn = Column(Integer, nullable=True)
     id_personal_cpn = Column(Integer, ForeignKey('cat_personal_salud.id'))
-    id_nivel_atencion_cpn = Column(Integer, ForeignKey('cat_nivel_atencion.id'))
+    id_nivel_atencion_cpn = Column(
+        Integer, ForeignKey('cat_nivel_atencion.id'))
     id_remisiones = Column(Integer, ForeignKey('cat_remisiones.id'))
     compl_feto_rn_cie10 = Column(String(10), nullable=True)
 
@@ -554,7 +590,8 @@ class AntecedentePartoPuerperio(Base):
 
     __tablename__ = 'antecedente_parto_puerperio'
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey(
+        'caso_mortalidad.id_caso'), primary_key=True)
     id_momento_muerte = Column(Integer, ForeignKey('cat_momento_muerte.id'))
     semana_gestacion_muerte = Column(Integer, nullable=True)
     fecha_parto = Column(Date, nullable=True)
@@ -562,7 +599,8 @@ class AntecedentePartoPuerperio(Base):
     id_tipo_parto = Column(Integer, ForeignKey('cat_tipo_parto.id'))
     id_atendido_por = Column(Integer, ForeignKey('cat_personal_salud.id'))
     otro_atencion_parto = Column(String(100), nullable=True)
-    id_nivel_atencion_parto = Column(Integer, ForeignKey('cat_nivel_atencion.id'))
+    id_nivel_atencion_parto = Column(
+        Integer, ForeignKey('cat_nivel_atencion.id'))
 
 
 class CausaMuerte(Base):
@@ -570,7 +608,8 @@ class CausaMuerte(Base):
 
     __tablename__ = 'causa_muerte'
 
-    id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
+    id_caso = Column(Integer, ForeignKey(
+        'caso_mortalidad.id_caso'), primary_key=True)
     causa_basica_cie10 = Column(String(10), nullable=False)
     id_fuente_causa = Column(Integer, ForeignKey('cat_fuente_causa_muerte.id'))
     demora_1 = Column(Boolean, nullable=False, default=False)
@@ -629,6 +668,7 @@ class VMorbilidadCompleta(Base):
     poblacion_vulnerable = Column(String(30), nullable=True)
     etnia = Column(String(20), nullable=True)
     tipo_afiliacion = Column(String(20), nullable=True)
+    secretaria_codigo = Column(String(60), nullable=True)
 
 
 class VMortalidadCompleta(Base):
@@ -690,3 +730,4 @@ class VMortalidadCompleta(Base):
     poblacion_vulnerable = Column(String(30), nullable=True)
     etnia = Column(String(20), nullable=True)
     tipo_afiliacion = Column(String(20), nullable=True)
+    secretaria_codigo = Column(String(60), nullable=True)

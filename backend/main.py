@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.routers import analisis, auth, sivigila
 from core.config import Config
 from db.database import Base, engine
+from db.migrations import run_migrations
 from db.models_sqlalchemy import Analisis, NarrativaIA, SivigilaImportacion, Usuario  # noqa: F401
 
 # ---------------------------------------------------------------------------
@@ -44,6 +45,12 @@ Path('media').mkdir(parents=True, exist_ok=True)
 # ---------------------------------------------------------------------------
 
 Base.metadata.create_all(bind=engine)
+
+# ---------------------------------------------------------------------------
+# Migraciones de arranque: columnas del aislamiento por secretaría y vistas
+# ---------------------------------------------------------------------------
+
+run_migrations(engine)
 
 # ---------------------------------------------------------------------------
 # Routers

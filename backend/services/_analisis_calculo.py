@@ -52,9 +52,11 @@ def calcular_completo(
         RuntimeError: Si falla el procesamiento de datos.
     """
     try:
-        df_raw = _construir_df_desde_bd(db, analisis.tipo)
+        df_raw = _construir_df_desde_bd(
+            db, analisis.tipo, analisis.secretaria_codigo)
         if df_raw is None or df_raw.empty:
-            raise ValueError(f'No hay datos en la base de datos para {analisis.tipo}')
+            raise ValueError(
+                f'No hay datos en la base de datos para {analisis.tipo}')
 
         df = _canonizar_columnas_dataframe(df_raw, analisis.tipo)
         df, limpieza = preparar_dataframe_analisis(df)
@@ -63,7 +65,8 @@ def calcular_completo(
         ultima_semana = _ultima_semana_reportada(df, analisis.tipo)
         # Se calcula ANTES de filtrar: el frontend compara contra el mes/año anterior y, con el
         # df ya filtrado, ese periodo previo siempre llegaba vacío (comparativo siempre 0).
-        distribucion_mensual = _calcular_distribucion_mensual(df, analisis.tipo)
+        distribucion_mensual = _calcular_distribucion_mensual(
+            df, analisis.tipo)
         df = _filtrar_por_fecha(df, analisis.tipo, year, month, week, day)
 
         meta: dict[str, Any] = {
@@ -138,9 +141,11 @@ def ejecutar_clustering(
         RuntimeError: Si falla el algoritmo de clustering.
     """
     try:
-        df_raw = _construir_df_desde_bd(db, analisis.tipo)
+        df_raw = _construir_df_desde_bd(
+            db, analisis.tipo, analisis.secretaria_codigo)
         if df_raw is None or df_raw.empty:
-            raise ValueError(f'No hay datos en la base de datos para {analisis.tipo}')
+            raise ValueError(
+                f'No hay datos en la base de datos para {analisis.tipo}')
 
         df, limpieza = preparar_dataframe_analisis(df_raw)
         if analisis.tipo == 'mortalidad':
@@ -186,14 +191,17 @@ def calcular_heatmap(analisis: Analisis, db: Session) -> dict[str, Any]:
         RuntimeError: Si falla el procesamiento.
     """
     try:
-        df_raw = _construir_df_desde_bd(db, analisis.tipo)
+        df_raw = _construir_df_desde_bd(
+            db, analisis.tipo, analisis.secretaria_codigo)
         if df_raw is None or df_raw.empty:
-            raise ValueError(f'No hay datos en la base de datos para {analisis.tipo}')
+            raise ValueError(
+                f'No hay datos en la base de datos para {analisis.tipo}')
 
         df, limpieza = preparar_dataframe_analisis(df_raw)
         procesador = MorbilidadProcessor(df)
         resultado: dict[str, Any] = procesador.heatmap_correlacion()
-        resultado.update({'analisis_id': analisis.id, 'limpieza_datos': limpieza})
+        resultado.update({'analisis_id': analisis.id,
+                         'limpieza_datos': limpieza})
         respuesta = _sanitize_json(resultado)
         return respuesta
     except FileNotFoundError:
@@ -261,24 +269,30 @@ def calcular_cruce(
     if analisis.tipo == 'mortalidad':
         col_clinica = variables_clinicas_mortalidad.get(var_clinica)
         if col_clinica is None:
-            raise ValueError(f'Variable clínica no válida para mortalidad: {var_clinica}')
+            raise ValueError(
+                f'Variable clínica no válida para mortalidad: {var_clinica}')
     else:
         col_clinica = variables_clinicas_morbilidad.get(var_clinica)
         if col_clinica is None:
-            raise ValueError(f'Variable clínica no válida para morbilidad: {var_clinica}')
+            raise ValueError(
+                f'Variable clínica no válida para morbilidad: {var_clinica}')
 
     try:
-        df_raw = _construir_df_desde_bd(db, analisis.tipo)
+        df_raw = _construir_df_desde_bd(
+            db, analisis.tipo, analisis.secretaria_codigo)
         if df_raw is None or df_raw.empty:
-            raise ValueError(f'No hay datos en la base de datos para {analisis.tipo}')
+            raise ValueError(
+                f'No hay datos en la base de datos para {analisis.tipo}')
 
         df = _canonizar_columnas_dataframe(df_raw, analisis.tipo)
         df, _ = preparar_dataframe_analisis(df)
 
         if col_socio not in df.columns:
-            raise ValueError(f"La columna '{col_socio}' no existe en los datos")
+            raise ValueError(
+                f"La columna '{col_socio}' no existe en los datos")
         if col_clinica not in df.columns:
-            raise ValueError(f"La columna '{col_clinica}' no existe en los datos")
+            raise ValueError(
+                f"La columna '{col_clinica}' no existe en los datos")
 
         def _agrupar_serie(valores: pd.Series, col: str) -> pd.Series:
             if 'falla' in col:
@@ -312,10 +326,12 @@ def calcular_cruce(
         df_valid = df[[col_socio, col_clinica]].copy()
         df_valid = df_valid.dropna()
         df_valid = df_valid[
-            ~df_valid[col_socio].astype(str).str.lower().isin({'', 'nan', 'none', 'null'})
+            ~df_valid[col_socio].astype(str).str.lower().isin(
+                {'', 'nan', 'none', 'null'})
         ]
         df_valid = df_valid[
-            ~df_valid[col_clinica].astype(str).str.lower().isin({'', 'nan', 'none', 'null'})
+            ~df_valid[col_clinica].astype(str).str.lower().isin(
+                {'', 'nan', 'none', 'null'})
         ]
 
         if df_valid.empty:
@@ -329,9 +345,11 @@ def calcular_cruce(
             }
 
         df_valid['socio_cat'] = _agrupar_serie(df_valid[col_socio], col_socio)
-        df_valid['clinica_cat'] = _agrupar_serie(df_valid[col_clinica], col_clinica)
+        df_valid['clinica_cat'] = _agrupar_serie(
+            df_valid[col_clinica], col_clinica)
         df_valid = df_valid[
-            ~df_valid['socio_cat'].str.lower().isin({'nan', 'none', 'null', ''})
+            ~df_valid['socio_cat'].str.lower().isin(
+                {'nan', 'none', 'null', ''})
             & ~df_valid['clinica_cat'].str.lower().isin({'nan', 'none', 'null', ''})
         ]
 
@@ -384,9 +402,11 @@ def calcular_extra_columna(analisis: Analisis, columna_idx: int, db: Session) ->
         RuntimeError: Si falla el procesamiento.
     """
     try:
-        df_raw = _construir_df_desde_bd(db, analisis.tipo)
+        df_raw = _construir_df_desde_bd(
+            db, analisis.tipo, analisis.secretaria_codigo)
         if df_raw is None or df_raw.empty:
-            raise ValueError(f'No hay datos en la base de datos para {analisis.tipo}')
+            raise ValueError(
+                f'No hay datos en la base de datos para {analisis.tipo}')
 
         df = _canonizar_columnas_dataframe(df_raw, 'mortalidad')
         df, _ = preparar_dataframe_analisis(df)

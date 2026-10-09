@@ -43,6 +43,7 @@ def buscar_historial(
     year: int | None = None,
     month: int | None = None,
     week: int | None = None,
+    secretaria_codigo: str | None = None,
 ) -> tuple[list[Analisis], int]:
     """Devuelve una página del historial de cargas aplicando búsqueda y filtros.
 
@@ -60,14 +61,18 @@ def buscar_historial(
         year: Año de la carga.
         month: Mes de la carga (1-12).
         week: Semana ISO de la carga.
+        secretaria_codigo: Tenant del usuario; limita el historial a sus propias cargas.
 
     Returns:
         Tupla (análisis de la página, ordenados por fecha de carga desc; total que cumple).
     """
-    consulta = db.query(Analisis.id, Analisis.tipo, Analisis.nombre_archivo, Analisis.fecha_carga)
+    consulta = db.query(Analisis.id, Analisis.tipo,
+                        Analisis.nombre_archivo, Analisis.fecha_carga)
+    consulta = consulta.filter(Analisis.secretaria_codigo == secretaria_codigo)
     if tipo:
         consulta = consulta.filter(Analisis.tipo == tipo)
-    filas = consulta.order_by(Analisis.fecha_carga.desc(), Analisis.id.desc()).all()
+    filas = consulta.order_by(
+        Analisis.fecha_carga.desc(), Analisis.id.desc()).all()
 
     termino = (q or '').strip().lower()
     coincidentes: list[int] = []
@@ -86,16 +91,19 @@ def buscar_historial(
         coincidentes.append(id_)
 
     total = len(coincidentes)
-    ids_pagina = coincidentes[(page - 1) * per_page : page * per_page]
+    ids_pagina = coincidentes[(page - 1) * per_page: page * per_page]
     if not ids_pagina:
         return [], total
-    por_id = {a.id: a for a in db.query(Analisis).filter(Analisis.id.in_(ids_pagina)).all()}
+    por_id = {a.id: a for a in db.query(Analisis).filter(
+        Analisis.id.in_(ids_pagina)).all()}
     return [por_id[i] for i in ids_pagina if i in por_id], total
 
 
-def anios_historial(db: Session) -> list[int]:
-    """Lista los años (más reciente primero) en los que hay cargas, para el filtro de año."""
-    fechas = db.query(Analisis.fecha_carga).all()
+def anios_historial(db: Session, secretaria_codigo: str | None = None) -> list[int]:
+    """Lista los años (más reciente primero) con cargas de la secretaría, para el filtro de año."""
+    fechas = db.query(Analisis.fecha_carga).filter(
+        Analisis.secretaria_codigo == secretaria_codigo
+    ).all()
     return sorted({periodo_de_carga(f)[0] for (f,) in fechas}, reverse=True)
 
 
@@ -130,7 +138,8 @@ def actualizar_carga(
     if fecha_carga is not None:
         if fecha_carga.tzinfo is None:
             fecha_carga = fecha_carga.replace(tzinfo=_ZONA_LOCAL)
-        analisis.fecha_carga = fecha_carga.astimezone(timezone.utc).replace(tzinfo=None)
+        analisis.fecha_carga = fecha_carga.astimezone(
+            timezone.utc).replace(tzinfo=None)
     db.commit()
     db.refresh(analisis)
     return analisis
@@ -142,7 +151,8 @@ def eliminar_carga(db: Session, analisis: Analisis) -> None:
     Los casos ya integrados a la base clínica (pacientes y casos) no se tocan.
     """
     ruta = analisis.archivo
-    db.query(NarrativaIA).filter(NarrativaIA.analisis_id == analisis.id).delete()
+    db.query(NarrativaIA).filter(
+        NarrativaIA.analisis_id == analisis.id).delete()
     db.delete(analisis)
     db.commit()
     if not ruta:

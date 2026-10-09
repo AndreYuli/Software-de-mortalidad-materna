@@ -9,7 +9,7 @@ export const REQUEST_TIMEOUT_MS = 30_000
 /** Las cargas de Excel procesan y persisten miles de filas: se les da más margen. */
 export const UPLOAD_TIMEOUT_MS = 180_000
 
-const SESSION_KEYS = ['token', 'username', 'user_email'] as const
+const SESSION_KEYS = ['token', 'username', 'user_email', 'user_secretaria'] as const
 
 /** Elimina del navegador todos los datos de la sesión. */
 export function clearSession(): void {

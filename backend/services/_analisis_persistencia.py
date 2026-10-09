@@ -83,26 +83,36 @@ _MORTALIDAD_DB_MAPPING = {
 }
 
 
-def _construir_df_desde_bd(db: Session, tipo: str) -> pd.DataFrame | None:
-    """Reconstruye el DataFrame desde la vista de BD.
+def _construir_df_desde_bd(
+    db: Session, tipo: str, secretaria_codigo: str | None
+) -> pd.DataFrame | None:
+    """Reconstruye el DataFrame desde la vista de BD, acotado a una secretaría.
 
     Args:
         db: Sesión de base de datos.
         tipo: Tipo de análisis ('mortalidad' o 'morbilidad').
+        secretaria_codigo: Tenant a filtrar; None devuelve solo los casos sin secretaría.
 
     Returns:
-        DataFrame con todos los casos de la base de datos, o None si tipo es inválido.
+        DataFrame con los casos de la secretaría, o None si tipo es inválido.
     """
     dataframe_resultado: pd.DataFrame | None = None
 
     if tipo == 'mortalidad':
-        registros = db.query(VMortalidadCompleta).order_by(VMortalidadCompleta.id_caso).all()
+        modelo = VMortalidadCompleta
         mapping = _MORTALIDAD_DB_MAPPING
     elif tipo == 'morbilidad':
-        registros = db.query(VMorbilidadCompleta).order_by(VMorbilidadCompleta.id_caso).all()
+        modelo = VMorbilidadCompleta
         mapping = _MORBILIDAD_DB_MAPPING
     else:
         return None
+
+    registros = (
+        db.query(modelo)
+        .filter(modelo.secretaria_codigo == secretaria_codigo)
+        .order_by(modelo.id_caso)
+        .all()
+    )
 
     if not registros:
         dataframe_resultado = pd.DataFrame(columns=mapping.values())
@@ -151,7 +161,8 @@ def _guardar_df_como_excel(
     upload_dir = Path('media') / 'uploads' / str(now.year) / f'{now.month:02d}'
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    safe_name = ''.join(c if c.isalnum() or c in ('.', '_', '-') else '_' for c in nombre_archivo)
+    safe_name = ''.join(c if c.isalnum() or c in (
+        '.', '_', '-') else '_' for c in nombre_archivo)
     file_path = upload_dir / safe_name
     file_path.write_bytes(contenido)
 

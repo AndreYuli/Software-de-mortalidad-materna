@@ -3,6 +3,7 @@
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import or_, select
 from sqlalchemy.orm import Session
 
 from api.dependencies import get_current_user
@@ -12,6 +13,7 @@ from db.models_sqlalchemy import (
     CasoMortalidad,
     CatTipoId,
     Paciente,
+    Usuario,
     VMorbilidadCompleta,
     VMortalidadCompleta,
 )
@@ -44,20 +46,46 @@ def _obtener_limite(limit: int | None) -> int:
     return resultado
 
 
+def _filtro_pacientes_de_secretaria(secretaria_codigo: str | None):
+    """Condición que limita un query de Paciente a los que tienen algún caso de la secretaría.
+
+    El paciente es una identidad compartida, pero solo es visible para una secretaría si
+    tiene al menos un caso (morbilidad o mortalidad) de esa secretaría.
+    """
+    morbilidad = select(CasoMorbilidad.id_paciente).where(
+        CasoMorbilidad.secretaria_codigo == secretaria_codigo
+    )
+    mortalidad = select(CasoMortalidad.id_paciente).where(
+        CasoMortalidad.secretaria_codigo == secretaria_codigo
+    )
+    return or_(Paciente.id_paciente.in_(morbilidad), Paciente.id_paciente.in_(mortalidad))
+
+
 @router.get('/resumen/')
-def resumen(db: Session = Depends(get_db)) -> dict[str, int]:
-    """Devuelve el conteo total de pacientes, casos de morbilidad y mortalidad.
+def resumen(
+    db: Session = Depends(get_db), usuario: Usuario = Depends(get_current_user)
+) -> dict[str, int]:
+    """Devuelve el conteo de pacientes y casos de la secretaría del usuario.
 
     Args:
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado; su secretaría acota los conteos.
 
     Returns:
         Diccionario con los tres conteos.
     """
+    sc = usuario.secretaria_codigo
     conteos: dict[str, int] = {
-        'pacientes': db.query(Paciente).count(),
-        'casos_morbilidad': db.query(CasoMorbilidad).count(),
-        'casos_mortalidad': db.query(CasoMortalidad).count(),
+        'pacientes': (
+            db.query(Paciente).filter(
+                _filtro_pacientes_de_secretaria(sc)).count()
+        ),
+        'casos_morbilidad': db.query(CasoMorbilidad).filter(
+            CasoMorbilidad.secretaria_codigo == sc
+        ).count(),
+        'casos_mortalidad': db.query(CasoMortalidad).filter(
+            CasoMortalidad.secretaria_codigo == sc
+        ).count(),
     }
     return conteos
 
@@ -67,6 +95,7 @@ def listar_pacientes(
     skip: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> list[PacienteResponse]:
     """Lista pacientes con su tipo de identificación.
 
@@ -74,6 +103,7 @@ def listar_pacientes(
         skip: Número de registros a omitir para paginación.
         limit: Máximo de registros a devolver (por defecto 100, máximo 500).
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado; su secretaría acota los pacientes visibles.
 
     Returns:
         Lista paginada de pacientes con datos de identificación.
@@ -82,6 +112,7 @@ def listar_pacientes(
     resultados = (
         db.query(Paciente, CatTipoId)
         .outerjoin(CatTipoId, Paciente.id_tipo_id == CatTipoId.id)
+        .filter(_filtro_pacientes_de_secretaria(usuario.secretaria_codigo))
         .order_by(Paciente.id_paciente)
         .offset(skip)
         .limit(limite)
@@ -107,6 +138,7 @@ def listar_morbilidad(
     skip: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> list[VMorbilidadResponse]:
     """Lista casos de morbilidad materna extrema desde la vista consolidada.
 
@@ -125,6 +157,7 @@ def listar_morbilidad(
     try:
         casos = (
             db.query(VMorbilidadCompleta)
+            .filter(VMorbilidadCompleta.secretaria_codigo == usuario.secretaria_codigo)
             .order_by(VMorbilidadCompleta.id_caso)
             .offset(skip)
             .limit(limite)
@@ -147,6 +180,7 @@ def listar_mortalidad(
     skip: int = Query(default=0, ge=0),
     limit: int | None = Query(default=None),
     db: Session = Depends(get_db),
+    usuario: Usuario = Depends(get_current_user),
 ) -> list[VMortalidadResponse]:
     """Lista casos de mortalidad materna desde la vista consolidada.
 
@@ -165,6 +199,7 @@ def listar_mortalidad(
     try:
         casos = (
             db.query(VMortalidadCompleta)
+            .filter(VMortalidadCompleta.secretaria_codigo == usuario.secretaria_codigo)
             .order_by(VMortalidadCompleta.id_caso)
             .offset(skip)
             .limit(limite)

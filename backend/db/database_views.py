@@ -1,4 +1,9 @@
-"""Creación de vistas SQL para morbilidad y mortalidad materna."""
+"""Creación de vistas SQL para morbilidad y mortalidad materna.
+
+Las vistas son la fuente de lectura del dashboard y del listado SIVIGILA. Se recrean
+en cada arranque (DROP + CREATE) para que siempre reflejen el esquema actual, incluida
+la columna `secretaria_codigo` que aísla los datos por secretaría (tenant).
+"""
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -20,65 +25,11 @@ def create_database_views(db: Session):
     except Exception:
         db.rollback()
 
-    sql_morbilidad = f"""
-    CREATE VIEW v_morbilidad_completa AS
-    SELECT
-        c.id_caso,
-        p.nombres_apellidos,
-        ti.codigo AS tipo_id,
-        p.numero_id,
-        p.fecha_nacimiento,
-        {edad_morbilidad} AS edad,
-        c.fecha_egreso,
-        r.remitida,
-        r.institucion_ref_1,
-        r.tiempo_remision_h,
-        a.num_gestaciones,
-        a.partos_vaginales,
-        a.cesareas,
-        a.abortos,
-        a.num_controles_prenatales,
-        a.edad_gestacional_sem,
-        tg.descripcion AS terminacion_gestacion,
-        a.estado_recien_nacido,
-        a.peso_rn_gramos,
-        ce.eclampsia,
-        ce.preeclampsia,
-        ce.hemorragia_obstetrica,
-        ce.sepsis_sistemica_severa,
-        ce.ruptura_uterina,
-        cf.falla_cardiaca,
-        cf.falla_renal,
-        cf.falla_hepatica,
-        cf.falla_respiratoria,
-        cf.falla_coagulacion,
-        cm.ingreso_uci,
-        cm.cirugia_adicional,
-        cm.transfusion,
-        cm.total_criterios,
-        mh.dias_estancia_hosp,
-        mh.dias_estancia_uci,
-        mh.unidades_transfundidas,
-        ca.causa_principal_cie10,
-        gc.descripcion AS grupo_causa
-    FROM caso_morbilidad c
-        LEFT JOIN paciente p ON p.id_paciente = c.id_paciente
-        LEFT JOIN cat_tipo_id ti ON ti.id = p.id_tipo_id
-        LEFT JOIN referencia r ON r.id_caso = c.id_caso
-        LEFT JOIN antecedentes_obstetricos a ON a.id_caso = c.id_caso
-        LEFT JOIN cat_terminacion_gestacion tg ON tg.id = a.id_terminacion_gestacion
-        LEFT JOIN criterios_enfermedad ce ON ce.id_caso = c.id_caso
-        LEFT JOIN criterios_falla_organica cf ON cf.id_caso = c.id_caso
-        LEFT JOIN criterios_manejo cm ON cm.id_caso = c.id_caso
-        LEFT JOIN manejo_hospitalario mh ON mh.id_caso = c.id_caso
-        LEFT JOIN causas_morbilidad ca ON ca.id_caso = c.id_caso
-        LEFT JOIN cat_grupo_causa gc ON gc.id = ca.id_grupo_causa;
-    """
-
     sql_mortalidad = f"""
-    CREATE VIEW v_mortalidad_completa AS
+    CREATE OR REPLACE VIEW v_mortalidad_completa AS
     SELECT
         c.id_caso,
+        c.secretaria_codigo,
         p.nombres_apellidos,
         ti.codigo AS tipo_id,
         p.numero_id,
@@ -127,7 +78,11 @@ def create_database_views(db: Session):
         cm.demora_1,
         cm.demora_2,
         cm.demora_3,
-        cm.demora_4
+        cm.demora_4,
+        zr.descripcion AS zona_residencia,
+        pv.descripcion AS poblacion_vulnerable,
+        et.descripcion AS etnia,
+        ta.descripcion AS tipo_afiliacion
     FROM caso_mortalidad c
         LEFT JOIN paciente p ON p.id_paciente = c.id_paciente
         LEFT JOIN cat_tipo_id ti ON ti.id = p.id_tipo_id
@@ -148,12 +103,82 @@ def create_database_views(db: Session):
         LEFT JOIN cat_personal_salud ps_parto ON ps_parto.id = pp.id_atendido_por
         LEFT JOIN cat_nivel_atencion na_parto ON na_parto.id = pp.id_nivel_atencion_parto
         LEFT JOIN causa_muerte cm ON cm.id_caso = c.id_caso
-        LEFT JOIN cat_fuente_causa_muerte fc ON fc.id = cm.id_fuente_causa;
+        LEFT JOIN cat_fuente_causa_muerte fc ON fc.id = cm.id_fuente_causa
+        LEFT JOIN datos_sociodemograficos ds ON ds.caso_mortalidad_id = c.id_caso
+        LEFT JOIN cat_zona_residencia zr ON zr.id = ds.id_zona_residencia
+        LEFT JOIN cat_poblacion_vulnerable pv ON pv.id = ds.id_poblacion_vulnerable
+        LEFT JOIN cat_etnia et ON et.id = ds.id_etnia
+        LEFT JOIN cat_tipo_afiliacion ta ON ta.id = ds.id_tipo_afiliacion;
+    """
+
+    sql_morbilidad = f"""
+    CREATE OR REPLACE VIEW v_morbilidad_completa AS
+    SELECT
+        c.id_caso,
+        c.secretaria_codigo,
+        p.nombres_apellidos,
+        ti.codigo AS tipo_id,
+        p.numero_id,
+        p.fecha_nacimiento,
+        {edad_morbilidad} AS edad,
+        c.fecha_egreso,
+        r.remitida,
+        r.institucion_ref_1,
+        r.tiempo_remision_h,
+        a.num_gestaciones,
+        a.partos_vaginales,
+        a.cesareas,
+        a.abortos,
+        a.num_controles_prenatales,
+        a.edad_gestacional_sem,
+        tg.descripcion AS terminacion_gestacion,
+        a.estado_recien_nacido,
+        a.peso_rn_gramos,
+        ce.eclampsia,
+        ce.preeclampsia,
+        ce.hemorragia_obstetrica,
+        ce.sepsis_sistemica_severa,
+        ce.ruptura_uterina,
+        cf.falla_cardiaca,
+        cf.falla_renal,
+        cf.falla_hepatica,
+        cf.falla_respiratoria,
+        cf.falla_coagulacion,
+        cm.ingreso_uci,
+        cm.cirugia_adicional,
+        cm.transfusion,
+        cm.total_criterios,
+        mh.dias_estancia_hosp,
+        mh.dias_estancia_uci,
+        mh.unidades_transfundidas,
+        ca.causa_principal_cie10,
+        gc.descripcion AS grupo_causa,
+        zr.descripcion AS zona_residencia,
+        pv.descripcion AS poblacion_vulnerable,
+        et.descripcion AS etnia,
+        ta.descripcion AS tipo_afiliacion
+    FROM caso_morbilidad c
+        LEFT JOIN paciente p ON p.id_paciente = c.id_paciente
+        LEFT JOIN cat_tipo_id ti ON ti.id = p.id_tipo_id
+        LEFT JOIN referencia r ON r.id_caso = c.id_caso
+        LEFT JOIN antecedentes_obstetricos a ON a.id_caso = c.id_caso
+        LEFT JOIN cat_terminacion_gestacion tg ON tg.id = a.id_terminacion_gestacion
+        LEFT JOIN criterios_enfermedad ce ON ce.id_caso = c.id_caso
+        LEFT JOIN criterios_falla_organica cf ON cf.id_caso = c.id_caso
+        LEFT JOIN criterios_manejo cm ON cm.id_caso = c.id_caso
+        LEFT JOIN manejo_hospitalario mh ON mh.id_caso = c.id_caso
+        LEFT JOIN causas_morbilidad ca ON ca.id_caso = c.id_caso
+        LEFT JOIN cat_grupo_causa gc ON gc.id = ca.id_grupo_causa
+        LEFT JOIN datos_sociodemograficos ds ON ds.caso_morbilidad_id = c.id_caso
+        LEFT JOIN cat_zona_residencia zr ON zr.id = ds.id_zona_residencia
+        LEFT JOIN cat_poblacion_vulnerable pv ON pv.id = ds.id_poblacion_vulnerable
+        LEFT JOIN cat_etnia et ON et.id = ds.id_etnia
+        LEFT JOIN cat_tipo_afiliacion ta ON ta.id = ds.id_tipo_afiliacion;
     """
 
     try:
-        db.execute(text(sql_morbilidad))
         db.execute(text(sql_mortalidad))
+        db.execute(text(sql_morbilidad))
         db.commit()
         print('Vistas de base de datos creadas/actualizadas correctamente.')
     except Exception as e:

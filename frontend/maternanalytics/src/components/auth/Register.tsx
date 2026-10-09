@@ -1,63 +1,92 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, Lock, Mail, User } from 'lucide-react'
-import { API_URL, describeNetworkError, extractErrorMessage, fetchWithTimeout } from '../../api'
-import { registerSchema, type RegisterFormValues } from '../../validation/registerSchema'
-import AuthCard from './AuthCard'
-import AuthField from './AuthField'
-import AuthNotice from './AuthNotice'
-import { authButtonClass, authLinkClass } from './authStyles'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Building2, Loader2, Lock, Mail, MapPin, User } from "lucide-react";
+import {
+  API_URL,
+  describeNetworkError,
+  extractErrorMessage,
+  fetchWithTimeout,
+} from "../../api";
+import { DEPARTAMENTOS, secretariasDe } from "../../constants/authConstants";
+import {
+  registerSchema,
+  type RegisterFormValues,
+} from "../../validation/registerSchema";
+import AuthCard from "./AuthCard";
+import AuthField from "./AuthField";
+import AuthNotice from "./AuthNotice";
+import AuthSelect from "./AuthSelect";
+import { authButtonClass, authLinkClass } from "./authStyles";
 
 interface RegisterProps {
-  onRegistered?: () => void
-  onBack?: () => void
+  onRegistered?: () => void;
+  onBack?: () => void;
 }
 
 interface RegisterResponse {
-  detail?: string
-  error?: string
+  detail?: string;
+  error?: string;
 }
 
 export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
-  const navigate = useNavigate()
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
-  })
+  });
+
+  const departamento = watch("departamento");
 
   const onSubmit = async (data: RegisterFormValues) => {
-    setError('')
-    setIsLoading(true)
+    setError("");
+    setIsLoading(true);
     try {
       const res = await fetchWithTimeout(`${API_URL}/auth/register/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: data.nombre, email: data.email, password: data.password }),
-      })
-      const responseData: RegisterResponse | null = await res.json().catch(() => null)
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: data.nombre,
+          email: data.email,
+          password: data.password,
+          departamento_codigo: data.departamento,
+          secretaria_codigo: data.secretaria,
+        }),
+      });
+      const responseData: RegisterResponse | null = await res
+        .json()
+        .catch(() => null);
       if (!res.ok) {
-        setError(extractErrorMessage(responseData, 'Error al crear la cuenta.'))
-        return
+        setError(
+          extractErrorMessage(responseData, "Error al crear la cuenta."),
+        );
+        return;
       }
-      setSuccess(true)
+      setSuccess(true);
       setTimeout(() => {
-        if (onRegistered) onRegistered()
-        else navigate('/login')
-      }, 1500)
+        if (onRegistered) onRegistered();
+        else navigate("/login");
+      }, 1500);
     } catch (err) {
-      setError(describeNetworkError(err, 'No se pudo conectar al servidor. Verifica que el backend esté activo.'))
+      setError(
+        describeNetworkError(
+          err,
+          "No se pudo conectar al servidor. Verifica que el backend esté activo.",
+        ),
+      );
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <AuthCard
@@ -65,13 +94,13 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
       subtitle="Completa los datos para registrarte en la plataforma de análisis."
       footer={
         <>
-          ¿Ya tienes una cuenta?{' '}
+          ¿Ya tienes una cuenta?{" "}
           <button
             type="button"
             className={authLinkClass}
             onClick={() => {
-              if (onBack) onBack()
-              else navigate('/login')
+              if (onBack) onBack();
+              else navigate("/login");
             }}
           >
             Iniciar sesión
@@ -91,7 +120,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             icon={User}
             placeholder="Tu nombre y apellido"
             error={errors.nombre?.message}
-            registration={register('nombre')}
+            registration={register("nombre")}
           />
           <AuthField
             id="email"
@@ -100,8 +129,36 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             type="email"
             placeholder="tu.correo@institucion.gov.co"
             error={errors.email?.message}
-            registration={register('email')}
+            registration={register("email")}
           />
+          <AuthSelect
+            id="departamento"
+            label="Departamento"
+            icon={MapPin}
+            placeholder="Selecciona tu departamento"
+            error={errors.departamento?.message}
+            options={DEPARTAMENTOS.map((d) => ({
+              value: d.codigo,
+              label: d.nombre,
+            }))}
+            registration={register("departamento", {
+              onChange: () => setValue("secretaria", ""),
+            })}
+          />
+          {departamento ? (
+            <AuthSelect
+              id="secretaria"
+              label="Secretaría de salud"
+              icon={Building2}
+              placeholder="Selecciona tu secretaría de salud"
+              error={errors.secretaria?.message}
+              options={secretariasDe(departamento).map((s) => ({
+                value: s.codigo,
+                label: s.nombre,
+              }))}
+              registration={register("secretaria")}
+            />
+          ) : null}
           <AuthField
             id="password"
             label="Contraseña"
@@ -109,7 +166,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             type="password"
             placeholder="Mínimo 6 caracteres"
             error={errors.password?.message}
-            registration={register('password')}
+            registration={register("password")}
           />
           <AuthField
             id="confirmPassword"
@@ -118,17 +175,23 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             type="password"
             placeholder="Repite tu contraseña"
             error={errors.confirmPassword?.message}
-            registration={register('confirmPassword')}
+            registration={register("confirmPassword")}
           />
 
           {error && <AuthNotice variant="error">{error}</AuthNotice>}
 
-          <button type="submit" className={authButtonClass} disabled={isLoading}>
-            {isLoading && <Loader2 className="size-4 animate-spin" aria-hidden="true" />}
-            {isLoading ? 'Creando cuenta...' : 'Crear cuenta'}
+          <button
+            type="submit"
+            className={authButtonClass}
+            disabled={isLoading}
+          >
+            {isLoading && (
+              <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+            )}
+            {isLoading ? "Creando cuenta..." : "Crear cuenta"}
           </button>
         </form>
       )}
     </AuthCard>
-  )
+  );
 }

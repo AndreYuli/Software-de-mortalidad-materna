@@ -1,5 +1,6 @@
 """Tests del endpoint de chat sobre los datos de un análisis."""
 
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
@@ -16,7 +17,8 @@ from services.ia_client import IAServiceUnavailableError
 def client(db_session):
     """Client."""
     app.dependency_overrides[get_db] = lambda: db_session
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        secretaria_codigo=None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -37,7 +39,8 @@ def mock_chatear_ia():
 
 def test_chat_analisis_devuelve_404_si_analisis_no_existe(client):
     """Chat analisis devuelve 404 si analisis no existe."""
-    response = client.post('/api/analisis/999/chat/', json={'pregunta': '¿Hola?', 'historial': []})
+    response = client.post('/api/analisis/999/chat/',
+                           json={'pregunta': '¿Hola?', 'historial': []})
     assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -69,7 +72,8 @@ def test_chat_analisis_devuelve_200_con_respuesta(
         'otra_cosa': 'secreto',
     }
 
-    mock_chatear_ia.return_value = {'respuesta': 'Hubo 10 casos en enero.', 'modelo': 'qwen2.5'}
+    mock_chatear_ia.return_value = {
+        'respuesta': 'Hubo 10 casos en enero.', 'modelo': 'qwen2.5'}
 
     # Execute
     response = client.post(
@@ -85,7 +89,8 @@ def test_chat_analisis_devuelve_200_con_respuesta(
 
     # Verify
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == {'respuesta': 'Hubo 10 casos en enero.', 'modelo': 'qwen2.5'}
+    assert response.json() == {
+        'respuesta': 'Hubo 10 casos en enero.', 'modelo': 'qwen2.5'}
 
     # Verify context extraction
     mock_chatear_ia.assert_called_once()
@@ -169,7 +174,8 @@ def test_chat_analisis_incluye_severidad_fallas_y_causas_cie10_en_contexto(
             'top_causas': [{'codigo': 'O72.1', 'nombre': 'Hemorragia postparto', 'casos': 5}],
         },
     }
-    mock_chatear_ia.return_value = {'respuesta': 'Hubo 4 ingresos a UCI.', 'modelo': 'qwen2.5'}
+    mock_chatear_ia.return_value = {
+        'respuesta': 'Hubo 4 ingresos a UCI.', 'modelo': 'qwen2.5'}
 
     response = client.post(
         f'/api/analisis/{analisis.id}/chat/',

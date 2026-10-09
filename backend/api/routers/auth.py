@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from core.security import create_access_token, hash_password, verify_password
+from core.tenant import resolver_secretaria
 from db.database import get_db
 from db.models_sqlalchemy import Usuario
 from schemas.user_schema import TokenResponse, UsuarioLogin, UsuarioRegister, UsuarioResponse
@@ -37,11 +38,24 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
             detail='Ya existe una cuenta con este correo electrónico.',
         )
 
+    # La secretaría es el tenant de datos: solo se aceptan valores del catálogo
+    # controlado, nunca texto libre del cliente.
+    try:
+        departamento, secretaria, secretaria_codigo = resolver_secretaria(
+            user_in.departamento_codigo, user_in.secretaria_codigo
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
     usuario = Usuario(
         nombre=user_in.nombre,
         email=user_in.email,
         password_hash=hash_password(user_in.password),
         fecha_registro=datetime.now(timezone.utc),
+        departamento=departamento,
+        secretaria=secretaria,
+        secretaria_codigo=secretaria_codigo,
     )
     try:
         db.add(usuario)
@@ -49,7 +63,8 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
         db.refresh(usuario)
     except Exception as exc:
         db.rollback()
-        logger.exception('Error inesperado al registrar usuario en la base de datos.')
+        logger.exception(
+            'Error inesperado al registrar usuario en la base de datos.')
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail='Error interno al crear la cuenta.',
@@ -71,7 +86,8 @@ def login(credentials: UsuarioLogin, db: Session = Depends(get_db)) -> TokenResp
     Raises:
         HTTPException: 401 si las credenciales son incorrectas.
     """
-    usuario = db.query(Usuario).filter(Usuario.email == credentials.email).first()
+    usuario = db.query(Usuario).filter(
+        Usuario.email == credentials.email).first()
 
     if not usuario or not verify_password(credentials.password, usuario.password_hash):
         raise HTTPException(
@@ -86,5 +102,8 @@ def login(credentials: UsuarioLogin, db: Session = Depends(get_db)) -> TokenResp
         id=usuario.id,
         nombre=usuario.nombre,
         email=usuario.email,
+        departamento=usuario.departamento,
+        secretaria=usuario.secretaria,
+        secretaria_codigo=usuario.secretaria_codigo,
     )
     return respuesta_token

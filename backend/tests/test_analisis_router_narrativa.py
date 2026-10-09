@@ -1,6 +1,7 @@
 """Tests del endpoint GET /api/analisis/{pk}/narrativa/{tipo}/."""
 
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,7 +16,8 @@ from main import app
 def client(db_session):
     """Cliente HTTP con la dependencia de BD sobreescrita por la sesión de prueba."""
     app.dependency_overrides[get_db] = lambda: db_session
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        secretaria_codigo=None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -47,7 +49,8 @@ def test_narrativa_devuelve_503_si_ia_service_no_disponible(client, db_session, 
     analisis = _crear_analisis(db_session)
     mocker.patch(
         'api.routers.analisis.analisis_service.calcular_completo',
-        return_value={'estadisticas_basicas': {'total_casos': 5}, 'tipo': 'mortalidad'},
+        return_value={'estadisticas_basicas': {
+            'total_casos': 5}, 'tipo': 'mortalidad'},
     )
     from services.ia_client import IAServiceUnavailableError
 
@@ -56,7 +59,8 @@ def test_narrativa_devuelve_503_si_ia_service_no_disponible(client, db_session, 
         side_effect=IAServiceUnavailableError('no disponible'),
     )
 
-    response = client.get(f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
+    response = client.get(
+        f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
 
     assert response.status_code == 503
 
@@ -66,7 +70,8 @@ def test_narrativa_devuelve_200_con_narrativa_generada(client, db_session, mocke
     analisis = _crear_analisis(db_session)
     mocker.patch(
         'api.routers.analisis.analisis_service.calcular_completo',
-        return_value={'estadisticas_basicas': {'total_casos': 5}, 'tipo': 'mortalidad'},
+        return_value={'estadisticas_basicas': {
+            'total_casos': 5}, 'tipo': 'mortalidad'},
     )
     mocker.patch(
         'api.routers.analisis.narrativa_service.obtener_narrativa',
@@ -78,7 +83,8 @@ def test_narrativa_devuelve_200_con_narrativa_generada(client, db_session, mocke
         },
     )
 
-    response = client.get(f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
+    response = client.get(
+        f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
 
     assert response.status_code == 200
     body = response.json()
@@ -110,7 +116,8 @@ def test_narrativa_no_envia_columnas_identificables_a_ia_client(client, db_sessi
     client.get(f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
 
     indicadores_enviados = (
-        mock_obtener.call_args.kwargs.get('indicadores') or mock_obtener.call_args[0][3]
+        mock_obtener.call_args.kwargs.get(
+            'indicadores') or mock_obtener.call_args[0][3]
     )
     campos_prohibidos = {
         'nombres_apellidos',

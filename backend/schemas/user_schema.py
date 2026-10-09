@@ -10,17 +10,28 @@ class UsuarioRegister(BaseModel):
         nombre: Nombre completo del usuario.
         email: Correo electrónico único, normalizado a minúsculas.
         password: Contraseña en texto plano (mínimo 6 caracteres).
+        departamento_codigo: Código del departamento (ej. 'antioquia').
+        secretaria_codigo: Código de la secretaría de salud (ej. 'bello'); define el
+            tenant con el que se aíslan los datos del usuario.
     """
 
     nombre: str = Field(..., min_length=1)
     email: EmailStr
     password: str = Field(..., min_length=6)
+    departamento_codigo: str = Field(..., min_length=1)
+    secretaria_codigo: str = Field(..., min_length=1)
 
     @field_validator('nombre', mode='before')
     @classmethod
     def limpiar_nombre(cls, v: str) -> str:
         """Elimina espacios al inicio y al final del nombre."""
         return v.strip()
+
+    @field_validator('departamento_codigo', 'secretaria_codigo', mode='before')
+    @classmethod
+    def normalizar_codigo(cls, v: str) -> str:
+        """Normaliza un código de afiliación a minúsculas sin espacios extremos."""
+        return v.strip().lower()
 
     @field_validator('email', mode='before')
     @classmethod
@@ -61,6 +72,9 @@ class UsuarioResponse(BaseModel):
     id: int
     nombre: str
     email: str
+    departamento: str | None = None
+    secretaria: str | None = None
+    secretaria_codigo: str | None = None
 
 
 class TokenResponse(BaseModel):
@@ -79,3 +93,6 @@ class TokenResponse(BaseModel):
     id: int
     nombre: str
     email: str
+    departamento: str | None = None
+    secretaria: str | None = None
+    secretaria_codigo: str | None = None

@@ -1,6 +1,7 @@
 """Tests de edición y eliminación de cargas del historial."""
 
 from datetime import datetime
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -15,7 +16,8 @@ from main import app
 def client(db_session):
     """Client."""
     app.dependency_overrides[get_db] = lambda: db_session
-    app.dependency_overrides[get_current_user] = lambda: object()
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        secretaria_codigo=None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -55,14 +57,17 @@ def test_patch_corrige_nombre_y_fecha(client, carga):
 def test_patch_rechaza_nombre_vacio_y_peticion_sin_cambios(client, carga):
     """Patch rechaza nombre vacio y peticion sin cambios."""
     assert (
-        client.patch(f'/api/analisis/{carga.id}/', json={'nombre_archivo': '  '}).status_code == 422
+        client.patch(
+            f'/api/analisis/{carga.id}/', json={'nombre_archivo': '  '}).status_code == 422
     )
-    assert client.patch(f'/api/analisis/{carga.id}/', json={}).status_code == 422
+    assert client.patch(
+        f'/api/analisis/{carga.id}/', json={}).status_code == 422
 
 
 def test_patch_y_delete_404_si_no_existe(client):
     """Patch y delete 404 si no existe."""
-    assert client.patch('/api/analisis/999/', json={'nombre_archivo': 'x'}).status_code == 404
+    assert client.patch('/api/analisis/999/',
+                        json={'nombre_archivo': 'x'}).status_code == 404
     assert client.delete('/api/analisis/999/').status_code == 404
 
 

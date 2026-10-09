@@ -39,7 +39,8 @@ def test_cambio_tipo_documento_no_duplica_paciente_y_asocia_el_caso(db_session):
     db_session.add(existente)
     db_session.flush()
 
-    caches = _precargar_caches_sivigila(db_session, 'morbilidad', {'102030'}, [])
+    caches = _precargar_caches_sivigila(
+        db_session, 'morbilidad', {'102030'}, [], None)
 
     ident = {
         'tipo_obj': tipo_cc,
@@ -70,10 +71,12 @@ def test_cambio_tipo_documento_no_duplica_paciente_y_asocia_el_caso(db_session):
     assert paciente_bd.id_tipo_id == tipo_cc.id
     assert paciente_bd.id_paciente == existente.id_paciente
 
-    row_cases = _fase3_upsert_casos('morbilidad', [0], pass1_data, caches, db_session, resumen)
+    row_cases = _fase3_upsert_casos(
+        'morbilidad', [0], pass1_data, caches, db_session, resumen, 'bello')
     db_session.flush()
 
     caso, caso_creado = row_cases[0]
     assert caso_creado is True
+    assert caso.secretaria_codigo == 'bello'
     assert caso.id_paciente == paciente_bd.id_paciente
     assert db_session.query(CasoMorbilidad).count() == 1

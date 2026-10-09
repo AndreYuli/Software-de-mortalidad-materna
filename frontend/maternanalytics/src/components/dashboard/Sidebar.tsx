@@ -10,6 +10,7 @@ import {
 import type { ActiveView } from "../../hooks/navigation/useActiveView";
 import { NavItem } from "./NavItem";
 import { Avatar } from "./Avatar";
+import { SecretariaBadge } from "./SecretariaBadge";
 
 export interface FileIndicator {
   hasFile?: boolean;
@@ -26,6 +27,7 @@ export interface SidebarProps {
     username: string;
     email?: string;
     avatarLetter: string;
+    secretaria?: string;
   };
   activeView: ActiveView;
   onNavigate: (view: ActiveView) => void;
@@ -133,6 +135,10 @@ export function Sidebar({
           >
             {user.email || "VidaMaterna Analytics"}
           </small>
+          <SecretariaBadge
+            secretaria={user.secretaria}
+            className="mt-1 max-w-full"
+          />
         </div>
         <button
           type="button"

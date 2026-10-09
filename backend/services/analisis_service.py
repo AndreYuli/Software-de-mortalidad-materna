@@ -67,13 +67,16 @@ def _mensaje_error_bd(exc: Exception) -> str:
     return f'Error al guardar los datos en la base de datos: {detalle}'
 
 
-def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, Any]:
+def procesar_subida(
+    tipo: str, archivo: UploadFile, db: Session, secretaria_codigo: str | None
+) -> dict[str, Any]:
     """Valida, persiste y genera el análisis de un archivo Excel subido.
 
     Args:
         tipo: Tipo de análisis ('mortalidad' o 'morbilidad').
         archivo: Archivo Excel recibido por el endpoint.
         db: Sesión de base de datos.
+        secretaria_codigo: Tenant del usuario que sube; aísla los datos generados.
 
     Returns:
         Dict con datos del análisis creado/actualizado y resumen SIVIGILA.
@@ -107,15 +110,15 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
     # --- Fase 1: operaciones DB + preparación de datos en memoria ---
     analisis_existente = (
         db.query(Analisis)
-        .filter(Analisis.tipo == tipo)
+        .filter(Analisis.tipo == tipo, Analisis.secretaria_codigo == secretaria_codigo)
         .order_by(Analisis.fecha_carga.desc(), Analisis.id.desc())
         .first()
     )
 
     try:
         persistencia = sivigila_service.persistir_dataframe(
-            db, df_cleaned, tipo)
-        df_bd = _construir_df_desde_bd(db, tipo)
+            db, df_cleaned, tipo, secretaria_codigo)
+        df_bd = _construir_df_desde_bd(db, tipo, secretaria_codigo)
     except ValueError:
         # Error de datos del Excel (fila/columna): se devuelve tal cual como 422.
         db.rollback()
@@ -155,6 +158,7 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
             total_registros=total,
             resumen=resumen,
             fecha_carga=datetime.now(timezone.utc),
+            secretaria_codigo=secretaria_codigo,
         )
         db.add(analisis)
 
@@ -180,11 +184,12 @@ def procesar_subida(tipo: str, archivo: UploadFile, db: Session) -> dict[str, An
     return resultado_final
 
 
-def listar_unicos(db: Session) -> list[Analisis]:
-    """Devuelve el análisis más reciente de cada tipo.
+def listar_unicos(db: Session, secretaria_codigo: str | None) -> list[Analisis]:
+    """Devuelve el análisis más reciente de cada tipo para una secretaría.
 
     Args:
         db: Sesión de base de datos.
+        secretaria_codigo: Tenant del usuario; limita el listado a sus cargas.
 
     Returns:
         Lista de análisis únicos ordenados por fecha descendente.
@@ -192,12 +197,14 @@ def listar_unicos(db: Session) -> list[Analisis]:
     subq = (
         db.query(Analisis.tipo, func.max(
             Analisis.fecha_carga).label('max_fecha'))
+        .filter(Analisis.secretaria_codigo == secretaria_codigo)
         .group_by(Analisis.tipo)
         .subquery()
     )
     return (
         db.query(Analisis)
         .join(subq, (Analisis.tipo == subq.c.tipo) & (Analisis.fecha_carga == subq.c.max_fecha))
+        .filter(Analisis.secretaria_codigo == secretaria_codigo)
         .order_by(Analisis.fecha_carga.desc())
         .all()
     )
@@ -212,6 +219,7 @@ def listar_historial(
     year: int | None = None,
     month: int | None = None,
     week: int | None = None,
+    secretaria_codigo: str | None = None,
 ) -> tuple[list[Analisis], int]:
     """Devuelve el historial de análisis paginado, con búsqueda y filtros opcionales.
 
@@ -228,4 +236,4 @@ def listar_historial(
     Returns:
         Tupla (lista de análisis ordenados por fecha_carga desc, total que cumple los filtros).
     """
-    return buscar_historial(db, page, per_page, q, tipo, year, month, week)
+    return buscar_historial(db, page, per_page, q, tipo, year, month, week, secretaria_codigo)
