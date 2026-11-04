@@ -32,7 +32,7 @@ class UsuarioRegister(BaseModel):
     Attributes:
         nombre: Nombre completo del usuario.
         email: Correo electrónico único, normalizado a minúsculas.
-        password: Contraseña en texto plano (15 a 128 caracteres, sin claves comunes).
+        password: Contraseña en texto plano (8 a 128 caracteres, sin claves comunes).
         departamento_codigo: Código del departamento (ej. 'antioquia').
         secretaria_codigo: Código de la secretaría de salud (ej. 'bello'); define el
             tenant con el que se aíslan los datos del usuario.
@@ -40,7 +40,7 @@ class UsuarioRegister(BaseModel):
 
     nombre: str = Field(..., min_length=1, max_length=120)
     email: EmailStr
-    password: str = Field(..., min_length=15, max_length=128)
+    password: str = Field(..., min_length=8, max_length=128)
     departamento_codigo: str = Field(..., min_length=1)
     secretaria_codigo: str = Field(..., min_length=1)
 
@@ -66,9 +66,10 @@ class UsuarioRegister(BaseModel):
         NIST SP 800-63B-4, sección 3.1.1.2: la contraseña usada como único factor debe tener al
         menos 15 caracteres (8 sólo si es parte de autenticación multifactor, que esta app no
         tiene), se debe permitir un máximo de al menos 64 y se debe comparar contra una lista de
-        contraseñas comunes o comprometidas, sin imponer otras reglas de composición. Aquí el
-        mínimo es 15 y el máximo 128; la lista de comunes es corta y de ejemplo (limitación:
-        ampliar con una lista pública como la de contraseñas filtradas si se necesita más).
+        contraseñas comunes o comprometidas, sin imponer otras reglas de composición. Decisión
+        del equipo: mínimo 8 y máximo 128, por debajo del mínimo de la norma para un solo factor
+        (limitación declarada). La lista de comunes es corta y de ejemplo (ampliar con una lista
+        pública como la de contraseñas filtradas si se necesita más).
         """
         if v.lower() in CLAVES_COMUNES or len(set(v)) == 1:
             raise ValueError('La contraseña es demasiado común; elige otra.')

@@ -88,13 +88,13 @@ describe("Register", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("exige al menos 15 caracteres (NIST SP 800-63B-4: contraseña como único factor)", async () => {
+  it("exige al menos 8 caracteres", async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     renderRegister();
-    await fillForm("catorce-chars-x", "catorce-chars-x".slice(0, 14));
+    await fillForm("siete-7", "siete-7");
     expect(
-      await screen.findByText("La contraseña debe tener al menos 15 caracteres"),
+      await screen.findByText("La contraseña debe tener al menos 8 caracteres"),
     ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
