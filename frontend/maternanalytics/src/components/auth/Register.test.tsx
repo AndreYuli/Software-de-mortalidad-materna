@@ -28,7 +28,7 @@ function stubFetch(status: number, body: unknown) {
   );
 }
 
-async function fillForm(confirm = "secreto1") {
+async function fillForm(confirm = "secreto-de-prueba-15", clave = "secreto-de-prueba-15") {
   await userEvent.type(screen.getByLabelText("Nombre completo"), "Ana Pérez");
   await userEvent.type(
     screen.getByLabelText("Correo electrónico"),
@@ -42,7 +42,7 @@ async function fillForm(confirm = "secreto1") {
     await screen.findByLabelText("Secretaría de salud"),
     "bello",
   );
-  await userEvent.type(screen.getByLabelText("Contraseña"), "secreto1");
+  await userEvent.type(screen.getByLabelText("Contraseña"), clave);
   await userEvent.type(screen.getByLabelText("Confirmar contraseña"), confirm);
   await userEvent.click(screen.getByRole("button", { name: "Crear cuenta" }));
 }
@@ -84,6 +84,17 @@ describe("Register", () => {
     await fillForm("otra-clave");
     expect(
       await screen.findByText("Las contraseñas no coinciden."),
+    ).toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("exige al menos 15 caracteres (NIST SP 800-63B-4: contraseña como único factor)", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    renderRegister();
+    await fillForm("catorce-chars-x", "catorce-chars-x".slice(0, 14));
+    expect(
+      await screen.findByText("La contraseña debe tener al menos 15 caracteres"),
     ).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });

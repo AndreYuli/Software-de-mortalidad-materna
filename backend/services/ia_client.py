@@ -32,7 +32,7 @@ def generar_narrativa(
             rechaza la conexión o devuelve un status distinto de 200.
     """
     try:
-        with httpx.Client(timeout=35.0) as client:
+        with httpx.Client(timeout=Config.ia_timeout_s) as client:
             response = client.post(
                 f'{Config.ia_service_url}/generar-narrativa',
                 json={

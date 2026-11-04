@@ -11,7 +11,7 @@ export const registerSchema = z
     email: z.string().email('Formato de correo inválido'),
     password: z
       .string()
-      .min(8, 'La contraseña debe tener al menos 8 caracteres')
+      .min(15, 'La contraseña debe tener al menos 15 caracteres')
       .max(128, 'La contraseña no puede superar 128 caracteres'),
     confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
     departamento: z.string().min(1, 'Selecciona tu departamento'),

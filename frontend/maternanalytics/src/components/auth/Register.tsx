@@ -164,7 +164,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             label="Contraseña"
             icon={Lock}
             type="password"
-            placeholder="Mínimo 8 caracteres"
+            placeholder="Mínimo 15 caracteres"
             error={errors.password?.message}
             registration={register("password")}
           />

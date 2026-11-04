@@ -58,6 +58,13 @@ describe('Login', () => {
     expect(localStorage.getItem('token')).toBeNull()
   })
 
+  it('muestra el aviso de bloqueo temporal cuando el servidor responde 429', async () => {
+    stubFetch(429, { detail: 'Demasiados intentos fallidos. Inténtalo de nuevo en unos 15 minutos.' })
+    renderLogin()
+    await fillAndSubmit()
+    expect(await screen.findByText(/demasiados intentos fallidos/i)).toBeInTheDocument()
+  })
+
   it('muestra el aviso informativo al pulsar "¿Olvidaste tu contraseña?"', async () => {
     renderLogin()
     await userEvent.click(screen.getByRole('button', { name: /olvidaste/i }))

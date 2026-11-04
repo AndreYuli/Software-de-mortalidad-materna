@@ -32,15 +32,16 @@ def _registrar(client, **cambios):
 
 
 @pytest.mark.parametrize(
-    'clave', ['12345', '1234567', '123456', 'aaaaaa', 'password', '12345678', 'x' * 129]
+    'clave',
+    ['12345', '1234567', '123456', 'aaaaaa', 'password', '12345678', 'abcdefghijklmn', 'x' * 129],
 )
 def test_registro_rechaza_claves_debiles(client, clave):
-    """Mínimo 8 caracteres, máximo 128 y sin claves comunes (NIST SP 800-63B)."""
+    """Mínimo 15 caracteres (14 se rechaza), máximo 128 y sin claves comunes (NIST SP 800-63B-4)."""
     assert _registrar(client, password=clave).status_code == 422
 
 
 def test_registro_acepta_clave_valida(client):
-    """Una clave de 8+ caracteres no común se acepta."""
+    """Una clave de 15+ caracteres no común se acepta."""
     assert _registrar(client).status_code == 201
 
 

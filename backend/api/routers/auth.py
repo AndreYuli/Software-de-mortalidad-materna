@@ -1,6 +1,7 @@
 """Endpoints de autenticación: registro e inicio de sesión."""
 
 import logging
+import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -15,6 +16,36 @@ from schemas.user_schema import TokenResponse, UsuarioLogin, UsuarioRegister, Us
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix='/api/auth', tags=['auth'])
+
+# Límite de intentos fallidos por correo (NIST SP 800-63B-4, 3.1.1.2: "SHALL implement a
+# rate-limiting mechanism"; 3.2.2 fija como tope 100 intentos y permite uno menor).
+# ponytail: contador en memoria por proceso; con varios workers cada uno cuenta aparte.
+# Pasar a una tabla o a Redis si se despliega con más de un worker.
+MAX_INTENTOS_FALLIDOS = 10
+VENTANA_BLOQUEO_S = 15 * 60
+_intentos_fallidos: dict[str, tuple[int, float]] = {}  # correo -> (fallos, inicio de ventana)
+
+# Hash falso para gastar el mismo tiempo que un correo real y no revelar qué cuentas existen.
+_HASH_FALSO = hash_password('contraseña-que-nadie-usa')
+
+
+def reiniciar_intentos_fallidos() -> None:
+    """Vacía el contador de intentos fallidos (lo usan las pruebas)."""
+    _intentos_fallidos.clear()
+
+
+def _bloqueado(email: str) -> bool:
+    """True si el correo agotó sus intentos y la ventana de bloqueo sigue vigente."""
+    fallos, inicio = _intentos_fallidos.get(email, (0, 0.0))
+    if fallos and time.monotonic() - inicio > VENTANA_BLOQUEO_S:
+        _intentos_fallidos.pop(email, None)
+        return False
+    return fallos >= MAX_INTENTOS_FALLIDOS
+
+
+def _registrar_fallo(email: str) -> None:
+    fallos, inicio = _intentos_fallidos.get(email, (0, time.monotonic()))
+    _intentos_fallidos[email] = (fallos + 1, inicio)
 
 
 @router.post('/register/', response_model=UsuarioResponse, status_code=status.HTTP_201_CREATED)
@@ -45,8 +76,7 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
             user_in.departamento_codigo, user_in.secretaria_codigo
         )
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
     usuario = Usuario(
         nombre=user_in.nombre,
@@ -63,8 +93,7 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
         db.refresh(usuario)
     except Exception as exc:
         db.rollback()
-        logger.exception(
-            'Error inesperado al registrar usuario en la base de datos.')
+        logger.exception('Error inesperado al registrar usuario en la base de datos.')
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail='Error interno al crear la cuenta.',
@@ -85,16 +114,26 @@ def login(credentials: UsuarioLogin, db: Session = Depends(get_db)) -> TokenResp
 
     Raises:
         HTTPException: 401 si las credenciales son incorrectas.
+        HTTPException: 429 tras 10 intentos fallidos seguidos del mismo correo.
     """
-    usuario = db.query(Usuario).filter(
-        Usuario.email == credentials.email).first()
+    if _bloqueado(credentials.email):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail='Demasiados intentos fallidos. Inténtalo de nuevo en unos 15 minutos.',
+        )
 
-    if not usuario or not verify_password(credentials.password, usuario.password_hash):
+    usuario = db.query(Usuario).filter(Usuario.email == credentials.email).first()
+    hash_a_verificar = usuario.password_hash if usuario else _HASH_FALSO
+    clave_valida = verify_password(credentials.password, hash_a_verificar)
+
+    if not usuario or not clave_valida:
+        _registrar_fallo(credentials.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail='Correo o contraseña incorrectos.',
         )
 
+    _intentos_fallidos.pop(credentials.email, None)
     token = create_access_token(data={'sub': str(usuario.id)})
     respuesta_token = TokenResponse(
         access_token=token,
