@@ -1,0 +1,24 @@
+Relevancia bibliográfica de las variables (N = 30 artículos)
+Puntaje = límite inferior del IC 95 % de Wilson de la frecuencia. No mide asociación estadística.
+
+ #  Variable                                               k/N       f         IC 95 %  Fichas
+ 1  Edad de la mujer/participante                        21/30   70.0%    [52.1; 83.3]  ambos
+ 2  Mortalidad materna, varias mediciones específicas    11/30   36.7%    [21.9; 54.5]  ambos
+ 3  Atención prenatal                                     7/30   23.3%    [11.8; 40.9]  ambos
+ 4  Nivel educativo de la mujer                           7/30   23.3%    [11.8; 40.9]  550
+ 5  Paridad                                               7/30   23.3%    [11.8; 40.9]  ambos
+ 6  Gravidez/número de embarazos                          6/30   20.0%     [9.5; 37.3]  ambos
+ 7  Raza/etnia de la mujer                                6/30   20.0%     [9.5; 37.3]  ambos
+ 8  Edad gestacional                                      5/30   16.7%     [7.3; 33.6]  ambos
+ 9  Tipo de seguro de salud                               5/30   16.7%     [7.3; 33.6]  ambos
+10  Ingresos del hogar                                    3/30   10.0%     [3.5; 25.6]  ninguno
+11  Área de residencia (rural/urbana)                     3/30   10.0%     [3.5; 25.6]  ambos
+12  Índice de riqueza del hogar                           3/30   10.0%     [3.5; 25.6]  ninguno
+13  Comorbilidades                                        2/30    6.7%     [1.8; 21.3]  ambos
+14  Enfermedad cardiovascular                             2/30    6.7%     [1.8; 21.3]  ambos
+15  Preeclampsia                                          2/30    6.7%     [1.8; 21.3]  ambos
+16  Presión arterial elevada                              2/30    6.7%     [1.8; 21.3]  ninguno
+17  Índice de masa corporal — IMC                         2/30    6.7%     [1.8; 21.3]  ninguno
+18  Abortos previos                                       1/30    3.3%     [0.6; 16.7]  ambos
+19  Cesárea previa                                        1/30    3.3%     [0.6; 16.7]  ambos
+20  Educación de la pareja                                1/30    3.3%     [0.6; 16.7]  ninguno
