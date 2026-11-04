@@ -21,7 +21,7 @@ import AuthSelect from "./AuthSelect";
 import { authButtonClass, authLinkClass } from "./authStyles";
 
 interface RegisterProps {
-  onRegistered?: () => void;
+  onRegistered?: (email?: string) => void;
   onBack?: () => void;
 }
 
@@ -43,6 +43,14 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      nombre: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      departamento: "",
+      secretaria: "",
+    },
   });
 
   const departamento = useWatch({ control, name: "departamento" });
@@ -73,8 +81,8 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
       }
       setSuccess(true);
       setTimeout(() => {
-        if (onRegistered) onRegistered();
-        else navigate("/login");
+        if (onRegistered) onRegistered(data.email);
+        else navigate("/login", { state: { registeredEmail: data.email, justRegistered: true } });
       }, 1500);
     } catch (err) {
       setError(
@@ -164,7 +172,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             label="Contraseña"
             icon={Lock}
             type="password"
-            placeholder="Mínimo 6 caracteres"
+            placeholder="Mínimo 8 caracteres"
             error={errors.password?.message}
             registration={register("password")}
           />

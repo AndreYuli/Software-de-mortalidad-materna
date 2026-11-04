@@ -8,7 +8,7 @@ describe('extractErrorMessage', () => {
 
   it('toma el primer msg cuando detail es la lista de un 422', () => {
     expect(extractErrorMessage({ detail: [{ msg: 'value is not a valid email' }] }, 'x')).toBe(
-      'value is not a valid email',
+      'El correo electrónico no es válido. Usa un correo institucional válido, por ejemplo tu.correo@institucion.gov.co.',
     )
   })
 

@@ -74,13 +74,14 @@ export async function fetchWithTimeout(
  * Extrae un mensaje legible del cuerpo de error de FastAPI. `detail` puede ser
  * un string (HTTPException) o una lista de objetos (422 de validación): renderizar
  * la lista tal cual en React lanza una excepción y deja la pantalla en blanco.
+ * Los errores de email de Pydantic llegan en inglés: se traducen a español.
  */
 export function extractErrorMessage(body: unknown, fallback: string): string {
   const detail = (body as { detail?: unknown; error?: unknown } | null)?.detail
-  if (typeof detail === 'string' && detail.trim()) return detail
+  if (typeof detail === 'string' && detail.trim()) return traducirErrorEmail(detail, detail)
   if (Array.isArray(detail) && detail.length > 0) {
     const first = detail[0] as { msg?: unknown }
-    if (typeof first?.msg === 'string') return first.msg
+    if (typeof first?.msg === 'string') return traducirErrorEmail(first.msg, fallback)
   }
   const error = (body as { error?: unknown } | null)?.error
   if (typeof error === 'string' && error.trim()) return error
@@ -90,6 +91,19 @@ export function extractErrorMessage(body: unknown, fallback: string): string {
 /** Mensaje al usuario para un fallo de red (timeout vs. sin conexión). */
 export function describeNetworkError(err: unknown, fallback: string): string {
   return err instanceof Error && err.name === 'TimeoutError' ? err.message : fallback
+}
+
+/**
+ * Pydantic/EmailStr genera el error en inglés ("value is not a valid email
+ * address..."), p. ej. con dominios reservados como `.test`. El backend ya lo
+ * traduce, pero esto cubre respuestas viejas o directos del validador.
+ */
+function traducirErrorEmail(msg: string, fallback: string): string {
+  const lower = msg.toLowerCase()
+  if (lower.includes('valid email') || lower.includes('email address')) {
+    return 'El correo electrónico no es válido. Usa un correo institucional válido, por ejemplo tu.correo@institucion.gov.co.'
+  }
+  return msg.trim() ? msg : fallback
 }
 
 const NarrativaResponseSchema = z.object({
