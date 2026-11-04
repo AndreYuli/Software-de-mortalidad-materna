@@ -23,8 +23,13 @@ export interface ReportExportData {
     morbilidad: number[]
   }
   causasPrincipales: {
+    /** Códigos CIE-10 (la descripción se obtiene del catálogo). */
     causas: string[]
     valores: number[]
+    /** Evento de cada causa ('Mortalidad' | 'Morbilidad'); necesario cuando se mezclan ambos. */
+    eventos?: string[]
+    /** Porcentaje que el dashboard calcula para cada causa; si falta se calcula por evento. */
+    porcentajes?: (number | undefined)[]
   }
   demoras: {
     nombres: string[]
@@ -76,14 +81,21 @@ export function exportReportToExcel(data: ReportExportData, filename?: string) {
   XLSX.utils.book_append_sheet(wb, wsEvolucion, 'Evolución Temporal')
 
   // 3. Hoja de Causas Principales
-  const totalCausas = data.causasPrincipales.valores.reduce((a, b) => a + b, 0) || 1
-  const causasRows = data.causasPrincipales.causas.map((c, idx) => {
-    const casos = data.causasPrincipales.valores[idx] || 0
+  const { causas, valores, eventos, porcentajes } = data.causasPrincipales
+  const totalPorEvento = new Map<string, number>()
+  causas.forEach((_, i) => {
+    const ev = eventos?.[i] ?? ''
+    totalPorEvento.set(ev, (totalPorEvento.get(ev) ?? 0) + (valores[i] || 0))
+  })
+  const causasRows = causas.map((c, idx) => {
+    const casos = valores[idx] || 0
+    const pct = porcentajes?.[idx] ?? (casos / (totalPorEvento.get(eventos?.[idx] ?? '') || 1)) * 100
     return {
-      'Causa / Criterio': getCie10Description(c),
+      ...(eventos ? { Evento: eventos[idx] } : {}),
       Código: c,
+      'Causa / Criterio': getCie10Description(c),
       Casos: casos,
-      'Porcentaje (%)': `${Math.round((casos / totalCausas) * 100)}%`,
+      'Porcentaje (%)': `${pct.toFixed(1).replace('.', ',')}%`,
     }
   })
   const wsCausas = XLSX.utils.json_to_sheet(causasRows)

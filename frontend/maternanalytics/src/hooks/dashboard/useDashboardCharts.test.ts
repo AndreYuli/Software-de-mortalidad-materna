@@ -79,6 +79,13 @@ describe('useDashboardCharts — causas principales', () => {
     const { result } = renderHook(() =>
       useDashboardCharts({ segmento: 'ambos', mortalidadData: null, morbilidadData: null, filterYear: '' }),
     )
-    expect(result.current.topCausasMortalidad).toEqual({ labels: [], values: [], colors: [], total: 0 })
+    expect(result.current.topCausasMortalidad).toEqual({
+      labels: [],
+      codigos: [],
+      porcentajes: [],
+      values: [],
+      colors: [],
+      total: 0,
+    })
   })
 })

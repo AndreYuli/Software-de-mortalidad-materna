@@ -1,9 +1,17 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import * as XLSX from 'xlsx'
 import {
   exportReportToExcel,
   exportToCsv,
   ReportExportData,
 } from './reportExporter'
+
+// writeFile se reemplaza para capturar el libro sin escribir a disco; el resto de xlsx es real.
+const libros = vi.hoisted(() => [] as unknown[])
+vi.mock('xlsx', async (importOriginal) => {
+  const real = await importOriginal<typeof import('xlsx')>()
+  return { ...real, writeFile: (wb: unknown) => void libros.push(wb) }
+})
 
 describe('reportExporter', () => {
   const mockReportData: ReportExportData = {
@@ -50,5 +58,48 @@ describe('reportExporter', () => {
     expect(() =>
       exportToCsv('test_csv', ['Header1', 'Header2'], [['Val1', 'Val2'], [1, 2]]),
     ).not.toThrow()
+  })
+
+  describe('hoja Top Causas CIE-10 (revisión de uso, partes 4 y 6)', () => {
+    function hojaCausas(data: ReportExportData) {
+      libros.length = 0
+      exportReportToExcel(data, 'x.xlsx')
+      const libro = libros[0] as XLSX.WorkBook
+      return XLSX.utils.sheet_to_json<Record<string, string | number>>(libro.Sheets['Top Causas CIE-10'])
+    }
+
+    it('lleva el código real y su descripción en columnas separadas, no intercambiadas', () => {
+      const filas = hojaCausas(mockReportData)
+      expect(filas[0]['Código']).toBe('O14.1')
+      expect(String(filas[0]['Causa / Criterio'])).not.toMatch(/no disponible/i)
+    })
+
+    it('indica el evento y usa el porcentaje del dashboard con un decimal', () => {
+      const filas = hojaCausas({
+        ...mockReportData,
+        causasPrincipales: {
+          causas: ['O46.0', 'O14.1'],
+          valores: [16, 80],
+          eventos: ['Mortalidad', 'Morbilidad'],
+          porcentajes: [7.9, 21.35],
+        },
+      })
+      expect(filas[0]['Evento']).toBe('Mortalidad')
+      expect(filas[0]['Porcentaje (%)']).toBe('7,9%')
+      expect(filas[1]['Evento']).toBe('Morbilidad')
+      expect(filas[1]['Porcentaje (%)']).toBe('21,4%')
+    })
+
+    it('sin porcentajes calcula la participación dentro de cada evento, no sobre la mezcla', () => {
+      const filas = hojaCausas({
+        ...mockReportData,
+        causasPrincipales: {
+          causas: ['O14.1', 'O72.1', 'O14.1'],
+          valores: [50, 50, 10],
+          eventos: ['Mortalidad', 'Mortalidad', 'Morbilidad'],
+        },
+      })
+      expect(filas.map((f) => f['Porcentaje (%)'])).toEqual(['50,0%', '50,0%', '100,0%'])
+    })
   })
 })

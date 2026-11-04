@@ -129,8 +129,13 @@ export function AnalysisHomeSection({
         morbilidad: lineChartData.series.find((s) => s.name.toLowerCase().includes('morbilidad'))?.data || [],
       },
       causasPrincipales: {
-        causas: [...topCausasMortalidad.labels, ...topCausasMorbilidad.labels],
+        causas: [...topCausasMortalidad.codigos, ...topCausasMorbilidad.codigos],
         valores: [...topCausasMortalidad.values, ...topCausasMorbilidad.values],
+        eventos: [
+          ...topCausasMortalidad.codigos.map(() => 'Mortalidad'),
+          ...topCausasMorbilidad.codigos.map(() => 'Morbilidad'),
+        ],
+        porcentajes: [...topCausasMortalidad.porcentajes, ...topCausasMorbilidad.porcentajes],
       },
       demoras: {
         nombres: demorasChartData.labels,

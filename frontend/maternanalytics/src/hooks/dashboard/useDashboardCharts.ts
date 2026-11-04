@@ -71,12 +71,14 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
 
   const topCausasMortalidad = useMemo(() => {
     if (!(segmento === 'ambos' || segmento === 'mortalidad')) {
-      return { labels: [], values: [], colors: [], total: 0 }
+      return { labels: [], codigos: [], porcentajes: [], values: [], colors: [], total: 0 }
     }
     const causas = mortalidadData?.causas_cie10?.top_causas ?? []
     const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10)
     return {
       labels: sorted.map((c) => getCie10Description(c.codigo)),
+      codigos: sorted.map((c) => c.codigo),
+      porcentajes: sorted.map((c) => c.porcentaje),
       values: sorted.map((c) => c.casos),
       colors: sorted.map(() => CHART_COLORS.mortalidad),
       total: mortalidadData?.estadisticas_basicas?.total_casos ?? mortalidadData?.total_registros ?? 0,
@@ -85,12 +87,14 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
 
   const topCausasMorbilidad = useMemo(() => {
     if (!(segmento === 'ambos' || segmento === 'morbilidad')) {
-      return { labels: [], values: [], colors: [], total: 0 }
+      return { labels: [], codigos: [], porcentajes: [], values: [], colors: [], total: 0 }
     }
     const causas = morbilidadData?.causas_cie10?.top_causas ?? []
     const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10)
     return {
       labels: sorted.map((c) => getCie10Description(c.codigo)),
+      codigos: sorted.map((c) => c.codigo),
+      porcentajes: sorted.map((c) => c.porcentaje),
       values: sorted.map((c) => c.casos),
       colors: sorted.map(() => CHART_COLORS.morbilidad),
       total: morbilidadData?.estadisticas_basicas?.total_casos ?? morbilidadData?.total_registros ?? 0,
