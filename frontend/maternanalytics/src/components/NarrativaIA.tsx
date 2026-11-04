@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Loader2, RefreshCw, Sparkles } from 'lucide-react'
 import { obtenerNarrativa } from '../api'
-import type { FiltrosNarrativa, TipoNarrativa } from '../types'
+import type { FiltrosNarrativa, TipoNarrativa, VerificacionNarrativa } from '../types'
 
 interface NarrativaIAProps {
   analisisId: number
@@ -15,11 +15,12 @@ type Estado = 'idle' | 'loading' | 'success' | 'unavailable' | 'error'
 const BUTTON_CLASS =
   'inline-flex items-center gap-2 rounded-lg bg-brand-magenta px-3 py-1.5 text-sm font-semibold text-white transition hover:opacity-90'
 
-// Opcional y asíncrona: no se genera nada hasta que la persona lo pide, y si el servicio de IA
-// no está disponible el bloque desaparece sin afectar al resto del dashboard.
+// Opcional y asíncrona: no se genera nada hasta que la persona lo pide. Si el servicio de IA no
+// está disponible se avisa y se permite reintentar, sin afectar al resto del dashboard.
 export default function NarrativaIA({ analisisId, tipo, titulo, filtros = {} }: NarrativaIAProps) {
   const [estado, setEstado] = useState<Estado>('idle')
   const [narrativa, setNarrativa] = useState('')
+  const [verificacion, setVerificacion] = useState<VerificacionNarrativa | undefined>()
 
   const generar = async (regenerar: boolean) => {
     setEstado('loading')
@@ -31,14 +32,13 @@ export default function NarrativaIA({ analisisId, tipo, titulo, filtros = {} }: 
         return
       }
       setNarrativa(resultado.narrativa)
+      setVerificacion(resultado.verificacion)
       setEstado('success')
     } catch (err) {
       console.error('NarrativaIA: error al obtener la narrativa', err)
       setEstado('error')
     }
   }
-
-  if (estado === 'unavailable') return null
 
   return (
     <div className="rounded-xl border border-brand-magenta/30 bg-brand-magenta/5 p-4">
@@ -63,10 +63,25 @@ export default function NarrativaIA({ analisisId, tipo, titulo, filtros = {} }: 
       {estado === 'success' && (
         <>
           <p className="text-sm leading-relaxed text-slate-700">{narrativa}</p>
+          <VerificacionAutomatica verificacion={verificacion} />
           <div className="mt-3 flex justify-end">
             <button type="button" className={BUTTON_CLASS} onClick={() => generar(true)}>
               <RefreshCw className="size-4" aria-hidden="true" />
               Regenerar
+            </button>
+          </div>
+        </>
+      )}
+
+      {estado === 'unavailable' && (
+        <>
+          <p role="status" className="text-sm text-slate-700">
+            El servicio de IA no está disponible en este momento. Intenta de nuevo más tarde.
+          </p>
+          <div className="mt-3">
+            <button type="button" className={BUTTON_CLASS} onClick={() => generar(false)}>
+              <RefreshCw className="size-4" aria-hidden="true" />
+              Reintentar
             </button>
           </div>
         </>
@@ -85,6 +100,31 @@ export default function NarrativaIA({ analisisId, tipo, titulo, filtros = {} }: 
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+/** Resultado de la verificación automática; deja claro que no es una validación clínica. */
+function VerificacionAutomatica({ verificacion }: { verificacion?: VerificacionNarrativa }) {
+  if (!verificacion) return null
+  const { cifras_total, cifras_respaldadas, cifras_sin_respaldo, alertas_coherencia } = verificacion
+  return (
+    <div className="mt-3 rounded-lg bg-white/70 p-2 text-xs text-slate-600">
+      <p>
+        Verificación automática: {cifras_respaldadas} de {cifras_total} cifras coinciden con los
+        indicadores.
+        {cifras_sin_respaldo.length > 0 && <> No respaldadas: {cifras_sin_respaldo.join(', ')}.</>}
+      </p>
+      {alertas_coherencia.length > 0 && (
+        <ul className="mt-1 list-disc pl-4 text-amber-800">
+          {alertas_coherencia.map((alerta) => (
+            <li key={alerta}>{alerta}</li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-1">
+        Esto no es una validación clínica: el texto requiere revisión del equipo de vigilancia.
+      </p>
     </div>
   )
 }

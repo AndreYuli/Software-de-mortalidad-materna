@@ -132,6 +132,14 @@ const NarrativaResponseSchema = z.object({
   modelo: z.string(),
   generado_en: z.string(),
   desde_cache: z.boolean(),
+  verificacion: z
+    .object({
+      cifras_total: z.number(),
+      cifras_respaldadas: z.number(),
+      cifras_sin_respaldo: z.array(z.string()),
+      alertas_coherencia: z.array(z.string()),
+    })
+    .optional(),
 })
 
 export async function obtenerNarrativa(

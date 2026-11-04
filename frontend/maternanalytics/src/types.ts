@@ -80,4 +80,13 @@ export interface NarrativaResponse {
   modelo: string
   generado_en: string
   desde_cache: boolean
+  verificacion?: VerificacionNarrativa
+}
+
+/** Verificación automática de la narrativa (cifras vs. indicadores y coherencia textual). */
+export interface VerificacionNarrativa {
+  cifras_total: number
+  cifras_respaldadas: number
+  cifras_sin_respaldo: string[]
+  alertas_coherencia: string[]
 }
