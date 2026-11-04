@@ -25,9 +25,17 @@ fallando usar `git clone --depth 1 <url>`.
 PostgreSQL ya estaba instalado y corriendo en el servidor
 (`sudo systemctl status postgresql`).
 
+> **¿El servidor ya tiene datos?** Entonces NO siga esta sección: si la base tiene la
+> estructura anterior (tablas `antecedentes_obstetricos`, `antecedente_materno`, columnas
+> `causa_asociada_2/3/4`), los datos se **migran a una base nueva** con
+> `backend/scripts/migrar_estructura_anterior.py` siguiendo [docs/MIGRACION_BD.md](docs/MIGRACION_BD.md),
+> con respaldo previo y sin modificar la base actual. **Nunca** ejecute `DROP DATABASE`
+> sobre una base con datos. El backend se niega a arrancar sobre la estructura anterior.
+
+### 2.1 Instalación nueva (servidor sin datos)
+
 ```bash
-# Crear la base (DROP/CREATE no puede ir junto con otras sentencias en -c)
-sudo -u postgres psql -d postgres -c "DROP DATABASE IF EXISTS sivigila_maternidad;"
+# Crear la base VACÍA (solo si no existe; el script no crea ni borra bases)
 sudo -u postgres psql -d postgres -c "CREATE DATABASE sivigila_maternidad ENCODING 'UTF8';"
 
 # Cargar el esquema completo
@@ -52,7 +60,15 @@ EOF
 ```
 
 El script `backend/sivigila_maternidad_postgres.sql` trae en su cabecera las
-instrucciones equivalentes para ejecutarlo desde DBeaver.
+instrucciones equivalentes para ejecutarlo desde DBeaver. Fija `SET client_encoding = 'UTF8'`:
+sin esa línea, `psql` en una consola Windows cargaba los catálogos con las tildes corruptas.
+
+### 2.2 Servidor con datos de la estructura anterior
+
+Ver [docs/MIGRACION_BD.md](docs/MIGRACION_BD.md): respaldo con `pg_dump`, base nueva
+`sivigila_maternidad_v2` creada con el script, simulación, revisión del informe, migración
+confirmada y, solo después de validar, cambio de `db_name` en `backend/.env`. La base anterior
+se conserva intacta como respaldo y referencia.
 
 ## 3. Backend (FastAPI)
 

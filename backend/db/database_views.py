@@ -10,7 +10,10 @@ from sqlalchemy.orm import Session
 
 
 def sentencias_vistas() -> list[str]:
-    """Devuelve las sentencias CREATE VIEW (mortalidad y morbilidad) del esquema actual."""
+    """Devuelve las sentencias CREATE VIEW del esquema actual.
+
+    Son tres: mortalidad, morbilidad y causas asociadas de morbilidad.
+    """
     edad_morbilidad = 'EXTRACT(YEAR FROM AGE(c.fecha_egreso, p.fecha_nacimiento))::integer'
     edad_mortalidad = 'EXTRACT(YEAR FROM AGE(c.fecha_defuncion, p.fecha_nacimiento))::integer'
 
@@ -169,7 +172,58 @@ def sentencias_vistas() -> list[str]:
         LEFT JOIN cat_tipo_afiliacion ta ON ta.id = ds.id_tipo_afiliacion;
     """
 
-    return [sql_mortalidad.strip(), sql_morbilidad.strip()]
+    # Causas asociadas: una fila por causa (1FN), con su descripción del catálogo CIE-10.
+    sql_causas_asociadas = """
+    CREATE OR REPLACE VIEW v_causa_asociada_morbilidad AS
+    SELECT
+        ca.id,
+        ca.id_caso,
+        c.secretaria_codigo,
+        ca.orden,
+        ca.cie10,
+        cie.descripcion
+    FROM causa_asociada_morbilidad ca
+        JOIN caso_morbilidad c ON c.id_caso = ca.id_caso
+        LEFT JOIN cie10 cie ON cie.codigo = ca.cie10;
+    """
+
+    return [sql_mortalidad.strip(), sql_morbilidad.strip(), sql_causas_asociadas.strip()]
+
+
+# Vistas que crea este módulo (en orden de borrado).
+VISTAS: tuple[str, ...] = (
+    'v_causa_asociada_morbilidad',
+    'v_morbilidad_completa',
+    'v_mortalidad_completa',
+)
+
+
+def _retirar_tablas_con_nombre_de_vista(db: Session) -> None:
+    """Quita una TABLA física vacía que ocupe el nombre de una vista.
+
+    Versiones anteriores registraban las vistas en el mismo `MetaData` que las tablas, así que
+    `create_all` sobre una base vacía las creaba como tablas vacías y la vista ya no se podía
+    crear. Si esa tabla tiene filas no se toca (no se borra información): se lanza un error.
+
+    Raises:
+        RuntimeError: Si una tabla con nombre de vista tiene datos.
+    """
+    for nombre in VISTAS:
+        tipo = db.execute(
+            text(
+                'SELECT c.relkind FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace '
+                'WHERE n.nspname = current_schema() AND c.relname = :n'
+            ),
+            {'n': nombre},
+        ).scalar()
+        if tipo != 'r':
+            continue
+        if db.execute(text(f'SELECT EXISTS (SELECT 1 FROM {nombre})')).scalar():
+            raise RuntimeError(
+                f'"{nombre}" es una tabla con datos y no una vista; revísela a mano antes de '
+                'arrancar (no se borra automáticamente).'
+            )
+        db.execute(text(f'DROP TABLE {nombre}'))
 
 
 def create_database_views(db: Session):
@@ -178,12 +232,17 @@ def create_database_views(db: Session):
     Args:
         db: Sesión activa de SQLAlchemy.
     """
+    if db.get_bind().dialect.name != 'postgresql':
+        return  # las vistas usan funciones de PostgreSQL (AGE, EXTRACT)
     try:
-        db.execute(text('DROP VIEW IF EXISTS v_morbilidad_completa'))
-        db.execute(text('DROP VIEW IF EXISTS v_mortalidad_completa'))
+        _retirar_tablas_con_nombre_de_vista(db)
+        for nombre in VISTAS:
+            db.execute(text(f'DROP VIEW IF EXISTS {nombre}'))
         db.commit()
-    except Exception:
+    except Exception as e:
         db.rollback()
+        print(f'Advertencia: No se pudieron preparar las vistas: {e}')
+        return
 
     try:
         for sentencia in sentencias_vistas():

@@ -50,6 +50,19 @@ Detalle y decisiones en `docs/BASE_DE_DATOS.md`; diagramas por dominio en `docs/
 - Nombres claros: `antecedentes_obstetricos` → `antecedente_obstetrico_morbilidad` y `antecedente_materno` → `antecedente_materno_mortalidad`. `api_usuario` ya no repite el nombre del departamento y de la secretaría.
 - Pruebas: back 236 aprobadas (+2 omitidas; incluye pruebas de PostgreSQL con esquema temporal), e2e 23/23 sobre una base reconstruida desde el script, carga real de 200 + 200 casos y reenvío sin duplicar.
 
+## Segunda fase: migración, integración de causas asociadas e integridad (4-nov-2026, sin commit)
+Detalle en `docs/BASE_DE_DATOS.md` y `docs/MIGRACION_BD.md`.
+- **Migración sin pérdida** desde la estructura de `main`: `backend/scripts/migrar_estructura_anterior.py` copia a una base nueva (origen en solo lectura), conserva los identificadores, normaliza los CIE-10, deja lo que no puede guardarse en `migracion_registro_pendiente`, se detiene ante CIE-10 obligatorios inexistentes (corregibles con `correcciones_cie10.csv`) o duplicados, simula sin persistir y exige respaldo verificado para confirmar.
+- La migración parcial que corría en cada arranque se quitó; el backend **se niega a arrancar** sobre la estructura anterior.
+- **Causas asociadas en todas las capas**: vista `v_causa_asociada_morbilidad`, relación ORM, `causas_asociadas` en `GET /api/sivigila/morbilidad/`, DataFrame de análisis, `analizar_causas_asociadas`, gráfico del dashboard y exportes Excel/PDF/CSV. `UNIQUE(id_caso, cie10)`; la carga rechaza con fila y columna la causa asociada repetida o igual a la principal.
+- **Integridad**: FK a `cie10` en `causa_muerte.causa_basica_cie10` y `control_prenatal.compl_feto_rn_cie10` (validadas en la carga); catálogo `cat_tipo_cirugia` en lugar del `CHECK 1..4`; institución de referencia 2 distinta de la 1 (cadena de remisión de la ficha 549).
+- **Bitácora** de las tablas hijas y de detalle, con `evento` e `id_caso`.
+- **Vistas** en un `MetaData` separado: `create_all` ya no las crea como tablas vacías; el arranque sobre una base vacía siembra los catálogos y deja el mismo esquema que el script.
+- El script SQL fija `SET client_encoding = 'UTF8'` (psql en Windows corrompía las tildes).
+- Las pruebas de PostgreSQL usan bases desechables (`VM_PG_PRUEBAS`), nunca la base de la aplicación.
+- `DEPLOY.md` ya no indica `DROP DATABASE`; separa instalación nueva y migración.
+- Pruebas: ver el informe de entrega de esta fase.
+
 ## Fuera del repositorio (en `Proyecto de grado`)
 - `CARACT_corregido (5).docx` (copia del (4); contraseña vuelve a 8) y (4) (copia del (3)), `Carta_de_Respuesta_corregida (3).docx`
 - `respuesta_a_la_matriz_de_la_asesora_3-nov_v2.txt`

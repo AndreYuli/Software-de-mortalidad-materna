@@ -17,9 +17,11 @@ from sqlalchemy import (
     Time,
     UniqueConstraint,
     func,
+    text,
 )
+from sqlalchemy.orm import relationship
 
-from db.database import Base
+from db.database import Base, VistaBase
 
 # --- Tablas maestras (catálogos controlados por la plataforma) ---
 
@@ -177,6 +179,15 @@ class Usuario(Base):
 
 
 # --- Tablas de catálogo ---
+
+
+class CatTipoCirugia(Base):
+    """Catálogo de cirugías adicionales de la ficha 549 (1 Histerectomía … 4 Otra)."""
+
+    __tablename__ = 'cat_tipo_cirugia'
+
+    id = Column(Integer, primary_key=True)
+    descripcion = Column(String(30), nullable=False)
 
 
 class CatConvivencia(Base):
@@ -403,6 +414,14 @@ class CasoMorbilidad(Base):
         String(60), ForeignKey('secretaria.codigo'), index=True, nullable=True
     )
 
+    # Causas asociadas en su orden de la ficha (1..3). Solo lectura desde el caso: la carga
+    # escribe las filas directamente (ver services/_sivigila_morbilidad._reemplazar_hijas).
+    causas_asociadas = relationship(
+        'CausaAsociadaMorbilidad',
+        order_by='CausaAsociadaMorbilidad.orden',
+        viewonly=True,
+    )
+
 
 class Referencia(Base):
     """Datos de referencia y remisión del caso de morbilidad (uno por caso)."""
@@ -416,15 +435,25 @@ class Referencia(Base):
 
 
 class ReferenciaInstitucion(Base):
-    """Institución a la que se remitió el caso (hasta 2, una fila por posición).
+    """Institución de referencia del caso (hasta 2, una fila por posición).
 
     Reemplaza a `referencia.institucion_ref_1/2` (grupo repetido, incumple 1FN).
+    Según el instructivo de la ficha 549, la 1 (5.2) es la institución desde donde fue remitida
+    la paciente y la 2 (5.3) la que la remitió **hacia la 1**: es una cadena de remisión, así que
+    una misma institución no puede ocupar las dos posiciones. El índice único compara el nombre
+    sin mayúsculas ni espacios de los extremos.
     """
 
     __tablename__ = 'referencia_institucion'
     __table_args__ = (
         UniqueConstraint('id_referencia', 'orden', name='uq_refinst_ref_orden'),
         CheckConstraint('orden BETWEEN 1 AND 2', name='chk_refinst_orden'),
+        Index(
+            'uq_refinst_ref_institucion',
+            'id_referencia',
+            func.lower(func.trim(text('institucion'))),
+            unique=True,
+        ),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -592,14 +621,14 @@ class CirugiaAdicionalMorbilidad(Base):
     """Cirugía adicional del caso (hasta 2, una fila por posición).
 
     Reemplaza a `manejo_hospitalario.cirugia_1/_cual/2/_cual` (grupo repetido, 1FN).
-    `id_tipo_cirugia`: 1=Histerectomía, 2=Laparotomía, 3=Legrado, 4=Otra (ficha 549).
+    `id_tipo_cirugia` es llave foránea a `cat_tipo_cirugia` (1 Histerectomía, 2 Laparotomía,
+    3 Legrado, 4 Otra: ficha 549).
     """
 
     __tablename__ = 'cirugia_adicional_morbilidad'
     __table_args__ = (
         UniqueConstraint('id_manejo', 'orden', name='uq_cirugia_manejo_orden'),
         CheckConstraint('orden BETWEEN 1 AND 2', name='chk_cirugia_orden'),
-        CheckConstraint('id_tipo_cirugia BETWEEN 1 AND 4', name='chk_cirugia_tipo'),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -607,7 +636,7 @@ class CirugiaAdicionalMorbilidad(Base):
         Integer, ForeignKey('manejo_hospitalario.id_manejo', ondelete='CASCADE'), nullable=False
     )
     orden = Column(SmallInteger, nullable=False)
-    id_tipo_cirugia = Column(SmallInteger, nullable=False)
+    id_tipo_cirugia = Column(Integer, ForeignKey('cat_tipo_cirugia.id'), nullable=False, index=True)
     cual = Column(String(200), nullable=True)
 
 
@@ -634,6 +663,9 @@ class CausaAsociadaMorbilidad(Base):
     __tablename__ = 'causa_asociada_morbilidad'
     __table_args__ = (
         UniqueConstraint('id_caso', 'orden', name='uq_causaaso_caso_orden'),
+        # Un mismo código no se repite como causa asociada del mismo caso. Que repita la
+        # causa principal (otra tabla) lo impide la carga, no la base (ver BASE_DE_DATOS.md).
+        UniqueConstraint('id_caso', 'cie10', name='uq_causaaso_caso_cie10'),
         CheckConstraint('orden BETWEEN 1 AND 3', name='chk_causaaso_orden'),
     )
 
@@ -756,7 +788,8 @@ class ControlPrenatal(Base):
     id_personal_cpn = Column(Integer, ForeignKey('cat_personal_salud.id'), index=True)
     id_nivel_atencion_cpn = Column(Integer, ForeignKey('cat_nivel_atencion.id'), index=True)
     id_remisiones = Column(Integer, ForeignKey('cat_remisiones.id'), nullable=False, index=True)
-    compl_feto_rn_cie10 = Column(String(10), nullable=True)
+    # Complicación del feto o recién nacido (8.6): código CIE-10 opcional del catálogo.
+    compl_feto_rn_cie10 = Column(String(10), ForeignKey('cie10.codigo'), nullable=True, index=True)
 
 
 class AntecedentePartoPuerperio(Base):
@@ -792,7 +825,7 @@ class CausaMuerte(Base):
     )
 
     id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
-    causa_basica_cie10 = Column(String(10), nullable=False, index=True)
+    causa_basica_cie10 = Column(String(10), ForeignKey('cie10.codigo'), nullable=False, index=True)
     id_fuente_causa = Column(
         Integer, ForeignKey('cat_fuente_causa_muerte.id'), nullable=False, index=True
     )
@@ -819,18 +852,26 @@ class AuditoriaCambio(Base):
     columnas_modificadas = Column(JSON, nullable=True)
     ocurrio_en = Column(DateTime, nullable=False, server_default=func.now())
     usuario_bd = Column(String(60), nullable=True)
+    # Caso al que pertenece el registro (también en las tablas hijas, que no tienen id_caso
+    # propio). Sin llave foránea a propósito: la bitácora debe sobrevivir al borrado del caso.
+    evento = Column(String(20), nullable=True)
+    id_caso = Column(Integer, nullable=True)
 
     __table_args__ = (
         CheckConstraint("operacion IN ('INSERT','UPDATE','DELETE')", name='chk_audit_operacion'),
+        CheckConstraint(
+            "evento IS NULL OR evento IN ('mortalidad','morbilidad')", name='chk_audit_evento'
+        ),
         Index('ix_auditoria_tabla_registro', 'tabla', 'registro_id'),
         Index('ix_auditoria_ocurrio_en', 'ocurrio_en'),
+        Index('ix_auditoria_evento_caso', 'evento', 'id_caso'),
     )
 
 
 # --- Vistas (solo lectura) ---
 
 
-class VMorbilidadCompleta(Base):
+class VMorbilidadCompleta(VistaBase):
     """Vista consolidada de morbilidad materna extrema (solo lectura)."""
 
     __tablename__ = 'v_morbilidad_completa'
@@ -880,7 +921,7 @@ class VMorbilidadCompleta(Base):
     secretaria_codigo = Column(String(60), nullable=True)
 
 
-class VMortalidadCompleta(Base):
+class VMortalidadCompleta(VistaBase):
     """Vista consolidada de mortalidad materna (solo lectura)."""
 
     __tablename__ = 'v_mortalidad_completa'
@@ -940,3 +981,16 @@ class VMortalidadCompleta(Base):
     etnia = Column(String(20), nullable=True)
     tipo_afiliacion = Column(String(20), nullable=True)
     secretaria_codigo = Column(String(60), nullable=True)
+
+
+class VCausaAsociadaMorbilidad(VistaBase):
+    """Vista de causas asociadas de morbilidad: una fila por causa (solo lectura)."""
+
+    __tablename__ = 'v_causa_asociada_morbilidad'
+
+    id = Column(Integer, primary_key=True)
+    id_caso = Column(Integer, nullable=False)
+    secretaria_codigo = Column(String(60), nullable=True)
+    orden = Column(SmallInteger, nullable=False)
+    cie10 = Column(String(10), nullable=False)
+    descripcion = Column(Text, nullable=True)

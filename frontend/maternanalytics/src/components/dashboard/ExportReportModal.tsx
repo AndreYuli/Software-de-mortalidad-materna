@@ -53,6 +53,17 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
           valores[i] || 0,
           porcentajes?.[i] !== undefined ? porcentajes[i]!.toFixed(1) : "",
         ]);
+        // Causas asociadas de morbilidad, identificadas en la columna Evento.
+        const asociadas = reportData.causasAsociadas;
+        asociadas?.causas.forEach((c, i) => {
+          rows.push([
+            "Morbilidad (causa asociada)",
+            c,
+            getCie10Description(c),
+            asociadas.valores[i] || 0,
+            asociadas.porcentajes?.[i] !== undefined ? asociadas.porcentajes[i]!.toFixed(1) : "",
+          ]);
+        });
         exportToCsv(
           `Causas_CIE10_${reportData.periodo.anio || "Consolidado"}`,
           headers,

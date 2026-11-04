@@ -30,7 +30,7 @@ from db.auditoria import (  # noqa: E402
     sentencias_triggers,
 )
 from db.database import Base  # noqa: E402
-from db.database_views import sentencias_vistas  # noqa: E402
+from db.database_views import VISTAS, sentencias_vistas  # noqa: E402
 
 DESTINO = RAIZ / 'sivigila_maternidad_postgres.sql'
 SEMILLAS = RAIZ / 'db' / 'semillas_catalogos.sql'
@@ -47,11 +47,11 @@ ENCABEZADO = """\
 --    2) Conectarse a ella y ejecutar este script completo.
 --  Este script no borra ni crea bases de datos.
 -- =====================================================================
+
+-- El archivo está en UTF-8. Sin esta línea, psql en Windows lo lee con la página de códigos
+-- de la consola (WIN1252) y las tildes de los catálogos quedan corruptas ('SÃ­' en vez de 'Sí').
+SET client_encoding = 'UTF8';
 """
-
-
-def _es_vista(tabla) -> bool:
-    return tabla.name.startswith('v_')
 
 
 def generar() -> str:
@@ -60,7 +60,8 @@ def generar() -> str:
     partes: list[str] = [ENCABEZADO]
 
     partes.append('-- SECCIÓN 1 · TABLAS, LLAVES Y RESTRICCIONES\n')
-    tablas = [t for t in Base.metadata.sorted_tables if not _es_vista(t)]
+    # Las vistas viven en VistaBase.metadata (db/database.py): aquí solo hay tablas.
+    tablas = list(Base.metadata.sorted_tables)
     for tabla in tablas:
         ddl = str(CreateTable(tabla).compile(dialect=dialecto)).strip().replace('%%', '%')
         partes.append(ddl + ';\n')
@@ -89,8 +90,7 @@ def generar() -> str:
     partes.append('')
 
     partes.append('-- SECCIÓN 7 · VISTAS DEL DASHBOARD\n')
-    partes.append('DROP VIEW IF EXISTS v_morbilidad_completa;')
-    partes.append('DROP VIEW IF EXISTS v_mortalidad_completa;')
+    partes.extend(f'DROP VIEW IF EXISTS {v};' for v in VISTAS)
     partes.extend(s.rstrip(';') + ';\n' for s in sentencias_vistas())
     return '\n'.join(partes).rstrip() + '\n'
 

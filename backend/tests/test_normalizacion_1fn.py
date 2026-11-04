@@ -157,20 +157,31 @@ def test_marcador_de_vacio_no_se_guarda_como_causa_asociada(db_session):
     assert db_session.query(CausaAsociadaMorbilidad).filter_by(id_caso=caso.id_caso).count() == 0
 
 
-def test_migracion_elimina_marcadores_de_vacio_ya_guardados(db_session):
-    """Los '—' que dejó la primera versión de la carga se borran en el arranque."""
-    from sqlalchemy import text
-
-    from db.migrations import SQL_LIMPIAR_MARCADORES_DE_VACIO
-
+def test_mismo_codigo_no_se_repite_como_asociada_del_caso(db_session):
+    """UNIQUE(id_caso, cie10): el mismo código no puede ser dos causas asociadas del caso."""
     caso = _caso(db_session)
     db_session.add_all(
         [
-            CausaAsociadaMorbilidad(id_caso=caso.id_caso, orden=1, cie10='—'),
+            CausaAsociadaMorbilidad(id_caso=caso.id_caso, orden=1, cie10='O721'),
             CausaAsociadaMorbilidad(id_caso=caso.id_caso, orden=2, cie10='O721'),
         ]
     )
-    db_session.flush()
-    db_session.execute(text(SQL_LIMPIAR_MARCADORES_DE_VACIO))
-    filas = db_session.query(CausaAsociadaMorbilidad).filter_by(id_caso=caso.id_caso).all()
-    assert [f.cie10 for f in filas] == ['O721']
+    with pytest.raises(IntegrityError):
+        db_session.flush()
+
+
+def test_el_caso_recupera_sus_causas_asociadas_en_orden(db_session):
+    """La relación ORM devuelve las causas asociadas del caso ordenadas por posición."""
+    caso = _caso(db_session)
+    fila = {**FILA, 'Causa asociada CIE-10': None, 'Causa asociada CIE-10.2': 'O990'}
+    _escribir(db_session, caso, fila)
+    db_session.expire(caso)
+    assert [(c.orden, c.cie10) for c in caso.causas_asociadas] == [(2, 'O721'), (3, 'O990')]
+
+
+def test_codigo_con_punto_y_minuscula_se_guarda_normalizado(db_session):
+    """'o72.1' y 'O721' son el mismo código: se guarda la forma del catálogo."""
+    caso = _caso(db_session)
+    _escribir(db_session, caso, {**FILA, 'Causa asociada CIE-10': ' o15.0 '})
+    filas = db_session.query(CausaAsociadaMorbilidad).order_by('orden').all()
+    assert [(f.orden, f.cie10) for f in filas] == [(1, 'O150'), (2, 'O721')]

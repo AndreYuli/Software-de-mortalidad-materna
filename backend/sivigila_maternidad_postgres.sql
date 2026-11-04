@@ -10,6 +10,10 @@
 --  Este script no borra ni crea bases de datos.
 -- =====================================================================
 
+-- El archivo está en UTF-8. Sin esta línea, psql en Windows lo lee con la página de códigos
+-- de la consola (WIN1252) y las tildes de los catálogos quedan corruptas ('SÃ­' en vez de 'Sí').
+SET client_encoding = 'UTF8';
+
 -- SECCIÓN 1 · TABLAS, LLAVES Y RESTRICCIONES
 
 CREATE TABLE auditoria_cambio (
@@ -20,8 +24,11 @@ CREATE TABLE auditoria_cambio (
 	columnas_modificadas JSON, 
 	ocurrio_en TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
 	usuario_bd VARCHAR(60), 
+	evento VARCHAR(20), 
+	id_caso INTEGER, 
 	CONSTRAINT pk_auditoria_cambio PRIMARY KEY (id), 
-	CONSTRAINT chk_audit_operacion CHECK (operacion IN ('INSERT','UPDATE','DELETE'))
+	CONSTRAINT chk_audit_operacion CHECK (operacion IN ('INSERT','UPDATE','DELETE')), 
+	CONSTRAINT chk_audit_evento CHECK (evento IS NULL OR evento IN ('mortalidad','morbilidad'))
 );
 
 CREATE TABLE cat_convivencia (
@@ -112,6 +119,12 @@ CREATE TABLE cat_tipo_afiliacion (
 	id SERIAL NOT NULL, 
 	descripcion VARCHAR(20) NOT NULL, 
 	CONSTRAINT pk_cat_tipo_afiliacion PRIMARY KEY (id)
+);
+
+CREATE TABLE cat_tipo_cirugia (
+	id SERIAL NOT NULL, 
+	descripcion VARCHAR(30) NOT NULL, 
+	CONSTRAINT pk_cat_tipo_cirugia PRIMARY KEY (id)
 );
 
 CREATE TABLE cat_tipo_id (
@@ -357,6 +370,7 @@ CREATE TABLE causa_asociada_morbilidad (
 	cie10 VARCHAR(10) NOT NULL, 
 	CONSTRAINT pk_causa_asociada_morbilidad PRIMARY KEY (id), 
 	CONSTRAINT uq_causaaso_caso_orden UNIQUE (id_caso, orden), 
+	CONSTRAINT uq_causaaso_caso_cie10 UNIQUE (id_caso, cie10), 
 	CONSTRAINT chk_causaaso_orden CHECK (orden BETWEEN 1 AND 3), 
 	CONSTRAINT fk_causa_asociada_morbilidad_id_caso_caso_morbilidad FOREIGN KEY(id_caso) REFERENCES caso_morbilidad (id_caso) ON DELETE CASCADE, 
 	CONSTRAINT fk_causa_asociada_morbilidad_cie10_cie10 FOREIGN KEY(cie10) REFERENCES cie10 (codigo)
@@ -373,6 +387,7 @@ CREATE TABLE causa_muerte (
 	CONSTRAINT pk_causa_muerte PRIMARY KEY (id_caso), 
 	CONSTRAINT chk_causa_cie10_valida CHECK (causa_basica_cie10 NOT LIKE 'P%' AND causa_basica_cie10 NOT IN ('8888', '9999')), 
 	CONSTRAINT fk_causa_muerte_id_caso_caso_mortalidad FOREIGN KEY(id_caso) REFERENCES caso_mortalidad (id_caso), 
+	CONSTRAINT fk_causa_muerte_causa_basica_cie10_cie10 FOREIGN KEY(causa_basica_cie10) REFERENCES cie10 (codigo), 
 	CONSTRAINT fk_causa_muerte_id_fuente_causa_cat_fuente_causa_muerte FOREIGN KEY(id_fuente_causa) REFERENCES cat_fuente_causa_muerte (id)
 );
 
@@ -423,7 +438,8 @@ CREATE TABLE control_prenatal (
 	CONSTRAINT fk_control_prenatal_id_caso_caso_mortalidad FOREIGN KEY(id_caso) REFERENCES caso_mortalidad (id_caso), 
 	CONSTRAINT fk_control_prenatal_id_personal_cpn_cat_personal_salud FOREIGN KEY(id_personal_cpn) REFERENCES cat_personal_salud (id), 
 	CONSTRAINT fk_control_prenatal_id_nivel_atencion_cpn_cat_nivel_atencion FOREIGN KEY(id_nivel_atencion_cpn) REFERENCES cat_nivel_atencion (id), 
-	CONSTRAINT fk_control_prenatal_id_remisiones_cat_remisiones FOREIGN KEY(id_remisiones) REFERENCES cat_remisiones (id)
+	CONSTRAINT fk_control_prenatal_id_remisiones_cat_remisiones FOREIGN KEY(id_remisiones) REFERENCES cat_remisiones (id), 
+	CONSTRAINT fk_control_prenatal_compl_feto_rn_cie10_cie10 FOREIGN KEY(compl_feto_rn_cie10) REFERENCES cie10 (codigo)
 );
 
 CREATE TABLE criterios_enfermedad (
@@ -543,13 +559,13 @@ CREATE TABLE cirugia_adicional_morbilidad (
 	id SERIAL NOT NULL, 
 	id_manejo INTEGER NOT NULL, 
 	orden SMALLINT NOT NULL, 
-	id_tipo_cirugia SMALLINT NOT NULL, 
+	id_tipo_cirugia INTEGER NOT NULL, 
 	cual VARCHAR(200), 
 	CONSTRAINT pk_cirugia_adicional_morbilidad PRIMARY KEY (id), 
 	CONSTRAINT uq_cirugia_manejo_orden UNIQUE (id_manejo, orden), 
 	CONSTRAINT chk_cirugia_orden CHECK (orden BETWEEN 1 AND 2), 
-	CONSTRAINT chk_cirugia_tipo CHECK (id_tipo_cirugia BETWEEN 1 AND 4), 
-	CONSTRAINT fk_cirugia_adicional_morbilidad_id_manejo_manejo_hospitalario FOREIGN KEY(id_manejo) REFERENCES manejo_hospitalario (id_manejo) ON DELETE CASCADE
+	CONSTRAINT fk_cirugia_adicional_morbilidad_id_manejo_manejo_hospitalario FOREIGN KEY(id_manejo) REFERENCES manejo_hospitalario (id_manejo) ON DELETE CASCADE, 
+	CONSTRAINT fk_cirugia_adicional_morbilidad_id_tipo_cirugia_cat_tip_4909 FOREIGN KEY(id_tipo_cirugia) REFERENCES cat_tipo_cirugia (id)
 );
 
 CREATE TABLE referencia_institucion (
@@ -565,6 +581,7 @@ CREATE TABLE referencia_institucion (
 
 -- SECCIÓN 2 · ÍNDICES
 
+CREATE INDEX ix_auditoria_evento_caso ON auditoria_cambio (evento, id_caso);
 CREATE INDEX ix_auditoria_ocurrio_en ON auditoria_cambio (ocurrio_en);
 CREATE INDEX ix_auditoria_tabla_registro ON auditoria_cambio (tabla, registro_id);
 CREATE INDEX ix_paciente_id_tipo_id ON paciente (id_tipo_id);
@@ -604,6 +621,7 @@ CREATE INDEX ix_causa_muerte_causa_basica_cie10 ON causa_muerte (causa_basica_ci
 CREATE INDEX ix_causa_muerte_id_fuente_causa ON causa_muerte (id_fuente_causa);
 CREATE INDEX ix_causas_morbilidad_causa_principal_cie10 ON causas_morbilidad (causa_principal_cie10);
 CREATE INDEX ix_causas_morbilidad_id_grupo_causa ON causas_morbilidad (id_grupo_causa);
+CREATE INDEX ix_control_prenatal_compl_feto_rn_cie10 ON control_prenatal (compl_feto_rn_cie10);
 CREATE INDEX ix_control_prenatal_id_nivel_atencion_cpn ON control_prenatal (id_nivel_atencion_cpn);
 CREATE INDEX ix_control_prenatal_id_personal_cpn ON control_prenatal (id_personal_cpn);
 CREATE INDEX ix_control_prenatal_id_remisiones ON control_prenatal (id_remisiones);
@@ -614,6 +632,8 @@ CREATE INDEX ix_datos_sociodemograficos_id_zona_residencia ON datos_sociodemogra
 CREATE UNIQUE INDEX uq_ds_caso_morb ON datos_sociodemograficos (caso_morbilidad_id);
 CREATE UNIQUE INDEX uq_ds_caso_mort ON datos_sociodemograficos (caso_mortalidad_id);
 CREATE INDEX ix_narrativa_ia_id ON narrativa_ia (id);
+CREATE INDEX ix_cirugia_adicional_morbilidad_id_tipo_cirugia ON cirugia_adicional_morbilidad (id_tipo_cirugia);
+CREATE UNIQUE INDEX uq_refinst_ref_institucion ON referencia_institucion (id_referencia, lower(trim(institucion)));
 
 -- SECCIÓN 3 · DATOS DE LOS CATÁLOGOS (tablas maestras)
 
@@ -701,6 +721,10 @@ INSERT INTO cat_tipo_afiliacion VALUES
 
 -- SECCIÓN 4 · TABLAS MAESTRAS DE AFILIACIÓN Y EVENTOS
 
+INSERT INTO cat_tipo_cirugia (id, descripcion) VALUES (1, 'Histerectomía') ON CONFLICT (id) DO UPDATE SET descripcion = EXCLUDED.descripcion;
+INSERT INTO cat_tipo_cirugia (id, descripcion) VALUES (2, 'Laparotomía') ON CONFLICT (id) DO UPDATE SET descripcion = EXCLUDED.descripcion;
+INSERT INTO cat_tipo_cirugia (id, descripcion) VALUES (3, 'Legrado') ON CONFLICT (id) DO UPDATE SET descripcion = EXCLUDED.descripcion;
+INSERT INTO cat_tipo_cirugia (id, descripcion) VALUES (4, 'Otra') ON CONFLICT (id) DO UPDATE SET descripcion = EXCLUDED.descripcion;
 INSERT INTO cat_evento (codigo, nombre) VALUES ('mortalidad', 'Mortalidad materna (ficha 550)') ON CONFLICT (codigo) DO UPDATE SET nombre = EXCLUDED.nombre;
 INSERT INTO cat_evento (codigo, nombre) VALUES ('morbilidad', 'Morbilidad materna extrema (ficha 549)') ON CONFLICT (codigo) DO UPDATE SET nombre = EXCLUDED.nombre;
 INSERT INTO departamento (codigo, nombre) VALUES ('antioquia', 'Antioquia') ON CONFLICT (codigo) DO UPDATE SET nombre = EXCLUDED.nombre;
@@ -748,14 +772,35 @@ $$;
 
 CREATE OR REPLACE FUNCTION fn_auditar() RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
-    pk   text := TG_ARGV[0];
-    reg  text;
-    cols jsonb;
+    pk     text := TG_ARGV[0];
+    evento text := NULLIF(TG_ARGV[1], '');
+    modo   text := TG_ARGV[2];
+    fila   jsonb;
+    reg    text;
+    caso   integer;
+    cols   jsonb;
 BEGIN
     IF TG_OP = 'DELETE' THEN
-        reg := to_jsonb(OLD) ->> pk;
+        fila := to_jsonb(OLD);
     ELSE
-        reg := to_jsonb(NEW) ->> pk;
+        fila := to_jsonb(NEW);
+    END IF;
+    reg := fila ->> pk;
+
+    IF modo = 'directo' THEN
+        caso := (fila ->> TG_ARGV[3])::integer;
+    ELSIF modo = 'exclusivo' THEN
+        IF fila ->> TG_ARGV[3] IS NOT NULL THEN
+            evento := 'morbilidad';
+            caso := (fila ->> TG_ARGV[3])::integer;
+        ELSE
+            evento := 'mortalidad';
+            caso := (fila ->> TG_ARGV[4])::integer;
+        END IF;
+    ELSIF modo = 'padre' THEN
+        -- Si el padre ya no existe (borrado en cascada), el caso queda NULL.
+        EXECUTE format('SELECT id_caso FROM %I WHERE %I = $1', TG_ARGV[4], TG_ARGV[5])
+            INTO caso USING (fila ->> TG_ARGV[3])::integer;
     END IF;
 
     IF TG_OP = 'UPDATE' THEN
@@ -768,8 +813,9 @@ BEGIN
         END IF;
     END IF;
 
-    INSERT INTO auditoria_cambio (tabla, registro_id, operacion, columnas_modificadas, usuario_bd)
-    VALUES (TG_TABLE_NAME, reg, TG_OP, cols::json, current_user);
+    INSERT INTO auditoria_cambio
+        (tabla, registro_id, operacion, columnas_modificadas, usuario_bd, evento, id_caso)
+    VALUES (TG_TABLE_NAME, reg, TG_OP, cols::json, current_user, evento, caso);
     RETURN NULL;
 END;
 $$;
@@ -802,26 +848,39 @@ CREATE TRIGGER trg_actualizado_en BEFORE UPDATE ON api_analisis FOR EACH ROW EXE
 DROP TRIGGER IF EXISTS trg_actualizado_en ON api_usuario;
 CREATE TRIGGER trg_actualizado_en BEFORE UPDATE ON api_usuario FOR EACH ROW EXECUTE FUNCTION fn_actualizado_en();
 DROP TRIGGER IF EXISTS trg_auditoria ON paciente;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON paciente FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_paciente');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON paciente FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_paciente', '', 'ninguno');
 DROP TRIGGER IF EXISTS trg_auditoria ON caso_morbilidad;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON caso_morbilidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON caso_morbilidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso', 'morbilidad', 'directo', 'id_caso');
 DROP TRIGGER IF EXISTS trg_auditoria ON caso_mortalidad;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON caso_mortalidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON caso_mortalidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso', 'mortalidad', 'directo', 'id_caso');
 DROP TRIGGER IF EXISTS trg_auditoria ON antecedente_obstetrico;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON antecedente_obstetrico FOR EACH ROW EXECUTE FUNCTION fn_auditar('id');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON antecedente_obstetrico FOR EACH ROW EXECUTE FUNCTION fn_auditar('id', '', 'exclusivo', 'caso_morbilidad_id', 'caso_mortalidad_id');
+DROP TRIGGER IF EXISTS trg_auditoria ON antecedente_obstetrico_morbilidad;
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON antecedente_obstetrico_morbilidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_antecedente', 'morbilidad', 'directo', 'id_caso');
+DROP TRIGGER IF EXISTS trg_auditoria ON antecedente_materno_mortalidad;
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON antecedente_materno_mortalidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso', 'mortalidad', 'directo', 'id_caso');
+DROP TRIGGER IF EXISTS trg_auditoria ON control_prenatal;
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON control_prenatal FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso', 'mortalidad', 'directo', 'id_caso');
 DROP TRIGGER IF EXISTS trg_auditoria ON causas_morbilidad;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON causas_morbilidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_causa');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON causas_morbilidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_causa', 'morbilidad', 'directo', 'id_caso');
+DROP TRIGGER IF EXISTS trg_auditoria ON causa_asociada_morbilidad;
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON causa_asociada_morbilidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id', 'morbilidad', 'directo', 'id_caso');
+DROP TRIGGER IF EXISTS trg_auditoria ON referencia_institucion;
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON referencia_institucion FOR EACH ROW EXECUTE FUNCTION fn_auditar('id', 'morbilidad', 'padre', 'id_referencia', 'referencia', 'id_referencia');
+DROP TRIGGER IF EXISTS trg_auditoria ON cirugia_adicional_morbilidad;
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON cirugia_adicional_morbilidad FOR EACH ROW EXECUTE FUNCTION fn_auditar('id', 'morbilidad', 'padre', 'id_manejo', 'manejo_hospitalario', 'id_manejo');
 DROP TRIGGER IF EXISTS trg_auditoria ON causa_muerte;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON causa_muerte FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON causa_muerte FOR EACH ROW EXECUTE FUNCTION fn_auditar('id_caso', 'mortalidad', 'directo', 'id_caso');
 DROP TRIGGER IF EXISTS trg_auditoria ON api_analisis;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON api_analisis FOR EACH ROW EXECUTE FUNCTION fn_auditar('id');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON api_analisis FOR EACH ROW EXECUTE FUNCTION fn_auditar('id', '', 'ninguno');
 DROP TRIGGER IF EXISTS trg_auditoria ON api_usuario;
-CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON api_usuario FOR EACH ROW EXECUTE FUNCTION fn_auditar('id');
+CREATE TRIGGER trg_auditoria AFTER INSERT OR UPDATE OR DELETE ON api_usuario FOR EACH ROW EXECUTE FUNCTION fn_auditar('id', '', 'ninguno');
 DROP TRIGGER IF EXISTS trg_importacion_caso ON api_sivigilaimportacion;
 CREATE TRIGGER trg_importacion_caso BEFORE INSERT OR UPDATE ON api_sivigilaimportacion FOR EACH ROW EXECUTE FUNCTION fn_importacion_caso();
 
 -- SECCIÓN 7 · VISTAS DEL DASHBOARD
 
+DROP VIEW IF EXISTS v_causa_asociada_morbilidad;
 DROP VIEW IF EXISTS v_morbilidad_completa;
 DROP VIEW IF EXISTS v_mortalidad_completa;
 CREATE OR REPLACE VIEW v_mortalidad_completa AS
@@ -974,3 +1033,15 @@ CREATE OR REPLACE VIEW v_morbilidad_completa AS
         LEFT JOIN cat_poblacion_vulnerable pv ON pv.id = ds.id_poblacion_vulnerable
         LEFT JOIN cat_etnia et ON et.id = ds.id_etnia
         LEFT JOIN cat_tipo_afiliacion ta ON ta.id = ds.id_tipo_afiliacion;
+
+CREATE OR REPLACE VIEW v_causa_asociada_morbilidad AS
+    SELECT
+        ca.id,
+        ca.id_caso,
+        c.secretaria_codigo,
+        ca.orden,
+        ca.cie10,
+        cie.descripcion
+    FROM causa_asociada_morbilidad ca
+        JOIN caso_morbilidad c ON c.id_caso = ca.id_caso
+        LEFT JOIN cie10 cie ON cie.codigo = ca.cie10;

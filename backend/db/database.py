@@ -31,6 +31,17 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=_CONVENCION_NOMBRES)
 
 
+class VistaBase(DeclarativeBase):
+    """Clase base para las VISTAS de solo lectura (`v_*`).
+
+    Tienen su propio `MetaData`, separado del de `Base`: así `Base.metadata.create_all` nunca
+    las crea como tablas físicas vacías. Las vistas las crea únicamente
+    `db.database_views.create_database_views` (y el script SQL de reconstrucción).
+    """
+
+    metadata = MetaData()
+
+
 def get_db():
     """Provee una sesión de base de datos y garantiza su cierre."""
     db = SessionLocal()

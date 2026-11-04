@@ -21,6 +21,9 @@ from db.models_sqlalchemy import (
 from services._sivigila_catalog import _resolve_catalog
 from services._sivigila_escritura import (
     _MORBILIDAD_FECHA_EGRESO_COLS,
+    _MORBILIDAD_INSTITUCION_REF_1_COLS,
+    _MORBILIDAD_INSTITUCION_REF_2_COLS,
+    _MORTALIDAD_COMPLICACIONES_FETO_COLS,
     _MORTALIDAD_FECHA_DEFUNCION_COLS,
     _MORTALIDAD_MOMENTO_MUERTE_COLS,
     _actualizar_caso_mortalidad,
@@ -105,6 +108,64 @@ def _verificar_causa_completa(
     )
 
 
+def _problemas_causas_asociadas_repetidas(row, fila: int) -> list[str]:
+    """Causas asociadas que repiten la principal u otra asociada de la misma fila.
+
+    La base impide repetir una asociada en el mismo caso (UNIQUE(id_caso, cie10)); que una
+    asociada repita la causa principal lo impide esta validación (están en tablas distintas).
+    Los códigos se comparan normalizados: 'O14.1' y 'o141' son el mismo.
+    """
+    problemas: list[str] = []
+    principal = clean_text(_get_value(row, ['Causa principal CIE-10']))
+    principal = normalizar_cie10(principal) if principal else None
+    vistas: dict[str, str] = {}
+    for columna in _COLUMNAS_CIE10_MORBILIDAD[1:]:
+        valor = limpiar_causa_asociada(_get_value(row, [columna]))
+        if not valor:
+            continue
+        codigo = normalizar_cie10(valor)
+        if principal and codigo == principal:
+            problemas.append(
+                f"Fila {fila}: la columna '{columna}' repite la causa principal ('{valor}'); "
+                'una causa asociada debe ser distinta de la principal.'
+            )
+        elif codigo in vistas:
+            problemas.append(
+                f"Fila {fila}: la columna '{columna}' repite la causa asociada '{valor}' de la "
+                f"columna '{vistas[codigo]}'."
+            )
+        else:
+            vistas[codigo] = columna
+    return problemas
+
+
+def _problemas_instituciones_repetidas(row, fila: int) -> list[str]:
+    """La institución de referencia 2 no puede ser la misma que la 1 (cadena de remisión)."""
+    nombres = [
+        clean_text(_get_value(row, cols))
+        for cols in (_MORBILIDAD_INSTITUCION_REF_1_COLS, _MORBILIDAD_INSTITUCION_REF_2_COLS)
+    ]
+    if nombres[0] and nombres[1] and nombres[0].strip().lower() == nombres[1].strip().lower():
+        return [
+            f"Fila {fila}: la columna '{_MORBILIDAD_INSTITUCION_REF_2_COLS[0]}' repite la "
+            f"institución de referencia 1 ('{nombres[1]}'); según la ficha 549, la 2 es la que "
+            'remitió a la paciente hacia la 1, así que deben ser distintas.'
+        ]
+    return []
+
+
+def _problemas_complicacion_feto(row, fila: int) -> list[str]:
+    """El CIE-10 de complicaciones del feto o del recién nacido (8.6), si se llena, existe."""
+    columna = _MORTALIDAD_COMPLICACIONES_FETO_COLS[0]
+    valor = limpiar_causa_asociada(_get_value(row, _MORTALIDAD_COMPLICACIONES_FETO_COLS))
+    if valor and not es_codigo_cie10_valido(valor):
+        return [
+            f"Fila {fila}: el código CIE-10 '{valor}' de la columna '{columna}' no existe en la "
+            'tabla de referencia CIE-10 (formato válido: P00.0 o P000; déjela vacía si no aplica).'
+        ]
+    return []
+
+
 def _verificar_reglas_de_valor(
     tipo: str,
     registros: pd.DataFrame,
@@ -137,6 +198,13 @@ def _verificar_reglas_de_valor(
                     f"Fila {fila}: el código CIE-10 '{causa}' no es una causa de muerte materna "
                     "(los que empiezan por 'P' son perinatales; 8888 y 9999 no son válidos)."
                 )
+            elif causa and not es_codigo_cie10_valido(causa):
+                problemas.append(
+                    f"Fila {fila}: el código CIE-10 '{causa}' de la columna '10.1 Causa básica "
+                    "CIE-10' no existe en la tabla de referencia CIE-10 (formato válido: O14.1 u "
+                    'O141).'
+                )
+            problemas.extend(_problemas_complicacion_feto(row, fila))
             gest = _parse_int(_get_value(row, ['6.5 Gestaciones']))
             if gest is not None and not 1 <= gest <= 20:
                 problemas.append(f'Fila {fila}: las gestaciones ({gest}) deben estar entre 1 y 20.')
@@ -153,6 +221,8 @@ def _verificar_reglas_de_valor(
                         f"Fila {fila}: el código CIE-10 '{codigo}' de la columna '{columna}' no "
                         'existe en la tabla de referencia CIE-10 (formato válido: O14.1 u O141).'
                     )
+            problemas.extend(_problemas_causas_asociadas_repetidas(row, fila))
+            problemas.extend(_problemas_instituciones_repetidas(row, fila))
             if (
                 _parse_bool(_get_value(row, ['Ingreso UCI']))
                 and _parse_int(_get_value(row, ['Días estancia UCI'])) is None

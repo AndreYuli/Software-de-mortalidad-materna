@@ -95,7 +95,7 @@ export function AnalysisHomeSection({
     )
   }, [mortalidadData, morbilidadData])
 
-  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, demorasChartData, edadChartData, severidadFallasData, morbKpis, edadGestacionalMortalidad, edadGestacionalMorbilidad, edadRiesgoMortalidad, edadRiesgoMorbilidad, sociodemograficaMortalidad, sociodemograficaMorbilidad } = useDashboardCharts({
+  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, topCausasAsociadasMorbilidad, demorasChartData, edadChartData, severidadFallasData, morbKpis, edadGestacionalMortalidad, edadGestacionalMorbilidad, edadRiesgoMortalidad, edadRiesgoMorbilidad, sociodemograficaMortalidad, sociodemograficaMorbilidad } = useDashboardCharts({
     segmento,
     mortalidadData,
     morbilidadData,
@@ -137,6 +137,13 @@ export function AnalysisHomeSection({
         ],
         porcentajes: [...topCausasMortalidad.porcentajes, ...topCausasMorbilidad.porcentajes],
       },
+      causasAsociadas: topCausasAsociadasMorbilidad
+        ? {
+            causas: topCausasAsociadasMorbilidad.codigos,
+            valores: topCausasAsociadasMorbilidad.values,
+            porcentajes: topCausasAsociadasMorbilidad.porcentajes,
+          }
+        : undefined,
       demoras: {
         nombres: demorasChartData.labels,
         valores: demorasChartData.values,
@@ -157,6 +164,7 @@ export function AnalysisHomeSection({
     lineChartData,
     topCausasMortalidad,
     topCausasMorbilidad,
+    topCausasAsociadasMorbilidad,
     demorasChartData,
     edadChartData,
     severidadFallasData,
@@ -227,7 +235,11 @@ export function AnalysisHomeSection({
       />
 
       {activeTab === 'generalidades' && (
-        <TrendChartsRow topCausasMortalidad={topCausasMortalidad} topCausasMorbilidad={topCausasMorbilidad} />
+        <TrendChartsRow
+          topCausasMortalidad={topCausasMortalidad}
+          topCausasMorbilidad={topCausasMorbilidad}
+          topCausasAsociadasMorbilidad={topCausasAsociadasMorbilidad}
+        />
       )}
 
       {activeTab === 'morbilidad' && (

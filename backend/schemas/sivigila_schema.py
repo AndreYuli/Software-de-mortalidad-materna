@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PacienteResponse(BaseModel):
@@ -15,6 +15,16 @@ class PacienteResponse(BaseModel):
     numero_id: str
     fecha_nacimiento: date | None
     creado_en: datetime | None
+
+
+class CausaAsociadaResponse(BaseModel):
+    """Causa CIE-10 asociada de un caso de morbilidad (orden 1..3 de la ficha 549)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    orden: int
+    cie10: str
+    descripcion: str | None
 
 
 class VMorbilidadResponse(BaseModel):
@@ -60,6 +70,8 @@ class VMorbilidadResponse(BaseModel):
     unidades_transfundidas: int | None
     causa_principal_cie10: str | None
     grupo_causa: str | None
+    # Desde la tabla hija causa_asociada_morbilidad (no son columnas de la vista).
+    causas_asociadas: list[CausaAsociadaResponse] = Field(default_factory=list)
 
 
 class VMortalidadResponse(BaseModel):

@@ -41,9 +41,16 @@ from services._sivigila_escritura import (
     _upsert_single_related,
 )
 from services._sivigila_helpers import _DatosPasada1
+from utils.cie10 import limpiar_causa_asociada, normalizar_cie10
 from utils.date_parsers import _parse_date, _parse_time
 from utils.text_utils import clean_text
 from utils.type_parsers import _parse_bool, _parse_int
+
+
+def _cie10_opcional(valor) -> str | None:
+    """Código CIE-10 opcional normalizado, o None si está vacío o es solo un guion."""
+    texto = limpiar_causa_asociada(valor)
+    return normalizar_cie10(texto) if texto else None
 
 
 def _escribir_relacionados_mortalidad(
@@ -379,7 +386,9 @@ def _escribir_relacionados_mortalidad(
             'id_personal_cpn': personal_cpn.id if personal_cpn else None,
             'id_nivel_atencion_cpn': nivel_cpn.id if nivel_cpn else None,
             'id_remisiones': remisiones.id if remisiones else None,
-            'compl_feto_rn_cie10': clean_text(
+            # Llave foránea a cie10: se guarda normalizado ('P00.0' -> 'P000'); vacío o '—'
+            # es NULL. Que el código exista lo valida la pasada 1 (_verificar_reglas_de_valor).
+            'compl_feto_rn_cie10': _cie10_opcional(
                 _get_value(row, _MORTALIDAD_COMPLICACIONES_FETO_COLS)
             ),
         },

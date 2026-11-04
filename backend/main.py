@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from api.routers import analisis, auth, sivigila
 from core.config import Config
 from db.database import Base, engine
-from db.migrations import run_migrations
+from db.migrations import run_migrations, verificar_estructura_compatible
 from db.models_sqlalchemy import Analisis, NarrativaIA, SivigilaImportacion, Usuario  # noqa: F401
 
 # ---------------------------------------------------------------------------
@@ -74,10 +74,15 @@ Path('media').mkdir(parents=True, exist_ok=True)
 # Creación de tablas propias de la API (no gestionadas por el script SQL)
 # ---------------------------------------------------------------------------
 
+# Una base con la estructura anterior no se toca: se migra a una base nueva con
+# scripts/migrar_estructura_anterior.py (docs/MIGRACION_BD.md). Aquí solo se detecta y se
+# detiene el arranque, antes de crear tabla alguna.
+verificar_estructura_compatible(engine)
+
 Base.metadata.create_all(bind=engine)
 
 # ---------------------------------------------------------------------------
-# Migraciones de arranque: columnas del aislamiento por secretaría y vistas
+# Ajustes de arranque: columnas del aislamiento por secretaría, maestras, triggers y vistas
 # ---------------------------------------------------------------------------
 
 run_migrations(engine)

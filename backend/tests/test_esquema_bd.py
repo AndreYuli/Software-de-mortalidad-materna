@@ -1,21 +1,22 @@
 """Esquema de la base de datos: el script SQL sigue a los modelos y PostgreSQL aplica las reglas.
 
 * Las pruebas de coherencia corren siempre.
-* Las pruebas de PostgreSQL crean un esquema temporal con el script generado y lo borran al
-  terminar; se omiten si no hay un PostgreSQL accesible con las variables DB_* del entorno.
+* Las pruebas de PostgreSQL usan bases DESECHABLES (tests/pg_desechable.py): solo corren con
+  `VM_PG_PRUEBAS` definida y nunca tocan la base configurada para la aplicación.
 """
 
 import importlib.util
-import uuid
 from pathlib import Path
 
-import psycopg2
 import pytest
-from sqlalchemy.engine import make_url
+from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import Session
 
-from core.config import Config
-from db.auditoria import TABLAS_AUDITADAS, TABLAS_CON_ACTUALIZADO_EN
-from db.database import Base
+from db.auditoria import TABLAS_AUDITADAS, TABLAS_CON_ACTUALIZADO_EN, TIPOS_CIRUGIA
+from db.database import Base, VistaBase
+from db.database_views import VISTAS, create_database_views
+from db.migrations import run_migrations, verificar_estructura_compatible
+from tests.pg_desechable import bases_desechables, conectar, parametros
 
 _RAIZ = Path(__file__).resolve().parent.parent
 _SCRIPT_SQL = _RAIZ / 'sivigila_maternidad_postgres.sql'
@@ -30,6 +31,14 @@ def _cargar_generador():
     return modulo
 
 
+def _url(nombre: str) -> str:
+    params = parametros()
+    return (
+        f'postgresql+psycopg2://{params.get("user")}:{params.get("password", "")}@'
+        f'{params.get("host")}:{params.get("port")}/{nombre}'
+    )
+
+
 def test_script_sql_coincide_con_los_modelos():
     """Si cambia un modelo, trigger o vista, hay que regenerar el .sql con el script."""
     generado = _cargar_generador().generar()
@@ -42,11 +51,16 @@ def test_script_sql_no_borra_ni_crea_bases_de_datos():
     assert 'DROP DATABASE' not in sql and 'CREATE DATABASE' not in sql
 
 
+def test_script_sql_fija_la_codificacion():
+    """Sin client_encoding, psql en Windows corrompe las tildes de los catálogos."""
+    assert "SET client_encoding = 'UTF8';" in _SCRIPT_SQL.read_text(encoding='utf-8')
+
+
 def test_todas_las_tablas_tienen_llave_primaria_y_las_fk_estan_indexadas():
     """Toda llave foránea es la primera columna de algún índice, llave primaria o único."""
     sin_indice = []
     for tabla in Base.metadata.tables.values():
-        if tabla.name.startswith(('v_', 'cat_')):
+        if tabla.name.startswith('cat_'):
             continue
         assert tabla.primary_key.columns, f'{tabla.name} no tiene llave primaria'
         cubiertas = {c.name for c in tabla.primary_key.columns}
@@ -66,45 +80,59 @@ def test_todas_las_tablas_tienen_llave_primaria_y_las_fk_estan_indexadas():
 
 def test_tablas_auditadas_y_con_actualizado_en_existen_en_los_modelos():
     """Las tablas y columnas que usan los triggers existen en los modelos."""
-    nombres = set(Base.metadata.tables)
-    for tabla, pk in TABLAS_AUDITADAS:
-        assert tabla in nombres
-        assert pk in Base.metadata.tables[tabla].c
+    tablas = Base.metadata.tables
+    for tabla, pk, _evento, modo, args in TABLAS_AUDITADAS:
+        assert tabla in tablas
+        assert pk in tablas[tabla].c
+        if modo in ('directo', 'exclusivo'):
+            assert all(a in tablas[tabla].c for a in args), tabla
+        if modo == 'padre':
+            fk, padre, pk_padre = args
+            assert fk in tablas[tabla].c
+            assert {pk_padre, 'id_caso'} <= set(tablas[padre].c.keys()), tabla
     for tabla in TABLAS_CON_ACTUALIZADO_EN:
-        assert 'actualizado_en' in Base.metadata.tables[tabla].c
+        assert 'actualizado_en' in tablas[tabla].c
+
+
+def test_las_tablas_hijas_estan_en_la_bitacora():
+    """Las tablas hijas estan en la bitacora."""
+    auditadas = {t[0] for t in TABLAS_AUDITADAS}
+    assert {
+        'causa_asociada_morbilidad',
+        'referencia_institucion',
+        'cirugia_adicional_morbilidad',
+    } <= auditadas
+
+
+def test_las_vistas_no_estan_en_el_metadata_de_las_tablas():
+    """create_all no puede crear las vistas como tablas físicas vacías."""
+    assert not [t for t in Base.metadata.tables if t.startswith('v_')]
+    assert set(VistaBase.metadata.tables) == set(VISTAS)
+
+
+def test_create_all_en_sqlite_no_crea_vistas():
+    """Create all en sqlite no crea vistas."""
+    motor = create_engine('sqlite://')
+    Base.metadata.create_all(bind=motor)
+    assert not [t for t in inspect(motor).get_table_names() if t.startswith('v_')]
 
 
 # ---------------------------------------------------------------------------
-# PostgreSQL real (esquema temporal)
+# PostgreSQL real (base desechable)
 # ---------------------------------------------------------------------------
 
 
 @pytest.fixture(scope='module')
 def pg():
-    """Conexión a PostgreSQL con un esquema temporal que contiene el script completo."""
-    if not Config.database_url.startswith('postgresql'):
-        pytest.skip('requiere PostgreSQL (variables DB_*)')
-    nombre = f'prueba_{uuid.uuid4().hex[:10]}'
-    url = make_url(Config.database_url)
-    try:
-        conexion = psycopg2.connect(
-            dbname=url.database,
-            user=url.username,
-            password=url.password,
-            host=url.host,
-            port=url.port,
-        )
-    except Exception:  # noqa: BLE001 - sin servidor accesible: se omite
-        pytest.skip('PostgreSQL no accesible')
-    conexion.autocommit = True
-    cur = conexion.cursor()
-    cur.execute(f'CREATE SCHEMA {nombre}')
-    cur.execute(f'SET search_path TO {nombre}')
-    cur.execute(_SCRIPT_SQL.read_text(encoding='utf-8'))
-    yield cur
-    cur.execute('SET search_path TO public')
-    cur.execute(f'DROP SCHEMA {nombre} CASCADE')
-    conexion.close()
+    """Cursor sobre una base desechable con el script completo (se borra al terminar)."""
+    with bases_desechables('esquema') as nombres:
+        conexion = conectar(nombres['esquema'])
+        cur = conexion.cursor()
+        cur.execute(_SCRIPT_SQL.read_text(encoding='utf-8'))
+        try:
+            yield cur
+        finally:
+            conexion.close()
 
 
 def _paciente(cur, numero='100'):
@@ -125,6 +153,15 @@ def _caso_morb(cur, id_paciente, fecha='2026-01-05', secretaria='bello'):
     return cur.fetchone()[0]
 
 
+def _caso_mort(cur, id_paciente, secretaria='bello'):
+    cur.execute(
+        'INSERT INTO caso_mortalidad (id_paciente, id_sitio_defuncion, secretaria_codigo) '
+        'VALUES (%s, 1, %s) RETURNING id_caso',
+        (id_paciente, secretaria),
+    )
+    return cur.fetchone()[0]
+
+
 def _falla(cur, sql, args=()):
     """Ejecuta la sentencia y confirma que la base de datos la rechaza."""
     cur.execute('SAVEPOINT intento')
@@ -135,27 +172,22 @@ def _falla(cur, sql, args=()):
 
 
 def test_pg_reconstruye_todo(pg):
-    """El script reconstruye triggers, CIE-10 y vistas en un esquema vacío."""
-    pg.execute(
-        'SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid = t.tgrelid '
-        'WHERE NOT t.tgisinternal AND c.relnamespace = current_schema()::regnamespace'
-    )
+    """El script reconstruye triggers, CIE-10, catálogos con tildes y vistas en una base vacía."""
+    pg.execute('SELECT count(*) FROM pg_trigger WHERE NOT tgisinternal')
     assert pg.fetchone()[0] == len(TABLAS_CON_ACTUALIZADO_EN) + len(TABLAS_AUDITADAS) + 1
     pg.execute('SELECT count(*) FROM cie10')
     assert pg.fetchone()[0] > 12000
-    pg.execute('SELECT count(*) FROM v_mortalidad_completa')  # las vistas se crean y consultan
+    pg.execute('SELECT descripcion FROM cat_remisiones WHERE id = 1')
+    assert pg.fetchone()[0] == 'Sí'
+    pg.execute("SELECT relname, relkind::text FROM pg_class WHERE relname LIKE 'v!_%' ESCAPE '!'")
+    assert sorted(pg.fetchall()) == [(v, 'v') for v in sorted(VISTAS)]
 
 
 def test_pg_antecedente_obstetrico_exige_exactamente_un_caso(pg):
     """La tabla común admite un solo caso (excluyente), una fila por caso y rangos válidos."""
     pg.execute('BEGIN')
     caso = _caso_morb(pg, _paciente(pg, '201'))
-    pg.execute(
-        'INSERT INTO caso_mortalidad (id_paciente, id_sitio_defuncion, secretaria_codigo) '
-        'VALUES (%s, 1, %s) RETURNING id_caso',
-        (_paciente(pg, '202'), 'bello'),
-    )
-    mort = pg.fetchone()[0]
+    mort = _caso_mort(pg, _paciente(pg, '202'))
     _falla(
         pg,
         'INSERT INTO antecedente_obstetrico (caso_morbilidad_id, caso_mortalidad_id) '
@@ -245,3 +277,183 @@ def test_pg_importacion_solo_apunta_a_casos_existentes(pg):
     _falla(pg, insertar, ('morbilidad', caso + 999))
     _falla(pg, insertar, ('otro', caso))  # tipo fuera de cat_evento
     pg.execute('ROLLBACK')
+
+
+def test_pg_causas_asociadas_varias_ordenadas_unicas_y_con_fk(pg):
+    """Varias causas por caso sin columnas extra; el código existe y no se repite en el caso."""
+    pg.execute('BEGIN')
+    caso = _caso_morb(pg, _paciente(pg, '601'))
+    insertar = 'INSERT INTO causa_asociada_morbilidad (id_caso, orden, cie10) VALUES (%s, %s, %s)'
+    for orden, codigo in ((1, 'O721'), (2, 'O150'), (3, 'O141')):
+        pg.execute(insertar, (caso, orden, codigo))
+    pg.execute(
+        'SELECT orden, cie10, descripcion IS NOT NULL FROM v_causa_asociada_morbilidad '
+        'WHERE id_caso = %s ORDER BY orden',
+        (caso,),
+    )
+    assert pg.fetchall() == [(1, 'O721', True), (2, 'O150', True), (3, 'O141', True)]
+    otro = _caso_morb(pg, _paciente(pg, '602'), fecha='2026-02-01')
+    _falla(pg, insertar, (otro, 1, 'ZZ99'))  # no existe en cie10
+    _falla(pg, insertar, (otro, 4, 'O721'))  # orden fuera de 1..3
+    pg.execute(insertar, (otro, 1, 'O721'))
+    _falla(pg, insertar, (otro, 2, 'O721'))  # UNIQUE(id_caso, cie10)
+    _falla(pg, insertar, (otro + 999, 1, 'O721'))  # caso inexistente
+    pg.execute('DELETE FROM caso_morbilidad WHERE id_caso = %s', (otro,))  # ON DELETE CASCADE
+    pg.execute('SELECT count(*) FROM causa_asociada_morbilidad WHERE id_caso = %s', (otro,))
+    assert pg.fetchone()[0] == 0
+    pg.execute('ROLLBACK')
+
+
+def test_pg_cie10_de_mortalidad_con_llave_foranea(pg):
+    """Causa básica y complicación del feto deben existir en cie10 (la segunda es opcional)."""
+    pg.execute('BEGIN')
+    caso = _caso_mort(pg, _paciente(pg, '701'))
+    causa = (
+        'INSERT INTO causa_muerte (id_caso, causa_basica_cie10, id_fuente_causa, demora_1, '
+        'demora_2, demora_3, demora_4) VALUES (%s, %s, 1, false, false, false, false)'
+    )
+    _falla(pg, causa, (caso, 'O999Z'))
+    pg.execute(causa, (caso, 'O721'))
+    cpn = (
+        'INSERT INTO control_prenatal (id_caso, id_remisiones, compl_feto_rn_cie10) '
+        'VALUES (%s, 1, %s)'
+    )
+    _falla(pg, cpn, (caso, 'NINGUNA'))
+    pg.execute(cpn, (caso, None))
+    pg.execute(
+        "UPDATE control_prenatal SET compl_feto_rn_cie10 = 'P000' WHERE id_caso = %s", (caso,)
+    )
+    pg.execute('ROLLBACK')
+
+
+def test_pg_cirugia_usa_el_catalogo_y_la_institucion_no_se_repite(pg):
+    """Pg cirugia usa el catalogo y la institucion no se repite."""
+    pg.execute('BEGIN')
+    pg.execute('SELECT id, descripcion FROM cat_tipo_cirugia ORDER BY id')
+    assert pg.fetchall() == list(TIPOS_CIRUGIA)
+    caso = _caso_morb(pg, _paciente(pg, '801'))
+    pg.execute('INSERT INTO manejo_hospitalario (id_caso) VALUES (%s) RETURNING id_manejo', (caso,))
+    manejo = pg.fetchone()[0]
+    cirugia = (
+        'INSERT INTO cirugia_adicional_morbilidad (id_manejo, orden, id_tipo_cirugia) '
+        'VALUES (%s, %s, %s)'
+    )
+    _falla(pg, cirugia, (manejo, 1, 5))
+    pg.execute(cirugia, (manejo, 1, 4))
+    pg.execute(cirugia, (manejo, 2, 4))  # dos cirugías «Otra» son válidas
+    pg.execute(
+        'INSERT INTO referencia (id_caso, remitida) VALUES (%s, true) RETURNING id_referencia',
+        (caso,),
+    )
+    ref = pg.fetchone()[0]
+    inst = (
+        'INSERT INTO referencia_institucion (id_referencia, orden, institucion) VALUES (%s, %s, %s)'
+    )
+    pg.execute(inst, (ref, 1, 'Hospital A'))
+    _falla(pg, inst, (ref, 2, ' hospital a '))  # misma institución sin importar mayúsculas
+    pg.execute(inst, (ref, 2, 'Hospital B'))
+    pg.execute('ROLLBACK')
+
+
+def test_pg_bitacora_registra_el_caso_de_las_tablas_hijas(pg):
+    """Pg bitacora registra el caso de las tablas hijas."""
+    pg.execute('BEGIN')
+    caso = _caso_morb(pg, _paciente(pg, '901'))
+    mort = _caso_mort(pg, _paciente(pg, '902'))
+    pg.execute(
+        "INSERT INTO causa_asociada_morbilidad (id_caso, orden, cie10) VALUES (%s, 1, 'O721') "
+        'RETURNING id',
+        (caso,),
+    )
+    id_asociada = pg.fetchone()[0]
+    pg.execute(
+        'INSERT INTO referencia (id_caso, remitida) VALUES (%s, true) RETURNING id_referencia',
+        (caso,),
+    )
+    ref = pg.fetchone()[0]
+    pg.execute(
+        'INSERT INTO referencia_institucion (id_referencia, orden, institucion) '
+        "VALUES (%s, 1, 'H')",
+        (ref,),
+    )
+    pg.execute('INSERT INTO manejo_hospitalario (id_caso) VALUES (%s) RETURNING id_manejo', (caso,))
+    manejo = pg.fetchone()[0]
+    pg.execute(
+        'INSERT INTO cirugia_adicional_morbilidad (id_manejo, orden, id_tipo_cirugia) '
+        'VALUES (%s, 1, 1)',
+        (manejo,),
+    )
+    pg.execute(
+        'INSERT INTO antecedente_obstetrico (caso_mortalidad_id, gestaciones) VALUES (%s, 1)',
+        (mort,),
+    )
+    pg.execute("UPDATE causa_asociada_morbilidad SET cie10 = 'O150' WHERE id = %s", (id_asociada,))
+    pg.execute(
+        'SELECT tabla, operacion, evento, id_caso FROM auditoria_cambio WHERE tabla IN '
+        "('causa_asociada_morbilidad', 'referencia_institucion', 'cirugia_adicional_morbilidad', "
+        "'antecedente_obstetrico') ORDER BY id"
+    )
+    assert pg.fetchall() == [
+        ('causa_asociada_morbilidad', 'INSERT', 'morbilidad', caso),
+        ('referencia_institucion', 'INSERT', 'morbilidad', caso),
+        ('cirugia_adicional_morbilidad', 'INSERT', 'morbilidad', caso),
+        ('antecedente_obstetrico', 'INSERT', 'mortalidad', mort),
+        ('causa_asociada_morbilidad', 'UPDATE', 'morbilidad', caso),
+    ]
+    pg.execute('ROLLBACK')
+
+
+def test_pg_arranque_sobre_base_vacia_crea_vistas_y_catalogos():
+    """Sin ejecutar el script: el arranque deja vistas (no tablas), catálogos y triggers."""
+    with bases_desechables('arranque') as nombres:
+        motor = create_engine(_url(nombres['arranque']))
+        try:
+            for _ in range(2):  # idempotente
+                verificar_estructura_compatible(motor)
+                Base.metadata.create_all(bind=motor)
+                run_migrations(motor)
+        finally:
+            motor.dispose()
+        con = conectar(nombres['arranque'])
+        try:
+            cur = con.cursor()
+            cur.execute(
+                "SELECT relname, relkind::text FROM pg_class WHERE relname LIKE 'v!_%' ESCAPE '!'"
+            )
+            assert sorted(cur.fetchall()) == [(v, 'v') for v in sorted(VISTAS)]
+            cur.execute('SELECT count(*) FROM cat_tipo_id')
+            assert cur.fetchone()[0] == 8
+            cur.execute('SELECT count(*) FROM cat_tipo_cirugia')
+            assert cur.fetchone()[0] == len(TIPOS_CIRUGIA)
+            cur.execute('SELECT count(*) FROM pg_trigger WHERE NOT tgisinternal')
+            assert cur.fetchone()[0] == len(TABLAS_CON_ACTUALIZADO_EN) + len(TABLAS_AUDITADAS) + 1
+        finally:
+            con.close()
+
+
+def test_pg_tabla_vacia_con_nombre_de_vista_se_reemplaza_y_con_datos_no():
+    """Rastro de versiones anteriores: una tabla v_* vacía se cambia por la vista."""
+    with bases_desechables('vista') as nombres:
+        con = conectar(nombres['vista'])
+        cur = con.cursor()
+        cur.execute(_SCRIPT_SQL.read_text(encoding='utf-8'))
+        cur.execute('DROP VIEW v_mortalidad_completa')
+        cur.execute('CREATE TABLE v_mortalidad_completa (id_caso integer)')
+        motor = create_engine(_url(nombres['vista']))
+        try:
+            with Session(bind=motor) as sesion:
+                create_database_views(sesion)
+            cur.execute(
+                "SELECT relkind::text FROM pg_class WHERE relname = 'v_mortalidad_completa'"
+            )
+            assert cur.fetchone()[0] == 'v'
+            cur.execute('DROP VIEW v_mortalidad_completa')
+            cur.execute('CREATE TABLE v_mortalidad_completa (id_caso integer)')
+            cur.execute('INSERT INTO v_mortalidad_completa VALUES (1)')
+            with Session(bind=motor) as sesion:
+                create_database_views(sesion)
+            cur.execute('SELECT count(*) FROM v_mortalidad_completa')
+            assert cur.fetchone()[0] == 1  # la tabla con datos no se tocó
+        finally:
+            motor.dispose()
+            con.close()

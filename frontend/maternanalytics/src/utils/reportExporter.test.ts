@@ -102,4 +102,30 @@ describe('reportExporter', () => {
       expect(filas.map((f) => f['Porcentaje (%)'])).toEqual(['50,0%', '50,0%', '100,0%'])
     })
   })
+
+  describe('hoja Causas asociadas CIE-10', () => {
+    function libro(data: ReportExportData) {
+      libros.length = 0
+      exportReportToExcel(data, 'x.xlsx')
+      return libros[0] as XLSX.WorkBook
+    }
+
+    it('exporta las causas asociadas con código, descripción y porcentaje de casos', () => {
+      const wb = libro({
+        ...mockReportData,
+        causasAsociadas: { causas: ['O72.1', 'O15.0'], valores: [12, 3], porcentajes: [40, 10] },
+      })
+      const filas = XLSX.utils.sheet_to_json<Record<string, string | number>>(
+        wb.Sheets['Causas asociadas CIE-10'],
+      )
+      expect(filas).toHaveLength(2)
+      expect(filas[0]).toMatchObject({ Evento: 'Morbilidad', Código: 'O72.1', Casos: 12 })
+      expect(filas[0]['Porcentaje de casos (%)']).toBe('40,0%')
+      expect(String(filas[0]['Causa asociada'])).not.toMatch(/no disponible/i)
+    })
+
+    it('sin causas asociadas no agrega la hoja', () => {
+      expect(libro(mockReportData).SheetNames).not.toContain('Causas asociadas CIE-10')
+    })
+  })
 })

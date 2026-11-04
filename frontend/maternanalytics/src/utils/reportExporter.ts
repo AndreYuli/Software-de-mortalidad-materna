@@ -31,6 +31,12 @@ export interface ReportExportData {
     /** Porcentaje que el dashboard calcula para cada causa; si falta se calcula por evento. */
     porcentajes?: (number | undefined)[]
   }
+  /** Causas asociadas de morbilidad (hasta 3 por caso; porcentaje sobre el total de casos). */
+  causasAsociadas?: {
+    causas: string[]
+    valores: number[]
+    porcentajes?: (number | undefined)[]
+  }
   demoras: {
     nombres: string[]
     valores: number[]
@@ -100,6 +106,21 @@ export function exportReportToExcel(data: ReportExportData, filename?: string) {
   })
   const wsCausas = XLSX.utils.json_to_sheet(causasRows)
   XLSX.utils.book_append_sheet(wb, wsCausas, 'Top Causas CIE-10')
+
+  // 3b. Hoja de Causas Asociadas (morbilidad): un caso puede tener varias.
+  if (data.causasAsociadas && data.causasAsociadas.causas.length > 0) {
+    const asociadasRows = data.causasAsociadas.causas.map((c, idx) => {
+      const pct = data.causasAsociadas?.porcentajes?.[idx]
+      return {
+        Evento: 'Morbilidad',
+        Código: c,
+        'Causa asociada': getCie10Description(c),
+        Casos: data.causasAsociadas?.valores[idx] || 0,
+        'Porcentaje de casos (%)': pct !== undefined ? `${pct.toFixed(1).replace('.', ',')}%` : '',
+      }
+    })
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(asociadasRows), 'Causas asociadas CIE-10')
+  }
 
   // 4. Hoja de Demoras Obstétricas
   const totalDemoras = data.demoras.valores.reduce((a, b) => a + b, 0) || 1
@@ -189,6 +210,16 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
   const causesTableRows = data.causasPrincipales.causas
     .map((c, i) => {
       const val = data.causasPrincipales.valores[i] || 0
+      return `<tr>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;"><b>${escapeHtml(c)}</b> - ${escapeHtml(getCie10Description(c))}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${val}</td>
+      </tr>`
+    })
+    .join('')
+
+  const asociadasTableRows = (data.causasAsociadas?.causas ?? [])
+    .map((c, i) => {
+      const val = data.causasAsociadas?.valores[i] || 0
       return `<tr>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;"><b>${escapeHtml(c)}</b> - ${escapeHtml(getCie10Description(c))}</td>
         <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">${val}</td>
@@ -462,6 +493,24 @@ export function printExecutiveMedicalReport(data: ReportExportData) {
       </table>
     </div>
   </div>
+
+  ${
+    asociadasTableRows
+      ? `
+  <div class="section-title">Causas Asociadas de Morbilidad (CIE-10)</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Diagnóstico asociado</th>
+        <th style="text-align: right;">Casos</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${asociadasTableRows}
+    </tbody>
+  </table>`
+      : ''
+  }
 
   <div class="section-title">Distribución por Rango de Edad</div>
   <table>
