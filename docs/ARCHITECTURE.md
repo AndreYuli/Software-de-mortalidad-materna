@@ -88,8 +88,6 @@ Software-de-mortalidad-materna/
 │   ├── pruebas/             # Excel sintéticos
 │   └── local/               # No versionado: archivos de procedencia sin confirmar
 ├── scripts/                 # iniciar_servicios.bat, ejecutar_pruebas_e2e.bat
-├── docker-compose.yml
-├── .env.example
 ├── ruff.toml
 └── README.md
 ```
@@ -103,10 +101,8 @@ Nota: las carpetas se llaman `backend`, `ia-service` y `frontend` (en minúscula
 | Frontend | `frontend/maternanalytics/` | React 18, TypeScript, Vite | 5173 | Interfaz, dashboard, carga, historial, filtros y visualizaciones |
 | Backend | `backend/` | FastAPI, SQLAlchemy, pandas | 8000 | API, autenticación, carga de Excel, procesamiento, indicadores y persistencia |
 | IA-SERVICE | `ia-service/` | FastAPI, httpx, Ollama | 8001 | Generación de narrativas con IA local a partir de indicadores agregados |
-| PostgreSQL | externo / Docker | PostgreSQL 16 | 5432 | Base de datos relacional |
-| Ollama | externo / Docker | Ollama con modelo local | 11434 | Motor LLM local para IA-SERVICE |
-
-`docker-compose.yml` levanta PostgreSQL, Ollama, IA-SERVICE y Backend. El frontend se ejecuta aparte con Vite.
+| PostgreSQL | externo | PostgreSQL 16 | 5432 | Base de datos relacional |
+| Ollama | externo | Ollama con modelo local | 11434 | Motor LLM local para IA-SERVICE |
 
 ## Frontend
 
@@ -272,7 +268,7 @@ El backend también crea tablas propias mediante SQLAlchemy al iniciar, como an�
 - Mantener las responsabilidades de cada componente.
 - No mezclar lógica de negocio dentro de componentes visuales si puede vivir en hooks, servicios o utilidades.
 - No cambiar rutas, estructura de carpetas o contratos de API sin revisar el impacto completo.
-- No renombrar `backend`, `ia-service` ni `frontend` sin actualizar `docker-compose.yml`, `scripts/` y `.gitignore`.
+- No renombrar `backend`, `ia-service` ni `frontend` sin actualizar `scripts/` y `.gitignore`.
 - No introducir otra librería de gráficas si ECharts o Chart.js son suficientes.
 - No enviar datos crudos de pacientes a IA.
 - Si cambia una decisión arquitectónica, actualizar este documento y `docs/CHANGELOG.md`.
@@ -283,4 +279,3 @@ Estos puntos fueron identificados en el código y deben tenerse presentes antes 
 
 - La definición de tasa de letalidad debe confirmarse con el equipo antes de ajustar cálculos.
 - `NarrativaIA.tsx` existe, pero su integración visible en el dashboard debe verificarse antes de asumir que el usuario puede usarla.
-- El frontend no está incluido en `docker-compose.yml`; si se define despliegue con Docker completo, debe agregarse explícitamente.
