@@ -105,7 +105,7 @@ export default function DashboardOKD({ onLogout }: DashboardOKDProps = {}) {
         </header>
 
         <main className="flex-1">
-          <div className="mx-auto w-full max-w-7xl p-4 lg:p-8">
+          <div className="mx-auto w-full max-w-7xl p-4 pb-24 lg:p-8 lg:pb-28">
             <Outlet
               context={
                 {

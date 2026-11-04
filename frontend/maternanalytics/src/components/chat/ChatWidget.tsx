@@ -58,7 +58,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ analisisId, filtros }) =
       {/* Botón flotante para abrir el chat */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 p-4 bg-brand-magenta text-white rounded-full shadow-lg hover:bg-brand-violet transition-colors z-50 flex items-center justify-center"
+        className="fixed bottom-6 right-4 p-4 bg-brand-magenta text-white rounded-full shadow-lg hover:bg-brand-violet transition-colors z-50 flex items-center justify-center sm:right-6"
         aria-label="Abrir asistente de IA"
       >
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
@@ -66,7 +66,7 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({ analisisId, filtros }) =
 
       {/* Ventana del chat */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 w-80 sm:w-96 bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col z-50 overflow-hidden h-[500px] max-h-[calc(100dvh-120px)]">
+        <div className="fixed bottom-24 right-4 w-[calc(100vw-2rem)] bg-white rounded-xl shadow-2xl border border-gray-200 flex flex-col z-50 overflow-hidden h-[500px] max-h-[calc(100dvh-120px)] sm:right-6 sm:w-96">
           {/* Cabecera */}
           <div className="bg-brand-deep text-white p-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
