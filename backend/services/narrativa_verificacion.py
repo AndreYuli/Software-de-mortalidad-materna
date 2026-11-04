@@ -90,6 +90,8 @@ def _coincide(crudo: str, valor: float, dec: int, fuente: list[float]) -> bool:
     candidatos = [(valor, dec)]
     if re.fullmatch(r'\d{1,3},\d{3}', crudo):
         candidatos.append((float(crudo.replace(',', '')), 0))
+    if re.fullmatch(r'\d{1,3}\.\d{3}', crudo):  # «6.065»: también puede ser el decimal 6,065
+        candidatos.append((float(crudo), 3))
     return any(_misma_cifra(s, v, d) for v, d in candidatos for s in fuente)
 
 

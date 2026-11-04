@@ -91,3 +91,19 @@ def test_anios_y_meses_que_son_claves_de_los_indicadores_cuentan_como_respaldo()
     assert verificar_narrativa('En 2024 hubo 16 casos.', indicadores)['cifras_sin_respaldo'] == [
         '2024'
     ]
+
+
+def test_punto_decimal_con_tres_decimales_no_se_confunde_con_miles():
+    """«6.065» puede ser el decimal 6,065 (como escribe el modelo) o 6065 (miles en español).
+
+    Medido el 3-nov-2026: un promedio de 6.065 controles prenatales se marcaba "sin respaldo"
+    porque se leía sólo como 6065.
+    """
+    assert (
+        verificar_narrativa('Promedio de 6.065 controles.', {'p': 6.065})['cifras_sin_respaldo']
+        == []
+    )
+    assert verificar_narrativa('Hubo 2.000 casos.', {'n': 2000})['cifras_sin_respaldo'] == []
+    assert verificar_narrativa('Promedio de 6.066 controles.', {'p': 6.065})[
+        'cifras_sin_respaldo'
+    ] == ['6.066']
