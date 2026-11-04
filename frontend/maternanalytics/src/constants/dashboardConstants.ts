@@ -60,10 +60,12 @@ export const ALIAS_COLUMNAS: Record<'morbilidad' | 'mortalidad', Record<string, 
   },
 }
 
-// Plantilla oficial descargable (archivos en public/plantillas).
+// Plantilla oficial descargable: archivos funcionales en public/plantillas (se sirven tal cual).
+// Si el nombre no coincide con un archivo existente, el fallback del SPA devuelve index.html
+// con extensión .xlsx y la carga falla con «No se pudo leer el archivo».
 export const PLANTILLAS: Record<'morbilidad' | 'mortalidad', { archivo: string; nombre: string }> = {
-  mortalidad: { archivo: 'plantilla_mortalidad_550.xlsx', nombre: 'Ficha 550 · Mortalidad Materna' },
-  morbilidad: { archivo: 'plantilla_morbilidad_549.xlsx', nombre: 'Ficha 549 · Morbilidad Materna Extrema' },
+  mortalidad: { archivo: 'PLANTILLA Mortalidad materna.xlsx', nombre: 'Ficha 550 · Mortalidad Materna' },
+  morbilidad: { archivo: 'PLANTILLA DATOS MORBILIDAD.xlsx', nombre: 'Ficha 549 · Morbilidad Materna Extrema' },
 }
 
 // Tipo de dato y opciones de cada campo requerido, según la hoja DICCIONARIO de la ficha oficial.
