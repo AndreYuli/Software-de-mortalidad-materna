@@ -65,3 +65,29 @@ def test_narrativa_coherente_no_genera_alertas():
     v = verificar_narrativa(texto, INDICADORES)
     assert v['alertas_coherencia'] == []
     assert v['cifras_sin_respaldo'] == []
+
+
+def test_cifra_truncada_por_el_modelo_se_acepta_pero_no_una_distinta():
+    """8.776 truncado a 8.77 (en vez de redondeado a 8.78) es la misma cifra; 8.70 no.
+
+    Medido el 3-nov-2026: el modelo escribió 8.77 para un promedio de 8.7763 y el verificador lo
+    marcaba como cifra sin respaldo aunque era la misma.
+    """
+    indicadores = {'estadisticas_basicas': {'estancia_uci_promedio': 8.776315789}}
+    assert verificar_narrativa('Pasan 8.77 días en UCI.', indicadores)['cifras_sin_respaldo'] == []
+    assert verificar_narrativa('Pasan 8.78 días en UCI.', indicadores)['cifras_sin_respaldo'] == []
+    assert verificar_narrativa('Pasan 8.70 días en UCI.', indicadores)['cifras_sin_respaldo'] == [
+        '8.70'
+    ]
+    # Con enteros no se admite un margen de una unidad: 36 no es 35,4.
+    assert verificar_narrativa('El 36% fue.', {'p': 35.4})['cifras_sin_respaldo'] == ['36']
+
+
+def test_anios_y_meses_que_son_claves_de_los_indicadores_cuentan_como_respaldo():
+    """La serie mensual usa el año y el mes como claves ('2025', '4'): son parte de los datos."""
+    indicadores = {'distribucion_mensual': {'2025': {'4': 13, '12': 16}, '2026': {'1': 10}}}
+    texto = 'En 2025 hubo 16 casos en diciembre y en 2026, 10 casos.'
+    assert verificar_narrativa(texto, indicadores)['cifras_sin_respaldo'] == []
+    assert verificar_narrativa('En 2024 hubo 16 casos.', indicadores)['cifras_sin_respaldo'] == [
+        '2024'
+    ]

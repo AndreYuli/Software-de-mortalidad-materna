@@ -12,6 +12,7 @@ No sustituye la validez clínica ni epidemiológica, que requiere profesionales 
 El criterio de coincidencia y la exclusión de códigos son los de la «Validación 2» del proyecto.
 """
 
+import math
 import re
 from collections.abc import Iterator
 from typing import Any
@@ -43,7 +44,10 @@ def numeros_de(obj: Any) -> Iterator[float]:
     if isinstance(obj, (int, float)):
         yield float(obj)
     elif isinstance(obj, dict):
-        for v in obj.values():
+        for k, v in obj.items():
+            # Las series usan el año y el mes como claves ('2025', '4'): también son datos.
+            if isinstance(k, str) and re.fullmatch(r'\d+(?:\.\d+)?', k):
+                yield float(k)
             yield from numeros_de(v)
     elif isinstance(obj, (list, tuple)):
         for v in obj:
@@ -86,7 +90,19 @@ def _coincide(crudo: str, valor: float, dec: int, fuente: list[float]) -> bool:
     candidatos = [(valor, dec)]
     if re.fullmatch(r'\d{1,3},\d{3}', crudo):
         candidatos.append((float(crudo.replace(',', '')), 0))
-    return any(abs(s - v) <= 0.5 * 10**-d + 1e-9 for v, d in candidatos for s in fuente)
+    return any(_misma_cifra(s, v, d) for v, d in candidatos for s in fuente)
+
+
+def _misma_cifra(fuente: float, texto: float, decimales: int) -> bool:
+    """La cifra del texto es la del indicador redondeada o truncada a sus decimales.
+
+    Los modelos a veces truncan (8.7763 -> 8.77) en vez de redondear (8.78); ambas son la misma
+    cifra. No se admite un margen mayor: 36 no es 35,4.
+    """
+    factor = 10**decimales
+    redondeada = abs(fuente - texto) <= 0.5 / factor + 1e-9  # incluye el medio hacia arriba
+    truncada = abs(math.copysign(math.floor(abs(fuente) * factor) / factor, fuente) - texto) < 1e-9
+    return redondeada or truncada
 
 
 def verificar_narrativa(texto: str, indicadores: dict[str, Any]) -> dict[str, Any]:
