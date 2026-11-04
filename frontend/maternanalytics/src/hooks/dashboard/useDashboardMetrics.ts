@@ -6,6 +6,8 @@ export type Segmento = 'ambos' | 'mortalidad' | 'morbilidad'
 export interface CompareResult {
   cur: number
   prev: number
+  /** Vista anual: último mes con datos del año actual (1-12); ambos años se suman hasta ese mes. */
+  meses?: number
 }
 
 export interface UseDashboardMetricsParams {
@@ -40,9 +42,14 @@ function getMonthlyCompare(
     }
     prev = dist[prevYear]?.[prevMonth] || 0
   } else {
-    cur = Object.values(dist[currentYear] || {}).reduce((a, b) => a + b, 0)
-    const prevYear = String(parseInt(currentYear) - 1)
-    prev = Object.values(dist[prevYear] || {}).reduce((a, b) => a + b, 0)
+    // Año a la fecha: si el año actual está incompleto, el anterior se suma solo hasta el
+    // mismo mes (comparar 3 meses contra 12 daría una bajada falsa).
+    const mesesActual = Object.keys(dist[currentYear] || {}).map(Number)
+    if (mesesActual.length === 0) return null
+    const hasta = Math.max(...mesesActual)
+    const sumarHasta = (anio: string) =>
+      Object.entries(dist[anio] || {}).reduce((a, [mes, n]) => (Number(mes) <= hasta ? a + n : a), 0)
+    return { cur: sumarHasta(currentYear), prev: sumarHasta(String(parseInt(currentYear) - 1)), meses: hasta }
   }
 
   return { cur, prev }
