@@ -472,9 +472,10 @@ def obtener_narrativa_ia(
         if tipo_narrativa == 'clustering':
             filtros.update({'tipo_clustering': tipo_clustering, 'n_clusters': n_clusters})
             clustering_resultado = analisis_service.ejecutar_clustering(
-                analisis,
-                tipo_clustering,
-                n_clusters,
+                analisis=analisis,
+                tipo_clustering=tipo_clustering,
+                n_clusters=n_clusters,
+                db=db,
             )
             indicadores = narrativa_service.extraer_indicadores_para_narrativa(
                 tipo_narrativa,

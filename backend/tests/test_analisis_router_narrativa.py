@@ -125,3 +125,30 @@ def test_narrativa_no_envia_columnas_identificables_a_ia_client(client, db_sessi
         'A. Nombres y Apellidos',
     }
     assert not (campos_prohibidos & set(indicadores_enviados.keys()))
+
+
+def test_narrativa_de_clustering_pasa_la_sesion_de_bd_al_servicio(client, db_session, mocker):
+    """La narrativa de agrupamiento llamaba a ejecutar_clustering sin la sesión de BD.
+
+    Hallado el 3-nov-2026 al generar narrativas contra un servidor real: la ruta respondía 500
+    ("ejecutar_clustering() missing 1 required positional argument: 'db'") en todas las llamadas.
+    """
+    analisis = _crear_analisis(db_session)
+    mock_cluster = mocker.patch(
+        'api.routers.analisis.analisis_service.ejecutar_clustering',
+        return_value={'n_clusters': 2, 'perfiles': []},
+    )
+    mocker.patch(
+        'api.routers.analisis.narrativa_service.obtener_narrativa',
+        return_value={
+            'narrativa': 'ok',
+            'modelo': 'qwen2.5',
+            'generado_en': datetime.now(timezone.utc),
+            'desde_cache': False,
+        },
+    )
+
+    response = client.get(f'/api/analisis/{analisis.id}/narrativa/clustering/')
+
+    assert response.status_code == 200
+    assert mock_cluster.call_args.kwargs['db'] is db_session
