@@ -13,6 +13,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
 from db import models_sqlalchemy  # noqa: F401  (registra los modelos en Base.metadata)
+from db.auditoria import aplicar_auditoria_y_maestras
 from db.database import Base, SessionLocal
 from db.database_views import create_database_views
 
@@ -165,6 +166,7 @@ def run_migrations(engine: Engine) -> None:
                 logger.warning('Migración omitida (¿falta la tabla?): %s', sql, exc_info=True)
 
     Base.metadata.create_all(bind=engine)  # tablas hijas nuevas (no toca las existentes)
+    aplicar_auditoria_y_maestras(engine)  # maestras y triggers (solo PostgreSQL)
     _normalizar_1fn(engine)
     _limpiar_marcadores_de_vacio(engine)
 

@@ -39,7 +39,7 @@ from services._sivigila_helpers import (
 )
 from services._sivigila_morbilidad import _escribir_relacionados_morbilidad
 from services._sivigila_mortalidad import _escribir_relacionados_mortalidad
-from utils.cie10 import es_codigo_cie10_valido, limpiar_causa_asociada
+from utils.cie10 import es_codigo_cie10_valido, limpiar_causa_asociada, normalizar_cie10
 from utils.column_validators import _require_text
 from utils.date_parsers import _parse_date
 from utils.text_utils import clean_text
@@ -237,11 +237,13 @@ def _fase1_validar_filas(
                 catalog_cache=catalog_cache,
             )
             fecha_egreso = _parse_date(_get_value(row, _MORBILIDAD_FECHA_EGRESO_COLS))
-            causa = _require_text(
-                _get_value(row, ['Causa principal CIE-10']),
-                'Causa principal CIE-10',
-                numero_fila,
-            ).upper()
+            causa = normalizar_cie10(
+                _require_text(
+                    _get_value(row, ['Causa principal CIE-10']),
+                    'Causa principal CIE-10',
+                    numero_fila,
+                )
+            )
             momento = _resolve_momento_ocurrencia(_get_value(row, ['Momento ocurrencia']))
             edad_gestacional = _parse_int(_get_value(row, ['Edad gestacional ocurrencia (sem)']))
             event_hash = _hash_payload(
@@ -294,11 +296,13 @@ def _fase1_validar_filas(
                     nombre_campo=columnas[0],
                 )
             fecha_def = _parse_date(_get_value(row, _MORTALIDAD_FECHA_DEFUNCION_COLS))
-            causa = _require_text(
-                _get_value(row, ['10.1 Causa básica CIE-10']),
-                '10.1 Causa básica CIE-10',
-                numero_fila,
-            ).upper()
+            causa = normalizar_cie10(
+                _require_text(
+                    _get_value(row, ['10.1 Causa básica CIE-10']),
+                    '10.1 Causa básica CIE-10',
+                    numero_fila,
+                )
+            )
             event_hash = _hash_payload(
                 {
                     'tipo': 'mortalidad',

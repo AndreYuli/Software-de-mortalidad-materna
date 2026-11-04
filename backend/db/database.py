@@ -1,6 +1,6 @@
 """Configuración y conexión a la base de datos."""
 
-from sqlalchemy import create_engine
+from sqlalchemy import MetaData, create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 from core.config import Config
@@ -14,8 +14,21 @@ SessionLocal = sessionmaker(
 )
 
 
+# Nombres predecibles para llaves, únicos e índices (el script SQL y la base real coinciden).
+# Los CHECK siempre llevan nombre explícito en el modelo.
+_CONVENCION_NOMBRES = {
+    'ix': 'ix_%(column_0_label)s',
+    'uq': 'uq_%(table_name)s_%(column_0_name)s',
+    'ck': '%(constraint_name)s',
+    'fk': 'fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s',
+    'pk': 'pk_%(table_name)s',
+}
+
+
 class Base(DeclarativeBase):
     """Clase base para los modelos ORM."""
+
+    metadata = MetaData(naming_convention=_CONVENCION_NOMBRES)
 
 
 def get_db():

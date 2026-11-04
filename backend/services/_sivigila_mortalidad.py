@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import (
     AntecedenteMaterno,
+    AntecedenteObstetrico,
     AntecedentePartoPuerperio,
     AntecedenteRiesgo,
     CatConvivencia,
@@ -98,13 +99,24 @@ def _escribir_relacionados_mortalidad(
                 )
             ),
             'id_escolaridad': escolaridad.id if escolaridad else None,
-            'id_regulacion_fec': regulacion.id if regulacion else None,
+        },
+        **kw,
+    )
+    # Campos obstétricos comunes a los dos eventos (incluye el control prenatal contado).
+    _upsert_single_related(
+        db,
+        AntecedenteObstetrico,
+        {'caso_mortalidad_id': caso.id_caso},
+        {
             'gestaciones': _parse_int(_get_value(row, ['6.5 Gestaciones'])),
             'partos_vaginales': _parse_int(_get_value(row, ['6.6 Partos Vaginales'])),
             'cesareas': _parse_int(_get_value(row, ['6.7 Cesáreas'])),
             'nacidos_muertos': _parse_int(_get_value(row, ['6.8 Muertos'])),
             'hijos_vivos': _parse_int(_get_value(row, ['6.9 Vivos'])),
             'abortos': _parse_int(_get_value(row, ['6.10 Abortos'])),
+            'id_regulacion_fecundidad': regulacion.id if regulacion else None,
+            'num_controles_prenatales': _parse_int(_get_value(row, ['8.1 No. CPN'])),
+            'semana_inicio_cpn': _parse_int(_get_value(row, ['8.2 Semana inicio CPN'])),
         },
         **kw,
     )
@@ -364,8 +376,6 @@ def _escribir_relacionados_mortalidad(
         ControlPrenatal,
         {'id_caso': caso.id_caso},
         {
-            'num_cpn': _parse_int(_get_value(row, ['8.1 No. CPN'])),
-            'semana_inicio_cpn': _parse_int(_get_value(row, ['8.2 Semana inicio CPN'])),
             'id_personal_cpn': personal_cpn.id if personal_cpn else None,
             'id_nivel_atencion_cpn': nivel_cpn.id if nivel_cpn else None,
             'id_remisiones': remisiones.id if remisiones else None,

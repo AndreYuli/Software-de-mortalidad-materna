@@ -3,6 +3,7 @@
 from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import (
+    AntecedenteObstetrico,
     AntecedentesObstetricos,
     CatEtnia,
     CatGrupoCausa,
@@ -39,7 +40,7 @@ from services._sivigila_escritura import (
     _upsert_single_related,
 )
 from services._sivigila_helpers import _DatosPasada1
-from utils.cie10 import limpiar_causa_asociada
+from utils.cie10 import limpiar_causa_asociada, normalizar_cie10
 from utils.date_parsers import _parse_date
 from utils.text_utils import clean_text, is_empty, slugify
 from utils.type_parsers import _parse_bool, _parse_decimal, _parse_int
@@ -148,19 +149,31 @@ def _escribir_relacionados_morbilidad(
         _get_value(row, _MORBILIDAD_TERMINACION_COLS),
         catalog_cache=catalog_cache,
     )
+    # Campos obstétricos comunes a los dos eventos: tabla única `antecedente_obstetrico`.
+    _upsert_single_related(
+        db,
+        AntecedenteObstetrico,
+        {'caso_morbilidad_id': caso.id_caso},
+        {
+            'gestaciones': _parse_int(_get_value(row, ['N° gestaciones'])),
+            'partos_vaginales': _parse_int(_get_value(row, ['Partos vaginales'])),
+            'cesareas': _parse_int(_get_value(row, ['Cesáreas'])),
+            'abortos': _parse_int(_get_value(row, ['Abortos'])),
+            'nacidos_muertos': _parse_int(_get_value(row, ['Muertos'])),
+            'hijos_vivos': _parse_int(_get_value(row, ['Vivos'])),
+            'id_regulacion_fecundidad': regulacion.id if regulacion else None,
+            'num_controles_prenatales': _parse_int(_get_value(row, ['N° controles prenatales'])),
+            'semana_inicio_cpn': _parse_int(_get_value(row, ['Semanas inicio CPN'])),
+        },
+        **kw,
+    )
     _upsert_single_related(
         db,
         AntecedentesObstetricos,
         {'id_caso': caso.id_caso},
         {
-            'num_gestaciones': _parse_int(_get_value(row, ['N° gestaciones'])),
-            'partos_vaginales': _parse_int(_get_value(row, ['Partos vaginales'])),
-            'cesareas': _parse_int(_get_value(row, ['Cesáreas'])),
-            'abortos': _parse_int(_get_value(row, ['Abortos'])),
             'molas': _parse_int(_get_value(row, ['Molas'])),
             'ectopicos': _parse_int(_get_value(row, ['Ectópicos'])),
-            'muertos': _parse_int(_get_value(row, ['Muertos'])),
-            'vivos': _parse_int(_get_value(row, ['Vivos'])),
             'fecha_ultima_gestacion': _parse_date(
                 _get_value(
                     row,
@@ -171,9 +184,6 @@ def _escribir_relacionados_morbilidad(
                     ],
                 )
             ),
-            'id_regulacion_fecundidad': regulacion.id if regulacion else None,
-            'num_controles_prenatales': _parse_int(_get_value(row, ['N° controles prenatales'])),
-            'semanas_inicio_cpn': _parse_int(_get_value(row, ['Semanas inicio CPN'])),
             'id_terminacion_gestacion': terminacion.id if terminacion else None,
             'edad_gestacional_sem': _parse_int(
                 _get_value(row, ['Edad gestacional ocurrencia (sem)'])
@@ -331,7 +341,7 @@ def _escribir_relacionados_morbilidad(
         db,
         CausaAsociadaMorbilidad,
         {'id_caso': caso.id_caso},
-        [{'orden': i, 'cie10': c} for i, c in enumerate(asociadas, start=1) if c],
+        [{'orden': i, 'cie10': normalizar_cie10(c)} for i, c in enumerate(asociadas, start=1) if c],
         not caso_creado,
     )
 

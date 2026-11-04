@@ -42,7 +42,7 @@ _COLUMNAS_PROHIBIDAS = (
 
 def _caso(db):
     """Crea un paciente y un caso de morbilidad mínimos."""
-    pac = Paciente(nombres_apellidos='Ana Prueba', numero_id='1')
+    pac = Paciente(nombres_apellidos='Ana Prueba', id_tipo_id=1, numero_id='1')
     db.add(pac)
     db.flush()
     caso = CasoMorbilidad(id_paciente=pac.id_paciente, fecha_egreso=date(2026, 1, 5))

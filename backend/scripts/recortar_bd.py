@@ -36,11 +36,23 @@ try:
     db.execute(text(f'DELETE FROM criterios_falla_organica WHERE id_caso NOT IN ({morb_str})'))
     db.execute(text(f'DELETE FROM referencia WHERE id_caso NOT IN ({morb_str})'))
     db.execute(text(f'DELETE FROM antecedentes_obstetricos WHERE id_caso NOT IN ({morb_str})'))
+    db.execute(
+        text(f'DELETE FROM antecedente_obstetrico WHERE caso_morbilidad_id NOT IN ({morb_str})')
+    )
+    db.execute(
+        text(f'DELETE FROM datos_sociodemograficos WHERE caso_morbilidad_id NOT IN ({morb_str})')
+    )
     db.execute(text(f'DELETE FROM caso_morbilidad WHERE id_caso NOT IN ({morb_str})'))
 
     # 4. Eliminar registros dependientes de mortalidad fuera del top 50
     db.execute(text(f'DELETE FROM causa_muerte WHERE id_caso NOT IN ({mort_str})'))
     db.execute(text(f'DELETE FROM antecedente_materno WHERE id_caso NOT IN ({mort_str})'))
+    db.execute(
+        text(f'DELETE FROM antecedente_obstetrico WHERE caso_mortalidad_id NOT IN ({mort_str})')
+    )
+    db.execute(
+        text(f'DELETE FROM datos_sociodemograficos WHERE caso_mortalidad_id NOT IN ({mort_str})')
+    )
     db.execute(text(f'DELETE FROM antecedente_riesgo WHERE id_caso NOT IN ({mort_str})'))
     db.execute(text(f'DELETE FROM complicacion_embarazo WHERE id_caso NOT IN ({mort_str})'))
     db.execute(text(f'DELETE FROM control_prenatal WHERE id_caso NOT IN ({mort_str})'))

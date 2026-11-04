@@ -39,6 +39,16 @@ Fuente: `git log` de la rama. Los pendientes están en `PENDIENTES_CORRECCION_AV
 ## Cambios posteriores (4-nov-2026, sin commit)
 - Contraseña mínima de **8** caracteres (antes 15): `backend/schemas/user_schema.py`, `frontend/.../registerSchema.ts`, `Register.tsx`, `Register.test.tsx` y `backend/tests/test_revision_uso_api.py`. Back: 227 pruebas aprobadas (+2 omitidas); front, las 20 de `components/auth`.
 
+## Reconstrucción de la base de datos (4-nov-2026, rama `correccion/bd-reconstruida`)
+Detalle y decisiones en `docs/BASE_DE_DATOS.md`; diagrama en `docs/modelo_de_datos.png|svg`.
+- El script SQL ya no se escribe a mano: se **genera** desde los modelos (`scripts/generar_esquema_sql.py`) y no trae `DROP DATABASE`.
+- Tablas maestras nuevas: `cat_evento`, `departamento`, `secretaria`, `cie10` (12.900 códigos). `secretaria_codigo`, `tipo` y los CIE-10 de morbilidad pasan a llaves foráneas.
+- Una sola tabla de antecedentes obstétricos comunes (`antecedente_obstetrico`, asociación excluyente) para morbilidad y mortalidad; lo propio de cada evento queda en su tabla.
+- Triggers: `actualizado_en`, bitácora `auditoria_cambio` (solo nombres de columnas) y validación del caso de cada importación.
+- Restricciones: 1:1 explícito, caso único por (secretaría, paciente, fecha), CHECK de rangos, índices en todas las llaves foráneas.
+- CIE-10 se guarda normalizado (`O141`).
+- Pruebas: back 236 aprobadas (+2 omitidas; incluye pruebas de PostgreSQL con esquema temporal), e2e 23/23 sobre una base reconstruida desde el script, carga real de 200 + 200 casos y reenvío sin duplicar.
+
 ## Fuera del repositorio (en `Proyecto de grado`)
 - `CARACT_corregido (5).docx` (copia del (4); contraseña vuelve a 8) y (4) (copia del (3)), `Carta_de_Respuesta_corregida (3).docx`
 - `respuesta_a_la_matriz_de_la_asesora_3-nov_v2.txt`

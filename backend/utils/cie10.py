@@ -72,6 +72,15 @@ def es_codigo_cie10_valido(codigo: str | None) -> bool:
     return clave in data or (len(clave) == 3 and (clave + 'X') in data)
 
 
+def normalizar_cie10(codigo: object) -> str:
+    """Forma canónica con la que se guarda un código CIE-10: mayúsculas, sin punto ni espacios.
+
+    'o14.1' y 'O141' son el mismo código; guardarlo siempre igual permite la llave foránea
+    a la tabla `cie10` y evita que el mismo diagnóstico cuente como dos causas distintas.
+    """
+    return str(codigo).replace('.', '').strip().upper()
+
+
 def limpiar_causa_asociada(valor: object) -> str | None:
     """Devuelve la causa asociada como texto, o None si está vacía o es sólo un guion ('—').
 
