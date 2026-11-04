@@ -53,21 +53,6 @@ function formatTipo(tipo: string): string {
   return tipo === 'mortalidad' ? '550 · Mortalidad' : '549 · Morbilidad'
 }
 
-function extractResumen(resumen: Record<string, unknown>): string {
-  const nuevos = (resumen.pacientes_nuevos as number) ?? 0
-  const existentes = (resumen.pacientes_existentes as number) ?? 0
-  const creados = (resumen.casos_creados as number) ?? 0
-  const actualizados = (resumen.casos_actualizados as number) ?? 0
-  const duplicados = (resumen.filas_omitidas_duplicadas as number) ?? 0
-  const partes: string[] = []
-  if (nuevos > 0) partes.push(`${nuevos} pacientes nuevos`)
-  if (existentes > 0) partes.push(`${existentes} existentes`)
-  if (creados > 0) partes.push(`${creados} casos creados`)
-  if (actualizados > 0) partes.push(`${actualizados} actualizados`)
-  if (duplicados > 0) partes.push(`${duplicados} duplicados omitidos`)
-  return partes.length > 0 ? partes.join(' · ') : 'Sin detalle'
-}
-
 export function UploadHistorySection() {
   const {
     items,
@@ -209,7 +194,19 @@ export function UploadHistorySection() {
       {!loading && !error && items.length > 0 && (
         <>
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full min-w-[60rem] border-collapse text-left text-sm">
+            {/* table-fixed + anchos por columna: la columna Archivo absorbe el espacio sobrante y
+                se trunca, de modo que Acciones siempre queda visible sin scroll en escritorio. */}
+            <table className="w-full min-w-[56rem] table-fixed border-collapse text-left text-sm">
+              <colgroup>
+                <col className="w-[4.5rem]" />
+                <col className="w-[6.5rem]" />
+                <col className="w-[5.5rem]" />
+                <col className="w-[14rem]" />
+                <col className="w-[8.5rem]" />
+                <col />
+                <col className="w-[6.5rem]" />
+                <col className="w-[10rem]" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold uppercase tracking-wider text-slate-500">
                   <th className={TH}>Año</th>
@@ -219,7 +216,6 @@ export function UploadHistorySection() {
                   <th className={TH}>Tipo</th>
                   <th className={TH}>Archivo</th>
                   <th className={`${TH} text-right`}>Registros</th>
-                  <th className={TH}>Resumen</th>
                   <th className={TH}>Acciones</th>
                 </tr>
               </thead>
@@ -239,13 +235,12 @@ export function UploadHistorySection() {
                         {formatTipo(item.tipo)}
                       </span>
                     </td>
-                    <td className={`${TD} max-w-[14rem] truncate`} title={item.nombre_archivo}>
+                    <td className={`${TD} truncate`} title={item.nombre_archivo}>
                       {item.nombre_archivo}
                     </td>
                     <td className={`${TD} text-right tabular-nums`}>{item.total_registros}</td>
-                    <td className={`${TD} min-w-[14rem] text-xs text-slate-500`}>{extractResumen(item.resumen)}</td>
                     <td className={`${TD} whitespace-nowrap`}>
-                      <div className="flex gap-1">
+                      <div className="flex gap-2">
                         <button type="button" className={BTN} aria-label={`Editar ${item.nombre_archivo}`} onClick={() => setEditando(item)}>
                           Editar
                         </button>
