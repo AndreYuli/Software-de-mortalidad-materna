@@ -48,6 +48,7 @@ export function useAnalysisList(onAutoOpen?: (tipo: string, id: number) => void)
   )
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- carga inicial de la lista
     fetchAnalisis(true)
   }, [fetchAnalisis])
 

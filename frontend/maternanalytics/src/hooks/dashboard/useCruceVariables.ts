@@ -23,11 +23,9 @@ export function useCruceVariables(
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!analisisId) {
-      setData(null)
-      return
-    }
+    if (!analisisId) return
     let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- inicio de petición: marca "cargando" antes del fetch
     setLoading(true)
     setError(null)
     fetchCruce(analisisId, varSocio, varClinica)
@@ -50,5 +48,5 @@ export function useCruceVariables(
     }
   }, [analisisId, varSocio, varClinica])
 
-  return { varSocio, varClinica, setVarSocio, setVarClinica, data, loading, error }
+  return { varSocio, varClinica, setVarSocio, setVarClinica, data: analisisId ? data : null, loading, error }
 }

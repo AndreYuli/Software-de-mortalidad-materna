@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, Loader2, Lock, Mail, MapPin, User } from "lucide-react";
 import {
@@ -38,14 +38,14 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
-  const departamento = watch("departamento");
+  const departamento = useWatch({ control, name: "departamento" });
 
   const onSubmit = async (data: RegisterFormValues) => {
     setError("");
