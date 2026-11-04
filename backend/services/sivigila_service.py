@@ -58,7 +58,7 @@ _COLUMNAS_CIE10_MORBILIDAD = (
     'Causa asociada CIE-10.2',
 )
 
-# Columnas NOT NULL de antecedente_materno y del momento de la muerte: se validan en la
+# Columnas NOT NULL de antecedente_materno_mortalidad y del momento de la muerte: se validan en la
 # pasada 1 para dar el número de fila en vez de fallar al insertar con un error de la BD.
 _CATALOGOS_OBLIGATORIOS_MORTALIDAD = (
     (CatConvivencia, ['6.1 Convivencia']),

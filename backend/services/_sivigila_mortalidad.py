@@ -3,7 +3,7 @@
 from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import (
-    AntecedenteMaterno,
+    AntecedenteMaternoMortalidad,
     AntecedenteObstetrico,
     AntecedentePartoPuerperio,
     AntecedenteRiesgo,
@@ -88,7 +88,7 @@ def _escribir_relacionados_mortalidad(
     )
     _upsert_single_related(
         db,
-        AntecedenteMaterno,
+        AntecedenteMaternoMortalidad,
         {'id_caso': caso.id_caso},
         {
             'id_convivencia': convivencia.id if convivencia else None,

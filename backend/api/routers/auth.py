@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from core.security import create_access_token, hash_password, verify_password
-from core.tenant import resolver_secretaria
+from core.tenant import nombres_de_secretaria, resolver_secretaria
 from db.database import get_db
 from db.models_sqlalchemy import Usuario
 from schemas.user_schema import TokenResponse, UsuarioLogin, UsuarioRegister, UsuarioResponse
@@ -72,7 +72,7 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
     # La secretaría es el tenant de datos: solo se aceptan valores del catálogo
     # controlado, nunca texto libre del cliente.
     try:
-        departamento, secretaria, secretaria_codigo = resolver_secretaria(
+        _, _, secretaria_codigo = resolver_secretaria(
             user_in.departamento_codigo, user_in.secretaria_codigo
         )
     except ValueError as exc:
@@ -83,8 +83,6 @@ def register(user_in: UsuarioRegister, db: Session = Depends(get_db)) -> Usuario
         email=user_in.email,
         password_hash=hash_password(user_in.password),
         fecha_registro=datetime.now(timezone.utc),
-        departamento=departamento,
-        secretaria=secretaria,
         secretaria_codigo=secretaria_codigo,
     )
     try:
@@ -135,14 +133,15 @@ def login(credentials: UsuarioLogin, db: Session = Depends(get_db)) -> TokenResp
 
     _intentos_fallidos.pop(credentials.email, None)
     token = create_access_token(data={'sub': str(usuario.id)})
+    departamento, secretaria = nombres_de_secretaria(usuario.secretaria_codigo)
     respuesta_token = TokenResponse(
         access_token=token,
         token_type='bearer',
         id=usuario.id,
         nombre=usuario.nombre,
         email=usuario.email,
-        departamento=usuario.departamento,
-        secretaria=usuario.secretaria,
+        departamento=departamento,
+        secretaria=secretaria,
         secretaria_codigo=usuario.secretaria_codigo,
     )
     return respuesta_token

@@ -10,7 +10,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import (
-    AntecedenteMaterno,
+    AntecedenteMaternoMortalidad,
     AntecedenteObstetrico,
     AntecedentePartoPuerperio,
     AntecedenteRiesgo,
@@ -215,7 +215,7 @@ def _precargar_caches_sivigila(
 
     related_models = (
         [
-            AntecedenteMaterno,
+            AntecedenteMaternoMortalidad,
             AntecedenteRiesgo,
             ComplicacionEmbarazo,
             ControlPrenatal,

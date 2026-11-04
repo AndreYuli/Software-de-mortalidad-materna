@@ -204,8 +204,6 @@ CREATE TABLE api_usuario (
 	password_hash VARCHAR(255) NOT NULL, 
 	fecha_registro TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL, 
 	actualizado_en TIMESTAMP WITHOUT TIME ZONE, 
-	departamento VARCHAR(100), 
-	secretaria VARCHAR(150), 
 	secretaria_codigo VARCHAR(60), 
 	CONSTRAINT pk_api_usuario PRIMARY KEY (id), 
 	CONSTRAINT fk_api_usuario_secretaria_codigo_secretaria FOREIGN KEY(secretaria_codigo) REFERENCES secretaria (codigo)
@@ -239,15 +237,15 @@ CREATE TABLE caso_mortalidad (
 	CONSTRAINT fk_caso_mortalidad_secretaria_codigo_secretaria FOREIGN KEY(secretaria_codigo) REFERENCES secretaria (codigo)
 );
 
-CREATE TABLE antecedente_materno (
+CREATE TABLE antecedente_materno_mortalidad (
 	id_caso INTEGER NOT NULL, 
 	id_convivencia INTEGER NOT NULL, 
 	otro_convivencia VARCHAR(100), 
 	id_escolaridad INTEGER NOT NULL, 
-	CONSTRAINT pk_antecedente_materno PRIMARY KEY (id_caso), 
-	CONSTRAINT fk_antecedente_materno_id_caso_caso_mortalidad FOREIGN KEY(id_caso) REFERENCES caso_mortalidad (id_caso), 
-	CONSTRAINT fk_antecedente_materno_id_convivencia_cat_convivencia FOREIGN KEY(id_convivencia) REFERENCES cat_convivencia (id), 
-	CONSTRAINT fk_antecedente_materno_id_escolaridad_cat_escolaridad FOREIGN KEY(id_escolaridad) REFERENCES cat_escolaridad (id)
+	CONSTRAINT pk_antecedente_materno_mortalidad PRIMARY KEY (id_caso), 
+	CONSTRAINT fk_antecedente_materno_mortalidad_id_caso_caso_mortalidad FOREIGN KEY(id_caso) REFERENCES caso_mortalidad (id_caso), 
+	CONSTRAINT fk_antecedente_materno_mortalidad_id_convivencia_cat_co_14ac FOREIGN KEY(id_convivencia) REFERENCES cat_convivencia (id), 
+	CONSTRAINT fk_antecedente_materno_mortalidad_id_escolaridad_cat_es_9e2e FOREIGN KEY(id_escolaridad) REFERENCES cat_escolaridad (id)
 );
 
 CREATE TABLE antecedente_obstetrico (
@@ -276,6 +274,30 @@ CREATE TABLE antecedente_obstetrico (
 	CONSTRAINT fk_antecedente_obstetrico_caso_morbilidad_id_caso_morbilidad FOREIGN KEY(caso_morbilidad_id) REFERENCES caso_morbilidad (id_caso), 
 	CONSTRAINT fk_antecedente_obstetrico_caso_mortalidad_id_caso_mortalidad FOREIGN KEY(caso_mortalidad_id) REFERENCES caso_mortalidad (id_caso), 
 	CONSTRAINT fk_antecedente_obstetrico_id_regulacion_fecundidad_cat__c1c2 FOREIGN KEY(id_regulacion_fecundidad) REFERENCES cat_regulacion_fecundidad (id)
+);
+
+CREATE TABLE antecedente_obstetrico_morbilidad (
+	id_antecedente SERIAL NOT NULL, 
+	id_caso INTEGER NOT NULL, 
+	molas SMALLINT, 
+	ectopicos SMALLINT, 
+	fecha_ultima_gestacion DATE, 
+	id_terminacion_gestacion INTEGER, 
+	edad_gestacional_sem SMALLINT, 
+	momento_ocurrencia VARCHAR(8), 
+	estado_recien_nacido VARCHAR(6), 
+	multiplicidad BOOLEAN, 
+	peso_rn_gramos SMALLINT, 
+	CONSTRAINT pk_antecedente_obstetrico_morbilidad PRIMARY KEY (id_antecedente), 
+	CONSTRAINT chk_ant_momento CHECK (momento_ocurrencia IN ('Antes','Durante','Despues')), 
+	CONSTRAINT chk_ant_estado_rn CHECK (estado_recien_nacido IN ('Vivo','Muerto')), 
+	CONSTRAINT chk_ant_molas CHECK (molas BETWEEN 0 AND 20), 
+	CONSTRAINT chk_ant_ecto CHECK (ectopicos BETWEEN 0 AND 20), 
+	CONSTRAINT chk_ant_egest CHECK (edad_gestacional_sem BETWEEN 1 AND 50), 
+	CONSTRAINT chk_ant_pesorn CHECK (peso_rn_gramos BETWEEN 500 AND 7000), 
+	CONSTRAINT uq_antecedente_obstetrico_morbilidad_id_caso UNIQUE (id_caso), 
+	CONSTRAINT fk_antecedente_obstetrico_morbilidad_id_caso_caso_morbilidad FOREIGN KEY(id_caso) REFERENCES caso_morbilidad (id_caso), 
+	CONSTRAINT fk_antecedente_obstetrico_morbilidad_id_terminacion_ges_e04d FOREIGN KEY(id_terminacion_gestacion) REFERENCES cat_terminacion_gestacion (id)
 );
 
 CREATE TABLE antecedente_parto_puerperio (
@@ -326,30 +348,6 @@ CREATE TABLE antecedente_riesgo (
 	gingivitis_periodontitis BOOLEAN NOT NULL, 
 	CONSTRAINT pk_antecedente_riesgo PRIMARY KEY (id_caso), 
 	CONSTRAINT fk_antecedente_riesgo_id_caso_caso_mortalidad FOREIGN KEY(id_caso) REFERENCES caso_mortalidad (id_caso)
-);
-
-CREATE TABLE antecedentes_obstetricos (
-	id_antecedente SERIAL NOT NULL, 
-	id_caso INTEGER NOT NULL, 
-	molas SMALLINT, 
-	ectopicos SMALLINT, 
-	fecha_ultima_gestacion DATE, 
-	id_terminacion_gestacion INTEGER, 
-	edad_gestacional_sem SMALLINT, 
-	momento_ocurrencia VARCHAR(8), 
-	estado_recien_nacido VARCHAR(6), 
-	multiplicidad BOOLEAN, 
-	peso_rn_gramos SMALLINT, 
-	CONSTRAINT pk_antecedentes_obstetricos PRIMARY KEY (id_antecedente), 
-	CONSTRAINT chk_ant_momento CHECK (momento_ocurrencia IN ('Antes','Durante','Despues')), 
-	CONSTRAINT chk_ant_estado_rn CHECK (estado_recien_nacido IN ('Vivo','Muerto')), 
-	CONSTRAINT chk_ant_molas CHECK (molas BETWEEN 0 AND 20), 
-	CONSTRAINT chk_ant_ecto CHECK (ectopicos BETWEEN 0 AND 20), 
-	CONSTRAINT chk_ant_egest CHECK (edad_gestacional_sem BETWEEN 1 AND 50), 
-	CONSTRAINT chk_ant_pesorn CHECK (peso_rn_gramos BETWEEN 500 AND 7000), 
-	CONSTRAINT uq_antecedentes_obstetricos_id_caso UNIQUE (id_caso), 
-	CONSTRAINT fk_antecedentes_obstetricos_id_caso_caso_morbilidad FOREIGN KEY(id_caso) REFERENCES caso_morbilidad (id_caso), 
-	CONSTRAINT fk_antecedentes_obstetricos_id_terminacion_gestacion_ca_ad52 FOREIGN KEY(id_terminacion_gestacion) REFERENCES cat_terminacion_gestacion (id)
 );
 
 CREATE TABLE causa_asociada_morbilidad (
@@ -591,16 +589,16 @@ CREATE INDEX ix_caso_mortalidad_fecha_defuncion ON caso_mortalidad (fecha_defunc
 CREATE INDEX ix_caso_mortalidad_id_paciente ON caso_mortalidad (id_paciente);
 CREATE INDEX ix_caso_mortalidad_id_sitio_defuncion ON caso_mortalidad (id_sitio_defuncion);
 CREATE INDEX ix_caso_mortalidad_secretaria_codigo ON caso_mortalidad (secretaria_codigo);
-CREATE INDEX ix_antecedente_materno_id_convivencia ON antecedente_materno (id_convivencia);
-CREATE INDEX ix_antecedente_materno_id_escolaridad ON antecedente_materno (id_escolaridad);
+CREATE INDEX ix_antecedente_materno_mortalidad_id_convivencia ON antecedente_materno_mortalidad (id_convivencia);
+CREATE INDEX ix_antecedente_materno_mortalidad_id_escolaridad ON antecedente_materno_mortalidad (id_escolaridad);
 CREATE INDEX ix_antecedente_obstetrico_id_regulacion_fecundidad ON antecedente_obstetrico (id_regulacion_fecundidad);
 CREATE UNIQUE INDEX uq_ao_caso_morb ON antecedente_obstetrico (caso_morbilidad_id);
 CREATE UNIQUE INDEX uq_ao_caso_mort ON antecedente_obstetrico (caso_mortalidad_id);
+CREATE INDEX ix_antecedente_obstetrico_morbilidad_id_terminacion_gestacion ON antecedente_obstetrico_morbilidad (id_terminacion_gestacion);
 CREATE INDEX ix_antecedente_parto_puerperio_id_atendido_por ON antecedente_parto_puerperio (id_atendido_por);
 CREATE INDEX ix_antecedente_parto_puerperio_id_momento_muerte ON antecedente_parto_puerperio (id_momento_muerte);
 CREATE INDEX ix_antecedente_parto_puerperio_id_nivel_atencion_parto ON antecedente_parto_puerperio (id_nivel_atencion_parto);
 CREATE INDEX ix_antecedente_parto_puerperio_id_tipo_parto ON antecedente_parto_puerperio (id_tipo_parto);
-CREATE INDEX ix_antecedentes_obstetricos_id_terminacion_gestacion ON antecedentes_obstetricos (id_terminacion_gestacion);
 CREATE INDEX ix_causa_asociada_morbilidad_cie10 ON causa_asociada_morbilidad (cie10);
 CREATE INDEX ix_causa_muerte_causa_basica_cie10 ON causa_muerte (causa_basica_cie10);
 CREATE INDEX ix_causa_muerte_id_fuente_causa ON causa_muerte (id_fuente_causa);
@@ -887,7 +885,7 @@ CREATE OR REPLACE VIEW v_mortalidad_completa AS
         LEFT JOIN paciente p ON p.id_paciente = c.id_paciente
         LEFT JOIN cat_tipo_id ti ON ti.id = p.id_tipo_id
         LEFT JOIN cat_sitio_defuncion sd ON sd.id = c.id_sitio_defuncion
-        LEFT JOIN antecedente_materno am ON am.id_caso = c.id_caso
+        LEFT JOIN antecedente_materno_mortalidad am ON am.id_caso = c.id_caso
         LEFT JOIN cat_convivencia cv ON cv.id = am.id_convivencia
         LEFT JOIN cat_escolaridad es ON es.id = am.id_escolaridad
         LEFT JOIN antecedente_obstetrico ao ON ao.caso_mortalidad_id = c.id_caso
@@ -963,7 +961,7 @@ CREATE OR REPLACE VIEW v_morbilidad_completa AS
         LEFT JOIN referencia_institucion ri1
             ON ri1.id_referencia = r.id_referencia AND ri1.orden = 1
         LEFT JOIN antecedente_obstetrico ao ON ao.caso_morbilidad_id = c.id_caso
-        LEFT JOIN antecedentes_obstetricos a ON a.id_caso = c.id_caso
+        LEFT JOIN antecedente_obstetrico_morbilidad a ON a.id_caso = c.id_caso
         LEFT JOIN cat_terminacion_gestacion tg ON tg.id = a.id_terminacion_gestacion
         LEFT JOIN criterios_enfermedad ce ON ce.id_caso = c.id_caso
         LEFT JOIN criterios_falla_organica cf ON cf.id_caso = c.id_caso

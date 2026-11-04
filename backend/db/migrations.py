@@ -22,8 +22,6 @@ logger = logging.getLogger(__name__)
 # Columnas nuevas del aislamiento por secretaría. `secretaria_codigo` es el tenant;
 # `departamento`/`secretaria` guardan el nombre visible del usuario.
 _ALTERACIONES: tuple[str, ...] = (
-    'ALTER TABLE api_usuario ADD COLUMN IF NOT EXISTS departamento VARCHAR(100)',
-    'ALTER TABLE api_usuario ADD COLUMN IF NOT EXISTS secretaria VARCHAR(150)',
     'ALTER TABLE api_usuario ADD COLUMN IF NOT EXISTS secretaria_codigo VARCHAR(60)',
     'ALTER TABLE api_analisis ADD COLUMN IF NOT EXISTS secretaria_codigo VARCHAR(60)',
     'ALTER TABLE api_sivigilaimportacion ADD COLUMN IF NOT EXISTS secretaria_codigo VARCHAR(60)',

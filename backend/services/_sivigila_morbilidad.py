@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import (
     AntecedenteObstetrico,
-    AntecedentesObstetricos,
+    AntecedenteObstetricoMorbilidad,
     CatEtnia,
     CatGrupoCausa,
     CatPoblacionVulnerable,
@@ -169,7 +169,7 @@ def _escribir_relacionados_morbilidad(
     )
     _upsert_single_related(
         db,
-        AntecedentesObstetricos,
+        AntecedenteObstetricoMorbilidad,
         {'id_caso': caso.id_caso},
         {
             'molas': _parse_int(_get_value(row, ['Molas'])),

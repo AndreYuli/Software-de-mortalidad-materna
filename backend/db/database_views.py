@@ -76,7 +76,7 @@ def sentencias_vistas() -> list[str]:
         LEFT JOIN paciente p ON p.id_paciente = c.id_paciente
         LEFT JOIN cat_tipo_id ti ON ti.id = p.id_tipo_id
         LEFT JOIN cat_sitio_defuncion sd ON sd.id = c.id_sitio_defuncion
-        LEFT JOIN antecedente_materno am ON am.id_caso = c.id_caso
+        LEFT JOIN antecedente_materno_mortalidad am ON am.id_caso = c.id_caso
         LEFT JOIN cat_convivencia cv ON cv.id = am.id_convivencia
         LEFT JOIN cat_escolaridad es ON es.id = am.id_escolaridad
         LEFT JOIN antecedente_obstetrico ao ON ao.caso_mortalidad_id = c.id_caso
@@ -154,7 +154,7 @@ def sentencias_vistas() -> list[str]:
         LEFT JOIN referencia_institucion ri1
             ON ri1.id_referencia = r.id_referencia AND ri1.orden = 1
         LEFT JOIN antecedente_obstetrico ao ON ao.caso_morbilidad_id = c.id_caso
-        LEFT JOIN antecedentes_obstetricos a ON a.id_caso = c.id_caso
+        LEFT JOIN antecedente_obstetrico_morbilidad a ON a.id_caso = c.id_caso
         LEFT JOIN cat_terminacion_gestacion tg ON tg.id = a.id_terminacion_gestacion
         LEFT JOIN criterios_enfermedad ce ON ce.id_caso = c.id_caso
         LEFT JOIN criterios_falla_organica cf ON cf.id_caso = c.id_caso

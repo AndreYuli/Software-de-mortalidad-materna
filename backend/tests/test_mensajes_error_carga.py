@@ -66,7 +66,7 @@ def test_error_de_dato_obligatorio_nombra_tabla_y_columna():
     """El NOT NULL de PostgreSQL (23502) indica qué columna faltó, sin volcar el SQL."""
 
     class _DiagFalso:
-        table_name = 'antecedente_materno'
+        table_name = 'antecedente_materno_mortalidad'
         column_name = 'id_regulacion_fec'
 
     class _OrigNotNullError(Exception):
@@ -79,7 +79,7 @@ def test_error_de_dato_obligatorio_nombra_tabla_y_columna():
     mensaje = _mensaje_error_bd(_ErrorSqlAlchemyNotNullError())
 
     assert "'id_regulacion_fec'" in mensaje
-    assert "'antecedente_materno'" in mensaje
+    assert "'antecedente_materno_mortalidad'" in mensaje
     assert 'INSERT' not in mensaje
 
 

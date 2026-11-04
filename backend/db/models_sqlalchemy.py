@@ -169,10 +169,8 @@ class Usuario(Base):
     password_hash = Column(String(255), nullable=False)
     fecha_registro = Column(DateTime, nullable=False, server_default=func.now())
     actualizado_en = Column(DateTime, nullable=True)
-    # Afiliación institucional del usuario. `secretaria_codigo` es el tenant que
-    # aísla sus datos; `departamento` y `secretaria` guardan el nombre visible.
-    departamento = Column(String(100), nullable=True)
-    secretaria = Column(String(150), nullable=True)
+    # Afiliación institucional: `secretaria_codigo` es el tenant que aísla sus datos. El
+    # nombre de la secretaría y del departamento se obtienen de las tablas maestras.
     secretaria_codigo = Column(
         String(60), ForeignKey('secretaria.codigo'), index=True, nullable=True
     )
@@ -440,8 +438,8 @@ class ReferenciaInstitucion(Base):
 class AntecedenteObstetrico(Base):
     """Antecedentes obstétricos COMUNES a morbilidad y mortalidad (una tabla, dos eventos).
 
-    Unifica los campos que antes estaban repetidos en `antecedentes_obstetricos`
-    (morbilidad) y `antecedente_materno` / `control_prenatal` (mortalidad). Lo propio de
+    Unifica los campos que antes estaban repetidos en `antecedente_obstetrico_morbilidad`
+    (morbilidad) y `antecedente_materno_mortalidad` / `control_prenatal` (mortalidad). Lo propio de
     cada evento queda en su tabla de extensión. Asociación excluyente: cada fila cuelga
     de un caso de morbilidad o de uno de mortalidad, nunca de ambos (CHECK), y hay como
     máximo una fila por caso (índice único).
@@ -482,10 +480,10 @@ class AntecedenteObstetrico(Base):
     semana_inicio_cpn = Column(SmallInteger, nullable=True)
 
 
-class AntecedentesObstetricos(Base):
+class AntecedenteObstetricoMorbilidad(Base):
     """Datos obstétricos PROPIOS del caso de morbilidad (el resto: `antecedente_obstetrico`)."""
 
-    __tablename__ = 'antecedentes_obstetricos'
+    __tablename__ = 'antecedente_obstetrico_morbilidad'
     __table_args__ = (
         CheckConstraint(
             "momento_ocurrencia IN ('Antes','Durante','Despues')", name='chk_ant_momento'
@@ -678,10 +676,10 @@ class CasoMortalidad(Base):
     )
 
 
-class AntecedenteMaterno(Base):
+class AntecedenteMaternoMortalidad(Base):
     """Datos maternos PROPIOS del caso de mortalidad (convivencia y escolaridad)."""
 
-    __tablename__ = 'antecedente_materno'
+    __tablename__ = 'antecedente_materno_mortalidad'
 
     id_caso = Column(Integer, ForeignKey('caso_mortalidad.id_caso'), primary_key=True)
     id_convivencia = Column(Integer, ForeignKey('cat_convivencia.id'), nullable=False, index=True)

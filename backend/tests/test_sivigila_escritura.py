@@ -36,7 +36,7 @@ def test_reconoce_encabezado_real_de_la_plantilla_oficial_morbilidad():
 
     Antes, `_MORBILIDAD_TERMINACION_COLS` solo reconocía
     'Terminación de la gestación', por lo que la plantilla real nunca
-    poblaba `antecedentes_obstetricos.id_terminacion_gestacion`.
+    poblaba `antecedente_obstetrico_morbilidad.id_terminacion_gestacion`.
     """
     row = pd.Series({'Terminación gestación': 'Parto'})
     assert _get_value(row, _MORBILIDAD_TERMINACION_COLS) == 'Parto'

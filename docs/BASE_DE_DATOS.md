@@ -1,8 +1,10 @@
 # Base de datos (PostgreSQL)
 
-Diagrama completo: [`modelo_de_datos.png`](modelo_de_datos.png) y [`modelo_de_datos.svg`](modelo_de_datos.svg)
-(vectorial: se puede ampliar sin perder nitidez). Se dibuja desde la base real con
-`backend/scripts/dibujar_modelo_de_datos.py`, así que no puede diferir del esquema.
+Diagramas (en `docs/modelo_de_datos/`; los `.svg` son vectoriales y se pueden ampliar sin perder nitidez):
+`bd_00_completa` (todas las tablas), `bd_01_nucleo`, `bd_02_sistema`, `bd_03_morbilidad`, `bd_04_mortalidad` y
+`bd_05_catalogos`. Se dibujan desde la base real con `backend/scripts/dibujar_modelo_de_datos.py`, así que no
+pueden diferir del esquema. En los de dominio, las llaves hacia un catálogo o hacia una tabla de otro diagrama
+se anotan en la columna («→ tabla») en vez de dibujarse como línea.
 
 ## Una sola fuente de verdad
 
@@ -33,7 +35,7 @@ migra**: se reconstruye.
 | Decisión | Por qué |
 |---|---|
 | **Tablas maestras** `cat_*`, `cat_evento`, `departamento`, `secretaria`, `cie10` | Los valores válidos viven en la base y las llaves foráneas impiden valores fuera de lista (antes `secretaria_codigo` y los CIE-10 eran texto libre). |
-| **Antecedentes obstétricos en una sola tabla** (`antecedente_obstetrico`) | Gestaciones, partos, cesáreas, abortos, nacidos muertos, hijos vivos, regulación de fecundidad y controles prenatales eran columnas repetidas en morbilidad y mortalidad. Asociación excluyente: dos llaves anulables y un CHECK que exige exactamente una; índice único por caso. Lo propio de cada evento queda en `antecedentes_obstetricos` (morbilidad), `antecedente_materno` y `control_prenatal` (mortalidad). |
+| **Antecedentes obstétricos en una sola tabla** (`antecedente_obstetrico`) | Gestaciones, partos, cesáreas, abortos, nacidos muertos, hijos vivos, regulación de fecundidad y controles prenatales eran columnas repetidas en morbilidad y mortalidad. Asociación excluyente: dos llaves anulables y un CHECK que exige exactamente una; índice único por caso. Lo propio de cada evento queda en `antecedente_obstetrico_morbilidad` (morbilidad) y `antecedente_materno_mortalidad` y `control_prenatal` (mortalidad); los nombres terminan en el evento para no confundirlos. |
 | **Triggers de tiempos** | `actualizado_en` lo escribe la base, no la aplicación. `creado_en` tiene valor por defecto del servidor. |
 | **Bitácora** `auditoria_cambio` | Quién, cuándo, tabla, registro, operación y **nombres** de columnas cambiadas; no copia valores (los datos de pacientes no se duplican). |
 | **Trazabilidad de la carga** | `api_sivigilaimportacion` guarda la fila cargada y su fecha; un trigger exige que `caso_id` exista en la tabla de su `tipo`. |
@@ -41,6 +43,7 @@ migra**: se reconstruye.
 | **Un caso no se repite** | Único por (secretaría, paciente, fecha del evento). |
 | **CIE-10 normalizado** | Se guarda sin punto y en mayúsculas (`O141`); las causas de morbilidad tienen llave foránea a `cie10`. La tabla incluye la categoría de 3 caracteres (`O14`) porque la carga la acepta. |
 | **Índices en todas las llaves foráneas** | PostgreSQL no los crea solo; la prueba `test_todas_las_tablas_tienen_llave_primaria_y_las_fk_estan_indexadas` lo verifica. |
+| **`api_usuario` sin texto repetido** | Guardaba `departamento` y `secretaria` como texto además de `secretaria_codigo`; ahora solo guarda el código y los nombres salen de las tablas maestras. |
 | **Nombres de restricciones predecibles** | `pk_`, `fk_`, `uq_`, `ix_` (convención de nombres en `db/database.py`). |
 
 ## Límites declarados
@@ -51,6 +54,10 @@ migra**: se reconstruye.
   puede aparecer en casos de secretarías distintas.
 - El aislamiento por secretaría lo aplica el código (filtros), no la base (no hay *row level security*).
 - Las columnas de fecha son `timestamp` sin zona horaria.
+- La bitácora guarda el usuario de la base de datos (`usuario_bd`), no el usuario de la aplicación: no sirve para saber quién cargó o editó.
+- `api_usuario` no tiene rol, estado ni correo verificado (registro abierto).
+- `total_criterios` (morbilidad) se guarda tal como viene o se calcula: no hay una restricción que lo compare con los criterios marcados, y la regla «ingreso a UCI exige días de UCI» cruza dos tablas, así que la valida la carga y no la base.
+- `fecha_defuncion` es opcional.
 - Los booleanos de factores de riesgo y complicaciones (mortalidad) siguen como columnas: es un
   conjunto fijo de la ficha 550.
 - Los identificadores usan `SERIAL`, no `IDENTITY`.
