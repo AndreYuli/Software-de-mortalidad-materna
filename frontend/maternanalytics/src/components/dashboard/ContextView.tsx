@@ -75,7 +75,7 @@ export function ContextView({ onNavigate }: ContextViewProps) {
       </header>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600">
           Los eventos que se vigilan
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -99,7 +99,7 @@ export function ContextView({ onNavigate }: ContextViewProps) {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600">
           ¿Qué obtienes al analizar?
         </h2>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -116,7 +116,7 @@ export function ContextView({ onNavigate }: ContextViewProps) {
       </section>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600">
           Cómo funciona, paso a paso
         </h2>
         <ol className="grid gap-3 sm:grid-cols-2">

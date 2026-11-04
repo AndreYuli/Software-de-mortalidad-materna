@@ -39,7 +39,7 @@ export interface SidebarProps {
 
 const ICON_CLASS = "size-5 shrink-0";
 const SECTION_TITLE_CLASS =
-  "px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-400";
+  "px-3 pb-1 pt-5 text-xs font-semibold uppercase tracking-wider text-slate-600";
 
 export function Sidebar({
   user,
