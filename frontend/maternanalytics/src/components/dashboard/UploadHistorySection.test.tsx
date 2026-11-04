@@ -56,6 +56,15 @@ describe('UploadHistorySection', () => {
     expect(fila.textContent).toContain('38')
   })
 
+  it('concuerda en singular: "1 carga registrada" y "1 carga que coincide con los filtros"', async () => {
+    fetchHistorial.mockResolvedValue(respuesta([item(1)]))
+    render(<UploadHistorySection />)
+    expect(await screen.findByText('1 carga registrada')).toBeTruthy()
+    fetchHistorial.mockResolvedValue(respuesta([item(1)]))
+    fireEvent.change(screen.getByLabelText(/buscar/i), { target: { value: 'archivo' } })
+    expect(await screen.findByText('1 carga que coincide con los filtros', {}, { timeout: 3000 })).toBeTruthy()
+  })
+
   it('carga sin filtros la primera vez y ofrece los años disponibles', async () => {
     render(<UploadHistorySection />)
     await screen.findByText('archivo_1.xlsx')

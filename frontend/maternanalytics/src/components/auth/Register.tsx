@@ -119,6 +119,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             label="Nombre completo"
             icon={User}
             placeholder="Tu nombre y apellido"
+            autoComplete="name"
             error={errors.nombre?.message}
             registration={register("nombre")}
           />
@@ -128,6 +129,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             icon={Mail}
             type="email"
             placeholder="tu.correo@institucion.gov.co"
+            autoComplete="username"
             error={errors.email?.message}
             registration={register("email")}
           />
@@ -165,6 +167,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             icon={Lock}
             type="password"
             placeholder="Mínimo 15 caracteres"
+            autoComplete="new-password"
             error={errors.password?.message}
             registration={register("password")}
           />
@@ -174,6 +177,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             icon={Lock}
             type="password"
             placeholder="Repite tu contraseña"
+            autoComplete="new-password"
             error={errors.confirmPassword?.message}
             registration={register("confirmPassword")}
           />
