@@ -39,6 +39,7 @@ from services._sivigila_escritura import (
     _upsert_single_related,
 )
 from services._sivigila_helpers import _DatosPasada1
+from utils.cie10 import limpiar_causa_asociada
 from utils.date_parsers import _parse_date
 from utils.text_utils import clean_text, is_empty, slugify
 from utils.type_parsers import _parse_bool, _parse_decimal, _parse_int
@@ -323,7 +324,7 @@ def _escribir_relacionados_morbilidad(
         **kw,
     )
     asociadas = [
-        clean_text(_get_value(row, [col]))
+        limpiar_causa_asociada(_get_value(row, [col]))
         for col in ('Causa asociada CIE-10', 'Causa asociada CIE-10.1', 'Causa asociada CIE-10.2')
     ]
     _reemplazar_hijas(

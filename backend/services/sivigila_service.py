@@ -39,6 +39,7 @@ from services._sivigila_helpers import (
 )
 from services._sivigila_morbilidad import _escribir_relacionados_morbilidad
 from services._sivigila_mortalidad import _escribir_relacionados_mortalidad
+from utils.cie10 import es_codigo_cie10_valido, limpiar_causa_asociada
 from utils.column_validators import _require_text
 from utils.date_parsers import _parse_date
 from utils.text_utils import clean_text
@@ -48,6 +49,14 @@ logger = logging.getLogger(__name__)
 
 
 _MAX_FILAS_EN_MENSAJE = 20
+
+# Columnas de morbilidad con códigos CIE-10 (la principal y las tres asociadas).
+_COLUMNAS_CIE10_MORBILIDAD = (
+    'Causa principal CIE-10',
+    'Causa asociada CIE-10',
+    'Causa asociada CIE-10.1',
+    'Causa asociada CIE-10.2',
+)
 
 # Columnas NOT NULL de antecedente_materno y del momento de la muerte: se validan en la
 # pasada 1 para dar el número de fila en vez de fallar al insertar con un error de la BD.
@@ -135,6 +144,15 @@ def _verificar_reglas_de_valor(
             gest = _parse_int(_get_value(row, ['N° gestaciones']))
             if gest is not None and not 0 <= gest <= 19:
                 problemas.append(f'Fila {fila}: las gestaciones ({gest}) deben estar entre 0 y 19.')
+            for columna in _COLUMNAS_CIE10_MORBILIDAD:
+                es_asociada = columna != 'Causa principal CIE-10'
+                valor = _get_value(row, [columna])
+                codigo = limpiar_causa_asociada(valor) if es_asociada else clean_text(valor)
+                if codigo and not es_codigo_cie10_valido(codigo):
+                    problemas.append(
+                        f"Fila {fila}: el código CIE-10 '{codigo}' de la columna '{columna}' no "
+                        'existe en la tabla de referencia CIE-10 (formato válido: O14.1 u O141).'
+                    )
             if (
                 _parse_bool(_get_value(row, ['Ingreso UCI']))
                 and _parse_int(_get_value(row, ['Días estancia UCI'])) is None

@@ -103,6 +103,23 @@ _NORMALIZACION_1FN: tuple[tuple[str, str, tuple[str, ...]], ...] = (
 )
 
 
+# Las plantillas de carga usan '—' para "sin causa asociada"; la primera versión de la tabla hija
+# lo guardaba como si fuera un código CIE-10. Se borra en cada arranque (idempotente).
+SQL_LIMPIAR_MARCADORES_DE_VACIO = (
+    'DELETE FROM causa_asociada_morbilidad '
+    "WHERE trim(replace(replace(replace(cie10, '—', ''), '–', ''), '-', '')) = ''"
+)
+
+
+def _limpiar_marcadores_de_vacio(engine: Engine) -> None:
+    """Borra de causa_asociada_morbilidad los guiones que no son códigos CIE-10."""
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(SQL_LIMPIAR_MARCADORES_DE_VACIO))
+    except Exception:
+        logger.warning('No se pudieron limpiar los marcadores de vacío', exc_info=True)
+
+
 def _normalizar_1fn(engine: Engine) -> None:
     """Copia los grupos repetidos a sus tablas hijas y elimina las columnas antiguas.
 
@@ -149,6 +166,7 @@ def run_migrations(engine: Engine) -> None:
 
     Base.metadata.create_all(bind=engine)  # tablas hijas nuevas (no toca las existentes)
     _normalizar_1fn(engine)
+    _limpiar_marcadores_de_vacio(engine)
 
     # Las vistas se recrean para exponer la nueva columna secretaria_codigo.
     session = SessionLocal()

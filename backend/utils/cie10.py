@@ -2,7 +2,10 @@
 
 import json
 import logging
+import re
 from pathlib import Path
+
+from utils.text_utils import clean_text
 
 logger = logging.getLogger(__name__)
 
@@ -44,3 +47,37 @@ def obtener_nombre_cie10(codigo: str | None) -> str:
     if len(clave) == 3 and (clave + 'X') in data:
         return data[clave + 'X']
     return str(codigo).strip()
+
+
+# Letra + 2 dígitos + (dígito o X): el punto se ignora, igual que en la tabla de referencia.
+_FORMATO_CIE10 = re.compile(r'[A-Z]\d{2}[0-9X]?')
+
+
+def es_codigo_cie10_valido(codigo: str | None) -> bool:
+    """Indica si el código tiene formato CIE-10 y existe en la tabla de referencia.
+
+    Acepta con o sin punto ('O14.1' y 'O141'), en minúscula y con espacios, y los códigos de
+    categoría de 3 caracteres ('O85' se busca como 'O85X', igual que `obtener_nombre_cie10`).
+    Si la tabla de referencia no está disponible sólo se comprueba el formato, para no rechazar
+    cargas por un archivo de apoyo ausente.
+    """
+    if not codigo:
+        return False
+    clave = str(codigo).replace('.', '').strip().upper()
+    if not _FORMATO_CIE10.fullmatch(clave):
+        return False
+    data = _cargar_cie10()
+    if not data:
+        return True
+    return clave in data or (len(clave) == 3 and (clave + 'X') in data)
+
+
+def limpiar_causa_asociada(valor: object) -> str | None:
+    """Devuelve la causa asociada como texto, o None si está vacía o es sólo un guion ('—').
+
+    Las plantillas de carga usan '—' para indicar "sin causa asociada"; no es un código.
+    """
+    texto = clean_text(valor)
+    if texto is None or re.fullmatch(r'[-–—\s]+', texto):
+        return None
+    return texto

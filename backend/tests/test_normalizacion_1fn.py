@@ -147,3 +147,30 @@ def test_script_sql_ya_no_declara_columnas_repetidas_en_las_tablas_base():
         'cirugia_adicional_morbilidad',
     ):
         assert f'CREATE TABLE {t}' in sql
+
+
+def test_marcador_de_vacio_no_se_guarda_como_causa_asociada(db_session):
+    """'—' en la plantilla significa "sin causa": no debe quedar como código en la tabla hija."""
+    caso = _caso(db_session)
+    fila = {**FILA, 'Causa asociada CIE-10': '—', 'Causa asociada CIE-10.1': '—'}
+    _escribir(db_session, caso, fila)
+    assert db_session.query(CausaAsociadaMorbilidad).filter_by(id_caso=caso.id_caso).count() == 0
+
+
+def test_migracion_elimina_marcadores_de_vacio_ya_guardados(db_session):
+    """Los '—' que dejó la primera versión de la carga se borran en el arranque."""
+    from sqlalchemy import text
+
+    from db.migrations import SQL_LIMPIAR_MARCADORES_DE_VACIO
+
+    caso = _caso(db_session)
+    db_session.add_all(
+        [
+            CausaAsociadaMorbilidad(id_caso=caso.id_caso, orden=1, cie10='—'),
+            CausaAsociadaMorbilidad(id_caso=caso.id_caso, orden=2, cie10='O721'),
+        ]
+    )
+    db_session.flush()
+    db_session.execute(text(SQL_LIMPIAR_MARCADORES_DE_VACIO))
+    filas = db_session.query(CausaAsociadaMorbilidad).filter_by(id_caso=caso.id_caso).all()
+    assert [f.cie10 for f in filas] == ['O721']
