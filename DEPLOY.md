@@ -253,12 +253,18 @@ está definido; sin esa variable sigue usando Ollama (desarrollo local).
 
 - Límites del plan gratuito: ~40 peticiones/min y créditos limitados; pensado
   para prototipos, no producción. Los indicadores agregados salen a un tercero.
-- Modelo: `meta/llama-3.2-11b-vision-instruct` (responde 200 y en español).
+- Modelo: `meta/llama-3.2-90b-vision-instruct` (responde 200; verificado el 3-nov-2026).
   Los catálogos cambian: `meta/llama-3.3-70b-instruct` y
-  `meta/llama-3.1-8b-instruct` ya devolvían `410` (retirados) al desplegar.
-  Si el chat empieza a dar 503, probar la clave/modelo con:
+  `meta/llama-3.1-8b-instruct` ya devolvían `410` (retirados) al desplegar, y
+  `meta/llama-3.2-11b-vision-instruct` (el modelo original) pasó a devolver `404`
+  (`Function id ... Specified function in account ... is not found`) aunque
+  `GET /v1/models` lo seguía listando: **el listado no prueba que el modelo responda**.
+  Si el chat o las narrativas empiezan a dar 503, probar la clave y el modelo con una
+  petición real (no con el listado):
   `curl -s https://integrate.api.nvidia.com/v1/chat/completions -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{"model":"<id>","messages":[{"role":"user","content":"OK"}],"max_tokens":8}'`
-  y listar ids vivos con `GET https://integrate.api.nvidia.com/v1/models`.
+  Un 404 con ese mensaje es el modelo retirado, no la clave ni el código: cambiar
+  `OLLAMA_MODEL` en el `.env` del ia-service y reiniciarlo. Desde esta versión, el detalle del
+  proveedor (ids de función y de cuenta) ya no llega al usuario: queda sólo en el log del servicio.
 
 ```bash
 cd ~/Software-de-mortalidad-materna/ia-service
@@ -271,7 +277,7 @@ umask 177
 cat > .env << EOF
 LLM_API_KEY=$K
 LLM_BASE_URL=https://integrate.api.nvidia.com/v1
-OLLAMA_MODEL=meta/llama-3.2-11b-vision-instruct
+OLLAMA_MODEL=meta/llama-3.2-90b-vision-instruct
 EOF
 unset K; umask 022
 ```
@@ -305,7 +311,7 @@ sudo systemctl restart mortalidad-backend
 
 Verificación: `POST http://localhost:8011/chat` con
 `{"pregunta":"hola","historial":[],"tipo_analisis":"mortalidad","contexto":{}}`
-responde texto y `"modelo":"meta/llama-3.2-11b-vision-instruct"`.
+responde texto y `"modelo":"meta/llama-3.2-90b-vision-instruct"`.
 Logs: `journalctl -u mortalidad-ia -f`.
 
 ## 7. Carga de Excel: errores encontrados al desplegar y cómo se resolvieron

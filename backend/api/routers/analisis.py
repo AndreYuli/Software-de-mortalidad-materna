@@ -1,5 +1,6 @@
 """Endpoints para carga, consulta y análisis estadístico de archivos Excel."""
 
+import logging
 from contextlib import contextmanager
 from typing import Annotated, Any, Generator, Literal
 
@@ -37,6 +38,17 @@ FiltroAnio = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1900
 FiltroMes = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1, 12))]
 FiltroSemana = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1, 53))]
 FiltroDia = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1, 31))]
+
+logger = logging.getLogger(__name__)
+
+_IA_NO_DISPONIBLE = 'El servicio de IA no está disponible en este momento.'
+
+
+def _ia_no_disponible(exc: Exception) -> HTTPException:
+    """503 genérico: el detalle del proveedor (ids de función y de cuenta) sólo va al log."""
+    logger.warning('IA-SERVICE no disponible: %s', exc)
+    return HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_IA_NO_DISPONIBLE)
+
 
 router = APIRouter(prefix='/api', tags=['analisis'], dependencies=[Depends(get_current_user)])
 
@@ -487,10 +499,7 @@ def obtener_narrativa_ia(
                 regenerar,
             )
         except IAServiceUnavailableError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=str(exc),
-            ) from exc
+            raise _ia_no_disponible(exc) from exc
 
     return resultado
 
@@ -548,7 +557,4 @@ def chat_analisis(
         try:
             return chatear_ia(req.pregunta, historial_dicts, analisis.tipo, contexto)
         except IAServiceUnavailableError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=str(exc),
-            ) from exc
+            raise _ia_no_disponible(exc) from exc
