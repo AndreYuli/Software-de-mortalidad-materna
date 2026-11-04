@@ -43,6 +43,32 @@ logger = logging.getLogger(__name__)
 _MAX_DETALLE_ERROR_BD = 400
 
 
+# Reglas CHECK de la BD con su explicación para el usuario (nombres del script SQL).
+_REGLAS_CHECK: dict[str, str] = {
+    'chk_causa_cie10_valida': (
+        'El código CIE-10 de la causa de muerte no corresponde a una causa materna '
+        "(los códigos que empiezan por 'P' son perinatales; 8888 y 9999 no son válidos)."
+    ),
+    'chk_am_gest': 'Las gestaciones deben estar entre 1 y 20.',
+    'chk_am_pvag': 'Los partos vaginales deben estar entre 0 y 20.',
+    'chk_am_cesa': 'Las cesáreas deben estar entre 0 y 20.',
+    'chk_am_nmuert': 'Los nacidos muertos deben estar entre 0 y 20.',
+    'chk_am_hvivos': 'Los hijos vivos deben estar entre 0 y 20.',
+    'chk_am_abort': 'Los abortos deben estar entre 0 y 20.',
+    'chk_ant_gest': 'El número de gestaciones debe estar entre 0 y 19.',
+    'chk_ant_ncpn': 'El número de controles prenatales debe estar entre 0 y 50.',
+    'chk_ant_egest': 'La edad gestacional debe estar entre 1 y 50 semanas.',
+    'chk_ant_pesorn': 'El peso del recién nacido debe estar entre 500 y 7000 gramos.',
+    'chk_cp_num': 'El número de controles prenatales debe estar entre 0 y 45.',
+    'chk_cp_sem': 'La semana de inicio del control prenatal debe estar entre 1 y 45.',
+    'chk_pp_semana': 'La semana de gestación de la muerte debe estar entre 1 y 45.',
+    'chk_total_crit': 'El total de criterios debe estar entre 1 y 14.',
+    'chk_mh_estancia': 'Los días de estancia hospitalaria deben ser 1 o más.',
+    'chk_mh_uci': 'Los días de estancia en UCI deben ser 1 o más.',
+    'chk_mh_trans': 'Las unidades transfundidas deben ser 3 o más.',
+}
+
+
 def _mensaje_error_bd(exc: Exception) -> str:
     """Traduce un error de base de datos a un mensaje comprensible para el usuario."""
     orig = getattr(exc, 'orig', None)
@@ -60,6 +86,36 @@ def _mensaje_error_bd(exc: Exception) -> str:
         return (
             f"Falta un dato obligatorio: la columna '{columna}' de la tabla '{tabla}' no "
             'puede quedar vacía. Revise que el Excel tenga ese dato en todas las filas.'
+        )
+    diag = getattr(orig, 'diag', None)
+    if pgcode == '23514':  # check_violation
+        regla = getattr(diag, 'constraint_name', None)
+        explicacion = _REGLAS_CHECK.get(regla or '')
+        if explicacion:
+            return (
+                f'Un valor del archivo no es válido: {explicacion} '
+                'Corrige el Excel y vuelve a cargarlo.'
+            )
+        return (
+            'Un valor del archivo no cumple una regla de validación de la base de datos. '
+            'Revisa rangos, códigos y catálogos en la plantilla oficial y vuelve a cargarlo.'
+        )
+    if pgcode == '23505':  # unique_violation
+        return 'Uno de los registros del archivo ya existe en la base de datos.'
+    if pgcode == '23503':  # foreign_key_violation
+        return (
+            'Un valor del archivo no existe en el catálogo correspondiente. '
+            'Usa los valores de la plantilla oficial.'
+        )
+    if pgcode == '22001':  # string_data_right_truncation
+        return (
+            'Un texto del archivo es demasiado largo para su columna. Acórtalo y vuelve a cargarlo.'
+        )
+    if orig is not None:
+        # Error del controlador de BD no previsto: se registra completo en el log del servidor
+        # (ya hecho por el llamador) y al usuario no se le muestran SQL ni nombres internos.
+        return (
+            'No se pudieron guardar los datos del archivo. Revisa los valores e inténtalo de nuevo.'
         )
     detalle = str(exc)
     if len(detalle) > _MAX_DETALLE_ERROR_BD:
@@ -102,8 +158,7 @@ def procesar_subida(
         df = _leer_dataframe_excel(buffer, tipo)
     except Exception as exc:
         logger.exception('Error leyendo el contenido del archivo Excel')
-        raise ValueError(
-            f'No se pudo leer el contenido del archivo: {exc}') from exc
+        raise ValueError(f'No se pudo leer el contenido del archivo: {exc}') from exc
 
     df_cleaned, _ = preparar_dataframe_analisis(df)
 
@@ -116,8 +171,7 @@ def procesar_subida(
     )
 
     try:
-        persistencia = sivigila_service.persistir_dataframe(
-            db, df_cleaned, tipo, secretaria_codigo)
+        persistencia = sivigila_service.persistir_dataframe(db, df_cleaned, tipo, secretaria_codigo)
         df_bd = _construir_df_desde_bd(db, tipo, secretaria_codigo)
     except ValueError:
         # Error de datos del Excel (fila/columna): se devuelve tal cual como 422.
@@ -137,12 +191,10 @@ def procesar_subida(
             if path.exists():
                 dataframes.append(pd.read_excel(path, engine='openpyxl'))
         dataframes.append(df_cleaned)
-        df_acum = pd.concat(dataframes, ignore_index=True) if len(
-            dataframes) > 1 else dataframes[0]
+        df_acum = pd.concat(dataframes, ignore_index=True) if len(dataframes) > 1 else dataframes[0]
 
     # --- Fase 2: I/O de disco (fuera de la transacción) ---
-    ruta, hash_, resumen, total = _guardar_df_como_excel(
-        df_acum, archivo.filename)
+    ruta, hash_, resumen, total = _guardar_df_como_excel(df_acum, archivo.filename)
 
     # --- Fase 3: transacción mínima — siempre inserta una fila nueva ---
     # Cada subida es un evento de carga distinto (ver historial de cargas);
@@ -195,8 +247,7 @@ def listar_unicos(db: Session, secretaria_codigo: str | None) -> list[Analisis]:
         Lista de análisis únicos ordenados por fecha descendente.
     """
     subq = (
-        db.query(Analisis.tipo, func.max(
-            Analisis.fecha_carga).label('max_fecha'))
+        db.query(Analisis.tipo, func.max(Analisis.fecha_carga).label('max_fecha'))
         .filter(Analisis.secretaria_codigo == secretaria_codigo)
         .group_by(Analisis.tipo)
         .subquery()
@@ -232,6 +283,7 @@ def listar_historial(
         year: Año de la carga.
         month: Mes de la carga (1-12).
         week: Semana ISO de la carga.
+        secretaria_codigo: Tenant del usuario; acota el historial a su secretaría.
 
     Returns:
         Tupla (lista de análisis ordenados por fecha_carga desc, total que cumple los filtros).
