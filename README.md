@@ -11,8 +11,8 @@ Tres servicios más PostgreSQL y Ollama:
 | Frontend | `frontend/maternanalytics/` | React 18, TypeScript, Vite | 5173 |
 | Backend | `backend/` | FastAPI, SQLAlchemy, pandas, scikit-learn, JWT | 8000 |
 | IA-SERVICE | `ia-service/` | FastAPI, httpx, Ollama (`qwen2.5`) | 8001 |
-| PostgreSQL | externo o Docker | PostgreSQL 16 | 5432 |
-| Ollama | externo o Docker | LLM local | 11434 |
+| PostgreSQL | externo | PostgreSQL 16 | 5432 |
+| Ollama | externo | LLM local | 11434 |
 
 - Todos los endpoints de datos (`/api/analisis/*`, `/api/sivigila/*`) exigen un JWT válido. Solo son públicos el login, el registro y `/health`. Los archivos cargados (`backend/media/`) no se sirven públicamente.
 - El backend nunca envía datos crudos de pacientes al servicio de IA: solo indicadores ya agregados. Ver `backend/services/narrativa_service.py`.
@@ -37,8 +37,6 @@ Software-de-mortalidad-materna/
 │   ├── pruebas/        # Excel sintéticos para probar la carga
 │   └── local/          # No se versiona
 ├── scripts/            # iniciar_servicios.bat, ejecutar_pruebas_e2e.bat
-├── docker-compose.yml
-├── .env.example        # Variables para docker compose
 └── ruff.toml           # Estilo Python (comillas simples)
 ```
 
@@ -46,9 +44,8 @@ Software-de-mortalidad-materna/
 
 - **Python 3.11+**
 - **Node.js 18+** y **pnpm**
-- **PostgreSQL 14+** (o Docker)
+- **PostgreSQL 14+**
 - **[Ollama](https://ollama.com)** con el modelo `qwen2.5`: `ollama pull qwen2.5`
-- Opcional: **Docker Desktop** para levantar todo con `docker compose`
 
 ## Variables de entorno
 
@@ -65,8 +62,6 @@ Software-de-mortalidad-materna/
 **ia-service** (opcionales): `OLLAMA_HOST` (`http://localhost:11434`), `OLLAMA_MODEL` (`qwen2.5`), `OLLAMA_TIMEOUT_S` (`30`).
 
 **Frontend** (`frontend/maternanalytics/.env.local`, opcional): `VITE_API_URL` (por defecto `http://localhost:8000/api`).
-
-**Docker** (`.env` en la raíz, copiar desde `.env.example`): `DB_USER`, `DB_PASSWORD`, `JWT_SECRET`, `CORS_ORIGINS`. Los archivos `.env` nunca se versionan.
 
 ## Instalación y ejecución local
 
@@ -121,16 +116,6 @@ curl -X POST http://localhost:8000/api/auth/register/ \
   -H "Content-Type: application/json" \
   -d '{"nombre":"Tu Nombre","email":"tu@correo.co","password":"una-clave-segura"}'
 ```
-
-## Docker
-
-```bash
-copy .env.example .env         # define DB_USER, DB_PASSWORD, JWT_SECRET y CORS_ORIGINS
-docker compose up -d --build
-docker exec maternidad_ollama ollama pull qwen2.5    # solo la primera vez
-```
-
-Levanta PostgreSQL (carga el esquema SQL), Ollama, ia-service y backend, todos publicados solo en `127.0.0.1`. El frontend no está en el compose: se ejecuta aparte con `pnpm dev` (o se sirve construido con `pnpm build`).
 
 ## Pruebas
 

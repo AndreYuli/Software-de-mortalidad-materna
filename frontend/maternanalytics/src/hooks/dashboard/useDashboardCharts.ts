@@ -117,14 +117,17 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
   const edadChartData = useMemo(() => {
     const labels = new Set<string>()
 
-    const extractAgeGroups = (data: any) => {
-      if (!data?.obstetrico_edad) return {}
-      const gestKey = Object.keys(data.obstetrico_edad).find((k) => k.toLowerCase().includes('estaciones'))
-      const obj = gestKey ? data.obstetrico_edad[gestKey]?.por_edad : null
+    type ObstetricoEdad = Record<string, { por_edad?: Record<string, number[]> } | undefined>
+
+    const extractAgeGroups = (data: AnalisisCompleto | null): Record<string, number> => {
+      const obstetrico = data?.obstetrico_edad as ObstetricoEdad | undefined
+      if (!obstetrico) return {}
+      const gestKey = Object.keys(obstetrico).find((k) => k.toLowerCase().includes('estaciones'))
+      const obj = gestKey ? obstetrico[gestKey]?.por_edad : null
       if (!obj) return {}
       const res: Record<string, number> = {}
       for (const [ageGroup, counts] of Object.entries(obj)) {
-        res[ageGroup] = (counts as number[]).reduce((a, b) => a + b, 0)
+        res[ageGroup] = counts.reduce((a, b) => a + b, 0)
       }
       return res
     }
@@ -167,12 +170,12 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
   }, [morbilidadData])
 
   const severidadFallasData = useMemo(() => {
-    return (morbilidadData as any)?.severidad_fallas
+    return morbilidadData?.severidad_fallas
   }, [morbilidadData])
 
   const morbKpis = useMemo(() => {
     if (!morbilidadData) return null
-    const stats = (morbilidadData as any)?.estadisticas_basicas
+    const stats = morbilidadData.estadisticas_basicas
     if (!stats) return null
     return {
       totalCasos: stats.total_casos ?? 0,
@@ -184,11 +187,11 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
   }, [morbilidadData])
 
   const sociodemograficaMortalidad = useMemo(() => {
-    return (mortalidadData as any)?.distribucion_sociodemografica ?? {}
+    return mortalidadData?.distribucion_sociodemografica ?? {}
   }, [mortalidadData])
 
   const sociodemograficaMorbilidad = useMemo(() => {
-    return (morbilidadData as any)?.distribucion_sociodemografica ?? {}
+    return morbilidadData?.distribucion_sociodemografica ?? {}
   }, [morbilidadData])
 
   return {

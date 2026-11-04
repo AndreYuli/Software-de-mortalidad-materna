@@ -160,6 +160,7 @@ export function AnalysisHomeSection({
     demorasChartData,
     edadChartData,
     severidadFallasData,
+    morbKpis,
   ])
 
   // Mientras se consulta la lista de análisis no se sabe si hay datos: no mostrar «sin datos» (parpadeo)

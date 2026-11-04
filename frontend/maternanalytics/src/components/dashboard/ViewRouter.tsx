@@ -1,13 +1,24 @@
+import { Suspense, lazy } from "react";
 import type { ActiveView } from "../../hooks/navigation/useActiveView";
 import type { DashboardData } from "../../hooks/useDashboardData";
 import {
   COLUMNAS_MORTALIDAD,
   COLUMNAS_MORBILIDAD,
 } from "../../constants/dashboardConstants";
-import { AnalysisHomeSection } from "./AnalysisHomeSection";
-import { UploadSection } from "./UploadSection";
-import { UploadHistorySection } from "./UploadHistorySection";
-import { ContextView } from "./ContextView";
+import { PageSkeleton } from "./PageSkeleton";
+
+const AnalysisHomeSection = lazy(() =>
+  import("./AnalysisHomeSection").then((m) => ({ default: m.AnalysisHomeSection })),
+);
+const UploadSection = lazy(() =>
+  import("./UploadSection").then((m) => ({ default: m.UploadSection })),
+);
+const UploadHistorySection = lazy(() =>
+  import("./UploadHistorySection").then((m) => ({ default: m.UploadHistorySection })),
+);
+const ContextView = lazy(() =>
+  import("./ContextView").then((m) => ({ default: m.ContextView })),
+);
 
 export interface ViewRouterProps {
   activeView: ActiveView;
@@ -15,7 +26,15 @@ export interface ViewRouterProps {
   onNavigate: (view: ActiveView) => void;
 }
 
-export function ViewRouter({ activeView, data, onNavigate }: ViewRouterProps) {
+export function ViewRouter(props: ViewRouterProps) {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <CurrentView {...props} />
+    </Suspense>
+  );
+}
+
+function CurrentView({ activeView, data, onNavigate }: ViewRouterProps) {
   switch (activeView) {
     case "analisis":
       return (

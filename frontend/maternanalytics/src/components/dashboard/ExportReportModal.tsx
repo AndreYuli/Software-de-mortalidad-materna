@@ -110,7 +110,7 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
             {/* Info resumen */}
             <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-50 p-3 text-sm sm:grid-cols-4">
               <div className="flex flex-col">
-                <span className="text-xs text-slate-400">Periodo</span>
+                <span className="text-xs text-slate-600">Periodo</span>
                 <b className="text-slate-700">
                   {reportData.periodo.anio || "Histórico"}{" "}
                   {reportData.periodo.mes
@@ -119,17 +119,17 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
                 </b>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-slate-400">Segmento</span>
+                <span className="text-xs text-slate-600">Segmento</span>
                 <b className="text-slate-700">
                   {reportData.periodo.segmento.toUpperCase()}
                 </b>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-slate-400">Total Casos</span>
+                <span className="text-xs text-slate-600">Total Casos</span>
                 <b className="text-slate-700">{reportData.kpis.casosTotales}</b>
               </div>
               <div className="flex flex-col">
-                <span className="text-xs text-slate-400">Letalidad</span>
+                <span className="text-xs text-slate-600">Letalidad</span>
                 <b className="text-slate-700">
                   {reportData.kpis.tasaLetalidad}
                 </b>

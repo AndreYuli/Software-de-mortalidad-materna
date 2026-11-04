@@ -52,7 +52,8 @@ describe('rutas de App', () => {
   it('sin token redirige a /login', async () => {
     window.history.pushState({}, '', '/historial')
     render(<App />)
-    await screen.findByRole('button', { name: /iniciar sesi/i })
+    // Primera carga en frío del Login diferido (lazy): puede superar el 1 s por defecto.
+    await screen.findByRole('button', { name: /iniciar sesi/i }, { timeout: 5000 })
     expect(window.location.pathname).toBe('/login')
   })
 

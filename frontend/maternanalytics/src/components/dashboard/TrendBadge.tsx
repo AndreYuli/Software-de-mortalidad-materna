@@ -21,7 +21,7 @@ const AVISO_BAJADA = 'Una cifra menor puede deberse a casos aún sin notificar.'
 const PILL_CLASS = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium'
 
 export function TrendBadge({ compare, periodo }: TrendBadgeProps) {
-  if (!compare) return <span className="text-xs text-slate-400">Histórico</span>
+  if (!compare) return <span className="text-xs text-slate-600">Histórico</span>
 
   const { cur, prev, meses } = compare
   if (prev === 0) {

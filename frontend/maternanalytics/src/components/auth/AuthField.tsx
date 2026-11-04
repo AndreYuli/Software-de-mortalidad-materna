@@ -57,7 +57,7 @@ export default function AuthField({
             aria-label={visible ? 'Ocultar' : 'Mostrar'}
             aria-pressed={visible}
             onClick={() => setVisible((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-brand-violet"
+            className="absolute right-1 top-1/2 -translate-y-1/2 rounded-md p-2 text-slate-500 hover:text-brand-violet focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-magenta"
           >
             {visible ? <EyeOff className="size-5" aria-hidden="true" /> : <Eye className="size-5" aria-hidden="true" />}
           </button>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Lock, Mail } from "lucide-react";
@@ -32,15 +32,22 @@ interface LoginResponse {
 
 export default function Login({ onLogin, onRegister }: LoginProps = {}) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const arrival = (location.state as { registeredEmail?: string; justRegistered?: boolean } | null) ?? {};
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [infoMsg, setInfoMsg] = useState("");
+  const [infoMsg, setInfoMsg] = useState(
+    arrival.justRegistered
+      ? "¡Cuenta creada exitosamente! Inicia sesión con tu correo."
+      : "",
+  );
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<{ email: string; password: string }>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: arrival.registeredEmail ?? "", password: "" },
   });
 
   const onSubmit = async (data: { email: string; password: string }) => {

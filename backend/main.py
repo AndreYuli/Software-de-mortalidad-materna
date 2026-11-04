@@ -2,8 +2,11 @@
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from api.routers import analisis, auth, sivigila
 from core.config import Config
@@ -20,6 +23,33 @@ app = FastAPI(
     description=Config.app_description,
     version=Config.app_version,
 )
+
+MENSAJE_EMAIL_INVALIDO = (
+    'El correo electrónico no es válido. Usa un correo institucional válido, '
+    'por ejemplo tu.correo@institucion.gov.co.'
+)
+
+
+@app.exception_handler(RequestValidationError)
+async def traducir_error_validacion(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Devuelve en español el error de email (p. ej. dominios .test) en login/registro.
+
+    FastAPI/Pydantic generan el mensaje en inglés ("value is not a valid email
+    address...") antes de llegar al router. Solo se intercepta ese caso; el resto
+    de errores 422 conservan su formato original.
+    """
+    for error in exc.errors():
+        loc = error.get('loc', ())
+        msg = str(error.get('msg', ''))
+        if 'email' in loc and ('valid email' in msg or 'email address' in msg):
+            return JSONResponse(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                content={'detail': MENSAJE_EMAIL_INVALIDO},
+            )
+    # Cualquier otro 422 se delega al manejador estándar de FastAPI, que sabe serializar los
+    # errores de los validadores propios (ctx con excepciones).
+    return await request_validation_exception_handler(request, exc)
+
 
 # ---------------------------------------------------------------------------
 # CORS

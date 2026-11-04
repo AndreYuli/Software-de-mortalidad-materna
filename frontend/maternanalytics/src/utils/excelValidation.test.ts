@@ -43,6 +43,25 @@ describe('previewExcel', () => {
     expect(preview?.totalRows).toBe(2)
   })
 
+  it('elige la hoja cuyos encabezados coinciden aunque no sea la primera, con el total exacto', async () => {
+    const workbook = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet([['Notas'], ['sin relación']]), 'Notas')
+    const datos = [
+      ['Título del reporte'],
+      ['Nombres y apellidos', 'Tipo de ID'],
+      ...Array.from({ length: 12 }, (_, i) => [`Paciente ${i + 1}`, 'CC']),
+    ]
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(datos), 'Datos')
+    const buffer = XLSX.write(workbook, { type: 'array', bookType: 'xlsx' })
+    const file = new File([buffer], 'multi.xlsx')
+
+    const preview = await previewExcel(file, requiredColumns, 'morbilidad')
+
+    expect(preview?.headers).toEqual(['Nombres y apellidos', 'Tipo de ID'])
+    expect(preview?.rows[0]).toEqual(['Paciente 1', 'CC'])
+    expect(preview?.totalRows).toBe(12)
+  })
+
   it('retorna null si la hoja está completamente vacía', async () => {
     const file = buildXlsxFile([])
 

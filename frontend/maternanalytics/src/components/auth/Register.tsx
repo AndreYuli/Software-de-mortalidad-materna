@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Building2, Loader2, Lock, Mail, MapPin, User } from "lucide-react";
 import {
@@ -21,7 +21,7 @@ import AuthSelect from "./AuthSelect";
 import { authButtonClass, authLinkClass } from "./authStyles";
 
 interface RegisterProps {
-  onRegistered?: () => void;
+  onRegistered?: (email?: string) => void;
   onBack?: () => void;
 }
 
@@ -38,14 +38,22 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
+    control,
     formState: { errors },
   } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
+    defaultValues: {
+      nombre: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      departamento: "",
+      secretaria: "",
+    },
   });
 
-  const departamento = watch("departamento");
+  const departamento = useWatch({ control, name: "departamento" });
 
   const onSubmit = async (data: RegisterFormValues) => {
     setError("");
@@ -73,8 +81,8 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
       }
       setSuccess(true);
       setTimeout(() => {
-        if (onRegistered) onRegistered();
-        else navigate("/login");
+        if (onRegistered) onRegistered(data.email);
+        else navigate("/login", { state: { registeredEmail: data.email, justRegistered: true } });
       }, 1500);
     } catch (err) {
       setError(

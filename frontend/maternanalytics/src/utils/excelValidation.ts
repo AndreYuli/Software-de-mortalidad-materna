@@ -53,13 +53,24 @@ export function findHeaderRow(jsonData: unknown[][], requiredColumns: string[], 
   return bestIndex
 }
 
+/** Cuántas filas del inicio de cada hoja bastan para ubicar la fila de encabezados (ver findHeaderRow). */
+const FILAS_PARA_ENCABEZADOS = 5
+
+/** Convierte solo las primeras filas de la hoja: evita volcar a JSON hojas enteras para mirar sus encabezados. */
+function topRows(sheet: XLSX.WorkSheet, count: number): unknown[][] {
+  if (!sheet['!ref']) return []
+  const range = XLSX.utils.decode_range(sheet['!ref'])
+  range.e.r = Math.min(range.e.r, range.s.r + count - 1)
+  return XLSX.utils.sheet_to_json(sheet, { header: 1, range })
+}
+
 export function findBestSheet(workbook: XLSX.WorkBook, requiredColumns: string[], tipo: TipoEvento): string {
   let bestSheet = workbook.SheetNames[0]
   let bestScore = -1
 
   workbook.SheetNames.forEach((sheetName) => {
     const sheet = workbook.Sheets[sheetName]
-    const jsonData: unknown[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 })
+    const jsonData = topRows(sheet, FILAS_PARA_ENCABEZADOS)
     const headerRowIndex = findHeaderRow(jsonData, requiredColumns, tipo)
     const aliasMap = buildAliasMap(requiredColumns, tipo)
     const headers = ((jsonData[headerRowIndex] as unknown[]) || []).map((header) => String(header ?? '').trim())
@@ -95,7 +106,8 @@ export async function previewExcel(
 ): Promise<FilePreview | null> {
   try {
     const buffer = await file.arrayBuffer()
-    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' })
+    // dense: guarda la hoja como arreglo en vez de objeto por celda; usa menos memoria con archivos grandes.
+    const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array', dense: true })
     const bestSheetName = findBestSheet(workbook, requiredColumns, tipo)
     const jsonData: unknown[][] = XLSX.utils.sheet_to_json(workbook.Sheets[bestSheetName], { header: 1 })
 
