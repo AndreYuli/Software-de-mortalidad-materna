@@ -2,6 +2,29 @@
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+CLAVES_COMUNES = frozenset(
+    {
+        '12345678',
+        '123456789',
+        '1234567890',
+        '87654321',
+        'password',
+        'password1',
+        'contraseña',
+        'qwertyui',
+        'qwerty123',
+        'abcd1234',
+        'abc12345',
+        'iloveyou',
+        'admin123',
+        'colombia',
+        'bienvenido',
+        '11111111',
+        '00000000',
+        '12341234',
+    }
+)
+
 
 class UsuarioRegister(BaseModel):
     """Datos requeridos para registrar un usuario nuevo.
@@ -9,15 +32,15 @@ class UsuarioRegister(BaseModel):
     Attributes:
         nombre: Nombre completo del usuario.
         email: Correo electrónico único, normalizado a minúsculas.
-        password: Contraseña en texto plano (mínimo 6 caracteres).
+        password: Contraseña en texto plano (8 a 128 caracteres, sin claves comunes).
         departamento_codigo: Código del departamento (ej. 'antioquia').
         secretaria_codigo: Código de la secretaría de salud (ej. 'bello'); define el
             tenant con el que se aíslan los datos del usuario.
     """
 
-    nombre: str = Field(..., min_length=1)
+    nombre: str = Field(..., min_length=1, max_length=120)
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8, max_length=128)
     departamento_codigo: str = Field(..., min_length=1)
     secretaria_codigo: str = Field(..., min_length=1)
 
@@ -26,6 +49,28 @@ class UsuarioRegister(BaseModel):
     def limpiar_nombre(cls, v: str) -> str:
         """Elimina espacios al inicio y al final del nombre."""
         return v.strip()
+
+    @field_validator('nombre')
+    @classmethod
+    def nombre_sin_marcado(cls, v: str) -> str:
+        """Rechaza `<` y `>` en el nombre: no es un nombre válido y evita HTML guardado."""
+        if '<' in v or '>' in v:
+            raise ValueError('El nombre no puede contener los caracteres < o >.')
+        return v
+
+    @field_validator('password')
+    @classmethod
+    def password_no_comun(cls, v: str) -> str:
+        """Rechaza claves de la lista de comunes o de un solo carácter repetido.
+
+        NIST SP 800-63B-4 exige comparar contra una lista de contraseñas comunes o
+        comprometidas. Ojo: para contraseña como único factor pide 15 caracteres como mínimo
+        (8 solo con autenticación multifactor); aquí se usa 8, el mínimo pedido en la revisión de
+        uso, y subir a 15 es una decisión pendiente del equipo.
+        """
+        if v.lower() in CLAVES_COMUNES or len(set(v)) == 1:
+            raise ValueError('La contraseña es demasiado común; elige otra.')
+        return v
 
     @field_validator('departamento_codigo', 'secretaria_codigo', mode='before')
     @classmethod

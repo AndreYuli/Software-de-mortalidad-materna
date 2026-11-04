@@ -75,12 +75,47 @@ export async function fetchWithTimeout(
  * un string (HTTPException) o una lista de objetos (422 de validación): renderizar
  * la lista tal cual en React lanza una excepción y deja la pantalla en blanco.
  */
+const CAMPOS_422: Record<string, string> = {
+  nombre: 'El nombre',
+  password: 'La contraseña',
+  email: 'El correo',
+}
+
+interface Detalle422 {
+  type?: string
+  loc?: unknown[]
+  msg?: unknown
+  ctx?: { min_length?: number; max_length?: number }
+}
+
+/**
+ * Traduce un error de validación de Pydantic (422) al español. Los mensajes propios del
+ * backend ya vienen en español (con el prefijo "Value error, "); los estándar en inglés se
+ * traducen por `type`, y si no se reconocen se devuelve null para usar el mensaje de reserva
+ * en lugar de mostrar texto técnico crudo.
+ */
+function traducirDetalle422(item: Detalle422): string | null {
+  if (typeof item?.msg !== 'string') return null
+  const campo = CAMPOS_422[String(item.loc?.[item.loc.length - 1] ?? '')] ?? 'El valor'
+  if (/valid email address/i.test(item.msg))
+    return 'Ingresa un correo electrónico válido, con un dominio real (por ejemplo, nombre@institucion.gov.co).'
+  if (item.type === 'string_too_short' && item.ctx?.min_length)
+    return `${campo} debe tener al menos ${item.ctx.min_length} caracteres.`
+  if (item.type === 'string_too_long' && item.ctx?.max_length)
+    return `${campo} no puede superar ${item.ctx.max_length} caracteres.`
+  if (item.type === 'missing') return `${campo} es obligatorio.`
+  const sinPrefijo = item.msg.replace(/^Value error, /, '')
+  if (item.type === 'value_error' && sinPrefijo !== item.msg) return sinPrefijo
+  // Texto ya en español (tildes o ñ): se muestra tal cual.
+  if (/[áéíóúñ¿]/i.test(item.msg)) return item.msg
+  return null
+}
+
 export function extractErrorMessage(body: unknown, fallback: string): string {
   const detail = (body as { detail?: unknown; error?: unknown } | null)?.detail
   if (typeof detail === 'string' && detail.trim()) return detail
   if (Array.isArray(detail) && detail.length > 0) {
-    const first = detail[0] as { msg?: unknown }
-    if (typeof first?.msg === 'string') return first.msg
+    return traducirDetalle422(detail[0] as Detalle422) ?? fallback
   }
   const error = (body as { error?: unknown } | null)?.error
   if (typeof error === 'string' && error.trim()) return error
