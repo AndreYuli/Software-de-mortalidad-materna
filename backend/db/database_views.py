@@ -123,7 +123,7 @@ def create_database_views(db: Session):
         {edad_morbilidad} AS edad,
         c.fecha_egreso,
         r.remitida,
-        r.institucion_ref_1,
+        ri1.institucion AS institucion_ref_1,
         r.tiempo_remision_h,
         a.num_gestaciones,
         a.partos_vaginales,
@@ -161,6 +161,8 @@ def create_database_views(db: Session):
         LEFT JOIN paciente p ON p.id_paciente = c.id_paciente
         LEFT JOIN cat_tipo_id ti ON ti.id = p.id_tipo_id
         LEFT JOIN referencia r ON r.id_caso = c.id_caso
+        LEFT JOIN referencia_institucion ri1
+            ON ri1.id_referencia = r.id_referencia AND ri1.orden = 1
         LEFT JOIN antecedentes_obstetricos a ON a.id_caso = c.id_caso
         LEFT JOIN cat_terminacion_gestacion tg ON tg.id = a.id_terminacion_gestacion
         LEFT JOIN criterios_enfermedad ce ON ce.id_caso = c.id_caso

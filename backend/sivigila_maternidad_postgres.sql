@@ -282,11 +282,21 @@ CREATE TABLE referencia (
     id_referencia      INT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     id_caso            INT          NOT NULL,
     remitida           BOOLEAN      NOT NULL,
-    institucion_ref_1  VARCHAR(200) NULL,
-    institucion_ref_2  VARCHAR(200) NULL,
     tiempo_remision_h  DECIMAL(6,1) NULL,
     CONSTRAINT fk_ref_caso
         FOREIGN KEY (id_caso) REFERENCES caso_morbilidad(id_caso)
+);
+
+-- 3.2.1 Instituciones de referencia (1FN: una fila por posición, antes institucion_ref_1/2)
+CREATE TABLE referencia_institucion (
+    id             INT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_referencia  INT          NOT NULL,
+    orden          SMALLINT     NOT NULL,
+    institucion    VARCHAR(200) NOT NULL,
+    CONSTRAINT fk_refinst_ref
+        FOREIGN KEY (id_referencia) REFERENCES referencia(id_referencia) ON DELETE CASCADE,
+    CONSTRAINT uq_refinst_ref_orden UNIQUE (id_referencia, orden),
+    CONSTRAINT chk_refinst_orden    CHECK (orden BETWEEN 1 AND 2)
 );
 
 -- 3.3 Antecedentes obstétricos ----------------------------------------
@@ -401,17 +411,26 @@ CREATE TABLE manejo_hospitalario (
     dias_estancia_hosp      SMALLINT,
     dias_estancia_uci       SMALLINT,
     unidades_transfundidas  SMALLINT,
-    cirugia_1               SMALLINT,
-    cirugia_1_cual          VARCHAR(200),
-    cirugia_2               SMALLINT,
-    cirugia_2_cual          VARCHAR(200),
     CONSTRAINT fk_mh_caso
         FOREIGN KEY (id_caso) REFERENCES caso_morbilidad(id_caso),
     CONSTRAINT chk_mh_estancia    CHECK (dias_estancia_hosp     >= 1),
     CONSTRAINT chk_mh_uci         CHECK (dias_estancia_uci      >= 1),
-    CONSTRAINT chk_mh_trans       CHECK (unidades_transfundidas >= 3),
-    CONSTRAINT chk_mh_cir1        CHECK (cirugia_1 BETWEEN 1 AND 4),
-    CONSTRAINT chk_mh_cir2        CHECK (cirugia_2 BETWEEN 1 AND 4)
+    CONSTRAINT chk_mh_trans       CHECK (unidades_transfundidas >= 3)
+);
+
+-- 3.7.1 Cirugías adicionales (1FN: una fila por posición, antes cirugia_1/_cual/2/_cual)
+-- id_tipo_cirugia: 1=Histerectomía, 2=Laparotomía, 3=Legrado, 4=Otra (ficha 549)
+CREATE TABLE cirugia_adicional_morbilidad (
+    id               INT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_manejo        INT          NOT NULL,
+    orden            SMALLINT     NOT NULL,
+    id_tipo_cirugia  SMALLINT     NOT NULL,
+    cual             VARCHAR(200),
+    CONSTRAINT fk_cirugia_manejo
+        FOREIGN KEY (id_manejo) REFERENCES manejo_hospitalario(id_manejo) ON DELETE CASCADE,
+    CONSTRAINT uq_cirugia_manejo_orden UNIQUE (id_manejo, orden),
+    CONSTRAINT chk_cirugia_orden       CHECK (orden BETWEEN 1 AND 2),
+    CONSTRAINT chk_cirugia_tipo        CHECK (id_tipo_cirugia BETWEEN 1 AND 4)
 );
 
 -- 3.8 Causas de morbilidad (CIE-10) -----------------------------------
@@ -420,14 +439,25 @@ CREATE TABLE causas_morbilidad (
     id_caso                INT          NOT NULL,
     causa_principal_cie10  VARCHAR(10)  NOT NULL,
     id_grupo_causa         SMALLINT     NULL,
-    causa_asociada_2       VARCHAR(10),
-    causa_asociada_3       VARCHAR(10),
-    causa_asociada_4       VARCHAR(10),
     CONSTRAINT fk_cm_caso
         FOREIGN KEY (id_caso) REFERENCES caso_morbilidad(id_caso),
     CONSTRAINT fk_cm_grupo
         FOREIGN KEY (id_grupo_causa) REFERENCES cat_grupo_causa(id)
 );
+
+-- 3.8.1 Causas asociadas (1FN: una fila por posición, antes causa_asociada_2/3/4)
+-- orden 1..3 equivale a las antiguas columnas 2..4 de la ficha 549.
+CREATE TABLE causa_asociada_morbilidad (
+    id        INT         GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id_caso   INT         NOT NULL,
+    orden     SMALLINT    NOT NULL,
+    cie10     VARCHAR(10) NOT NULL,
+    CONSTRAINT fk_causaaso_caso
+        FOREIGN KEY (id_caso) REFERENCES caso_morbilidad(id_caso) ON DELETE CASCADE,
+    CONSTRAINT uq_causaaso_caso_orden UNIQUE (id_caso, orden),
+    CONSTRAINT chk_causaaso_orden     CHECK (orden BETWEEN 1 AND 3)
+);
+CREATE INDEX idx_causaaso_caso ON causa_asociada_morbilidad(id_caso);
 
 CREATE INDEX idx_causa_cie10_morb ON causas_morbilidad(causa_principal_cie10);
 CREATE INDEX idx_causa_grupo_morb ON causas_morbilidad(id_grupo_causa);
@@ -705,7 +735,7 @@ SELECT  c.id_caso,
         p.fecha_nacimiento,
         EXTRACT(YEAR FROM AGE(c.fecha_egreso, p.fecha_nacimiento))::integer AS edad,
         c.fecha_egreso,
-        r.remitida, r.institucion_ref_1, r.tiempo_remision_h,
+        r.remitida, ri1.institucion AS institucion_ref_1, r.tiempo_remision_h,
         a.num_gestaciones, a.partos_vaginales, a.cesareas, a.abortos,
         a.num_controles_prenatales, a.edad_gestacional_sem,
         tg.descripcion AS terminacion_gestacion,
@@ -727,6 +757,7 @@ FROM caso_morbilidad c
 LEFT JOIN paciente                  p   ON p.id_paciente = c.id_paciente
 LEFT JOIN cat_tipo_id               ti  ON ti.id         = p.id_tipo_id
 LEFT JOIN referencia                r   ON r.id_caso     = c.id_caso
+LEFT JOIN referencia_institucion    ri1 ON ri1.id_referencia = r.id_referencia AND ri1.orden = 1
 LEFT JOIN antecedentes_obstetricos  a   ON a.id_caso     = c.id_caso
 LEFT JOIN cat_terminacion_gestacion tg  ON tg.id         = a.id_terminacion_gestacion
 LEFT JOIN criterios_enfermedad      ce  ON ce.id_caso    = c.id_caso
