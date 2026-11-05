@@ -187,7 +187,7 @@ export function AnalysisHomeSection({
         {ultimaSemanaReportada && (
           <p className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
             <CalendarClock className="size-4" aria-hidden="true" />
-            Última carga: Semana {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
+            Última semana reportada: {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
           </p>
         )}
       </div>
