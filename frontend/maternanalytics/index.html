@@ -6,9 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="VidaMaterna - Plataforma de Análisis Epidemiológico de Mortalidad y Morbilidad Materna Extrema" />
     <title>VidaMaterna</title>
+    <style>
+      body { margin: 0; }
+      #carga-inicial {
+        min-height: 100vh; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 12px;
+        font-family: system-ui, sans-serif; color: #290764; background: #f8fafc;
+      }
+      #carga-inicial .rueda {
+        width: 32px; height: 32px; border-radius: 50%;
+        border: 3px solid #e2e8f0; border-top-color: #89005e;
+        animation: carga-inicial-giro 0.9s linear infinite;
+      }
+      @keyframes carga-inicial-giro { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        #carga-inicial .rueda { animation: none; border-top-color: #89005e; border-right-color: #89005e; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="carga-inicial" role="status" aria-live="polite">
+        <div class="rueda" aria-hidden="true"></div>
+        <p>Cargando VidaMaterna…</p>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
