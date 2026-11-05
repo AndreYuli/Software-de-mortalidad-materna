@@ -6,7 +6,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class _Settings(BaseSettings):
-    """Configuración de conexión a Ollama y del servidor."""
+    """Configuración de conexión al proveedor LLM y del servidor."""
 
     model_config = SettingsConfigDict(
         env_file=Path.cwd() / '.env',
@@ -15,12 +15,11 @@ class _Settings(BaseSettings):
         extra='ignore',
     )
 
-    ollama_host: str = 'http://localhost:11434'
-    ollama_model: str = 'qwen2.5'
+    # ponytail: las variables OLLAMA_MODEL y OLLAMA_TIMEOUT_S conservan su nombre histórico porque el .env del
+    # servidor las usa; renombrarlas exige actualizar ese .env (hoy OLLAMA_MODEL es el id del modelo del proveedor).
+    ollama_model: str = 'openai/gpt-oss-20b'
     ollama_timeout_s: float = 120.0
-    # Si llm_base_url está definido se usa una API compatible con OpenAI
-    # (p. ej. https://integrate.api.nvidia.com/v1) en vez de Ollama;
-    # entonces ollama_model es el id del modelo de ese proveedor.
+    # API compatible con OpenAI (producción: https://api.groq.com/openai/v1). Obligatoria.
     llm_base_url: str = ''
     llm_api_key: str = ''
 

@@ -40,7 +40,7 @@ def test_generar_narrativa_lanza_error_en_503_de_ia_service(mocker):
     """Un status distinto de 200 debe traducirse a IAServiceUnavailableError."""
     respuesta_mock = httpx.Response(
         503,
-        json={'detail': 'Ollama no disponible'},
+        json={'detail': 'Modelo no disponible'},
         request=httpx.Request('POST', 'http://localhost:8001/generar-narrativa'),
     )
     mocker.patch('httpx.Client.post', return_value=respuesta_mock)

@@ -63,7 +63,7 @@ Estos archivos se cargan semanalmente en la aplicacion y se procesan para almace
 - **Chatbot IA:** panel flotante del dashboard para conversar con el sistema sobre los indicadores agregados del analisis consultado.
 - **Backend/API:** servicios de procesamiento, persistencia y consulta.
 - **Base de datos:** almacenamiento relacional en PostgreSQL.
-- **IA-SERVICE:** microservicio para generacion de narrativas y respuestas del chatbot. En desarrollo usa Ollama local; en produccion usa Groq (`openai/gpt-oss-20b`, API compatible con OpenAI), ver `DEC-005`.
+- **IA-SERVICE:** microservicio para generacion de narrativas y respuestas del chatbot. Usa Groq (`openai/gpt-oss-20b`, API compatible con OpenAI), ver `DEC-005`.
 
 ## Estado actual
 
@@ -85,7 +85,7 @@ Estado conocido:
 - **Graficas:** ECharts; revisar componentes existentes antes de agregar otra libreria.
 - **Backend:** Python, FastAPI.
 - **Base de datos:** PostgreSQL.
-- **Inteligencia artificial:** IA generativa sobre indicadores agregados. Ollama local en desarrollo; Groq (plan gratuito) en produccion, porque la CPU del servidor no tiene AVX y Ollama resulta demasiado lento alli.
+- **Inteligencia artificial:** IA generativa sobre indicadores agregados. Groq (plan gratuito); no se usa Ollama porque la CPU del servidor no tiene AVX y resulta demasiado lento alli.
 - **Infraestructura:** Docker, pendiente de definicion final segun el despliegue esperado.
 
 ## Documentacion relacionada

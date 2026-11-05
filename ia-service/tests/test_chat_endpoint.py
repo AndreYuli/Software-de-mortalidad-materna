@@ -3,7 +3,7 @@ from unittest.mock import patch
 from core.config import Config
 from fastapi.testclient import TestClient
 from main import app
-from ollama_client import OllamaUnavailableError
+from llm_client import LLMUnavailableError
 
 client = TestClient(app)
 
@@ -37,8 +37,8 @@ def test_chat_devuelve_200_en_exito(mock_chatear):
 
 
 @patch('main.chatear')
-def test_chat_devuelve_503_si_ollama_no_disponible(mock_chatear):
-    mock_chatear.side_effect = OllamaUnavailableError('Ollama no responde')
+def test_chat_devuelve_503_si_el_proveedor_no_disponible(mock_chatear):
+    mock_chatear.side_effect = LLMUnavailableError('El proveedor no responde')
 
     response = client.post(
         '/chat',
@@ -51,4 +51,4 @@ def test_chat_devuelve_503_si_ollama_no_disponible(mock_chatear):
     )
 
     assert response.status_code == 503
-    assert response.json()['detail'] == 'Ollama no responde'
+    assert response.json()['detail'] == 'El proveedor no responde'
