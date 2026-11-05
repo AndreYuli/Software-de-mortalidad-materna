@@ -43,7 +43,7 @@ export function WelcomeState({ onGoToUpload }: WelcomeStateProps) {
         <h2 className="text-xl font-semibold text-brand-deep">Análisis Epidemiológico</h2>
         <p className="mx-auto mb-6 mt-2 max-w-md text-sm text-slate-500">
           Aún no hay datos para analizar. Carga los registros de los Eventos 549 (Morbilidad) y 550 (Mortalidad) del
-          SIVIGILA para generar el panel de control y los modelos de clustering.
+          SIVIGILA para generar el panel de control con indicadores, tendencias y causas CIE-10.
         </p>
 
         {!showChoices ? (

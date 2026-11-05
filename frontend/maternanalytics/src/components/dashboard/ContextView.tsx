@@ -38,19 +38,19 @@ function FeatureCardView({ icon: Icon, title, children }: FeatureCard) {
 const PASOS = [
   {
     label: "1. Exporta",
-    desc: "Descarga la plantilla o prepara tu archivo .xlsx con los campos del evento.",
+    desc: "Descarga la plantilla oficial o prepara tu archivo .xlsx del evento 549 o 550 desde SIVIGILA.",
   },
   {
     label: "2. Carga",
-    desc: "Arrastra el archivo en «Carga de Datos». Validamos las columnas al instante.",
+    desc: "Arrastra el archivo en «Carga de Datos». Validamos las columnas requeridas antes de guardarlo.",
   },
   {
     label: "3. Analiza",
-    desc: "El sistema calcula KPIs, causas, demoras y clustering.",
+    desc: "El sistema omite filas vacías y duplicadas, identifica las causas CIE-10 y calcula casos, indicadores y distribuciones por fecha, edad y factores sociodemográficos.",
   },
   {
     label: "4. Explora",
-    desc: "Visualiza el Dashboard, genera reportes y consulta al asistente IA.",
+    desc: "Revisa Generalidades, Morbilidad y Mortalidad, filtra por evento y periodo, exporta reportes (Excel, PDF o CSV) y pide al asistente IA un resumen de los indicadores.",
   },
 ];
 
@@ -68,9 +68,10 @@ export function ContextView({ onNavigate }: ContextViewProps) {
         <p className="text-sm leading-relaxed text-slate-600">
           Es una plataforma de análisis epidemiológico para la vigilancia de la{" "}
           <b>mortalidad y morbilidad materna extrema</b>. Permite cargar los
-          registros de los eventos del SIVIGILA (Colombia), calcular indicadores
-          clave, detectar patrones con modelos de agrupamiento (clustering) y
-          generar reportes para la toma de decisiones en salud pública.
+          registros de los eventos del SIVIGILA (Colombia), consultar indicadores
+          epidemiológicos y tendencias, identificar las principales causas CIE-10,
+          revisar distribuciones por edad y factores sociodemográficos, y generar
+          reportes para la toma de decisiones en salud pública.
         </p>
       </header>
 

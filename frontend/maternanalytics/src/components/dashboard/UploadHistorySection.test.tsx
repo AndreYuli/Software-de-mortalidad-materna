@@ -50,6 +50,8 @@ describe('UploadHistorySection', () => {
     for (const columna of ['Año', 'Mes', 'Semana']) {
       expect(await screen.findByRole('columnheader', { name: columna })).toBeTruthy()
     }
+    // La columna Resumen se retiró de la interfaz para dejar espacio a Acciones.
+    expect(screen.queryByRole('columnheader', { name: 'Resumen' })).toBeNull()
     const fila = screen.getByText('archivo_1.xlsx').closest('tr')!
     expect(fila.textContent).toContain('2026')
     expect(fila.textContent).toContain('Septiembre')

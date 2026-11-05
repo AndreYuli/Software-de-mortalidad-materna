@@ -190,5 +190,8 @@ notes/local/
 # Datos: solo se versionan la referencia oficial y los Excel sintéticos (data/pruebas)
 !data/referencia/*.xlsx
 !data/pruebas/*.xlsx
+# Plantillas oficiales descargables: deben llegar al build del servidor; si faltan,
+# Apache sirve index.html con extensión .xlsx
+!frontend/maternanalytics/public/plantillas/*.xlsx
 # Datos sin procedencia confirmada (posibles datos reales): nunca versionar
 data/local/

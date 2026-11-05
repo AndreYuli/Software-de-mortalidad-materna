@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, Info, FileSpreadsheet } from "lucide-react";
+import { ChevronDown, Info, FileSpreadsheet, TriangleAlert } from "lucide-react";
 import {
   ALIAS_COLUMNAS,
   PLANTILLAS,
@@ -25,7 +25,8 @@ export function UploadTemplateInfo({ requiredColumns, tipo }: Props) {
   const tipos = TIPOS_CAMPO[tipo] || {};
   const alias = ALIAS_COLUMNAS[tipo] || {};
   const base = import.meta.env.BASE_URL || "/";
-  const href = `${base}plantillas/${plantilla.archivo}`;
+  // El nombre lleva espacios: se codifica para que la URL sea válida en Vite y en Apache.
+  const href = `${base}plantillas/${encodeURIComponent(plantilla.archivo)}`;
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -60,6 +61,18 @@ export function UploadTemplateInfo({ requiredColumns, tipo }: Props) {
             tipo de dato y las opciones válidas de cada campo. Para que el
             sistema acepte el archivo debe contener, como mínimo, estas columnas
             (puede traer muchas más):
+          </p>
+
+          <p
+            role="note"
+            className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800"
+          >
+            <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span>
+              <strong>Importante:</strong> la hoja PLANTILLA incluye registros
+              de ejemplo con datos ficticios. Elimínalos antes de cargar datos
+              reales; de lo contrario se importarán como casos.
+            </span>
           </p>
 
           <a
