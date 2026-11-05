@@ -143,9 +143,11 @@ Debe permitir preguntas como:
 - ¿qué grupo de edad presenta más casos?
 - ¿cómo cambió la morbilidad respecto al periodo anterior?
 
-El chatbot trabaja exclusivamente con información agregada y segura precalculada por el backend. No envía datos crudos de pacientes a servicios externos ni expone información sensible. Utiliza la arquitectura local de IA generativa (Ollama) como "lector" del contexto, asegurando total privacidad.
+El chatbot trabaja exclusivamente con información agregada precalculada por el backend (conteos, distribuciones, causas CIE-10, demoras y otros indicadores). No envía filas ni datos individuales de pacientes a ningún servicio. El modelo de IA actúa como "lector" de ese contexto agregado.
 
-Estado actual: el chatbot conversacional se encuentra implementado e integrado en el dashboard como un panel flotante, con protección frente a fallos del servicio de IA local.
+En producción, el modelo se ejecuta en **Groq**, un proveedor externo (servidores en EE. UU.), con el modelo `openai/gpt-oss-20b`. Por tanto, los indicadores agregados del análisis consultado y las preguntas que escribe el usuario **sí salen a ese tercero**. Según la política publicada por Groq, por defecto no conserva los datos de las peticiones, salvo registros temporales de hasta 30 días para fiabilidad o abuso, que se pueden desactivar con *Zero Data Retention*. El estado de esa opción debe comprobarse en la consola de Groq; esta documentación no asume que esté activa. En desarrollo local se puede usar Ollama, y entonces ningún dato sale del equipo.
+
+Estado actual: el chatbot conversacional se encuentra implementado e integrado en el dashboard como un panel flotante, con protección frente a fallos del servicio de IA (si el proveedor no responde, el resto del dashboard sigue funcionando).
 
 ## Principios funcionales
 

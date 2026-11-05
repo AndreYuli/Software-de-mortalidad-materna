@@ -60,10 +60,10 @@ Estos archivos se cargan semanalmente en la aplicacion y se procesan para almace
 - **Filtros:** seleccion de variables para explorar y comparar datos.
 - **Historial:** seguimiento de archivos y analisis cargados.
 - **Narrativa IA:** interpretaciones generadas a partir de indicadores agregados.
-- **Chatbot IA:** modulo pendiente para conversar con el sistema sobre los datos.
+- **Chatbot IA:** panel flotante del dashboard para conversar con el sistema sobre los indicadores agregados del analisis consultado.
 - **Backend/API:** servicios de procesamiento, persistencia y consulta.
 - **Base de datos:** almacenamiento relacional en PostgreSQL.
-- **IA-SERVICE:** microservicio local para generacion de narrativas con Ollama.
+- **IA-SERVICE:** microservicio para generacion de narrativas y respuestas del chatbot. En desarrollo usa Ollama local; en produccion usa Groq (`openai/gpt-oss-20b`, API compatible con OpenAI), ver `DEC-005`.
 
 ## Estado actual
 
@@ -75,7 +75,7 @@ Estado conocido:
 - Ya existe historial de cargas o analisis.
 - Ya se visualizan graficas, aunque hay recomendaciones de mejora y ajustes de diseno pendientes.
 - Existen filtros, pero falta validar completamente su funcionamiento.
-- Existe narrativa IA, pero falta completar o integrar el chatbot conversacional.
+- Existen narrativa IA y chatbot conversacional integrados en el dashboard; en produccion usan Groq (ver `DEC-005`).
 - Existen login y registro.
 - Hay decisiones tecnicas pendientes de conversar, especialmente alrededor de Docker y despliegue.
 
@@ -85,7 +85,7 @@ Estado conocido:
 - **Graficas:** ECharts; revisar componentes existentes antes de agregar otra libreria.
 - **Backend:** Python, FastAPI.
 - **Base de datos:** PostgreSQL.
-- **Inteligencia artificial:** Ollama / IA generativa local.
+- **Inteligencia artificial:** IA generativa sobre indicadores agregados. Ollama local en desarrollo; Groq (plan gratuito) en produccion, porque la CPU del servidor no tiene AVX y Ollama resulta demasiado lento alli.
 - **Infraestructura:** Docker, pendiente de definicion final segun el despliegue esperado.
 
 ## Documentacion relacionada

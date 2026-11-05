@@ -25,6 +25,11 @@ fallando usar `git clone --depth 1 <url>`.
 PostgreSQL ya estaba instalado y corriendo en el servidor
 (`sudo systemctl status postgresql`).
 
+> ⚠️ **Solo para la instalación inicial.** `DROP DATABASE` borra la base y
+> **todos sus datos**. No ejecutarlo en un servidor que ya tiene datos cargados;
+> para eso, hacer antes una copia con
+> `sudo -u postgres pg_dump -Fc sivigila_maternidad > ~/sivigila_maternidad-$(date +%F).dump`.
+
 ```bash
 # Crear la base (DROP/CREATE no puede ir junto con otras sentencias en -c)
 sudo -u postgres psql -d postgres -c "DROP DATABASE IF EXISTS sivigila_maternidad;"
@@ -36,8 +41,12 @@ sudo -u postgres psql -d sivigila_maternidad -f Software-de-mortalidad-materna/b
 # Verificar
 sudo -u postgres psql -d sivigila_maternidad -c "\dt"
 
-# Usuario de aplicación (no usar el superusuario postgres desde el backend)
-sudo -u postgres psql -c "CREATE USER app_mortalidad WITH PASSWORD 'mortalidad123';"
+# Usuario de aplicación (no usar el superusuario postgres desde el backend).
+# Generar la contraseña con: openssl rand -hex 24
+# Usar solo caracteres hexadecimales: backend/core/config.py la inserta sin
+# escapar en la URL de conexión, y caracteres como @ : / % # rompen el arranque.
+# La misma contraseña va en backend/.env (db_password), ver "Credenciales del despliegue".
+sudo -u postgres psql -c "CREATE USER app_mortalidad WITH PASSWORD 'REEMPLAZAR_CON_LA_CONTRASEÑA_DE_LA_BD';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE sivigila_maternidad TO app_mortalidad;"
 
 # Las tablas las creó postgres, así que también hay que dar permiso sobre ellas.
@@ -61,18 +70,34 @@ instrucciones equivalentes para ejecutarlo desde DBeaver.
 `backend/core/config.py` lee `backend/.env` (no se versiona, `.env.*` está en
 `.gitignore`):
 
+Reemplazar los dos valores `REEMPLAZAR_...` antes de arrancar el servicio
+(qué es cada uno y de dónde sale: sección "Credenciales del despliegue"):
+
 ```bash
 cd ~/Software-de-mortalidad-materna/backend
+umask 177   # el .env queda con permisos 600 (solo la dueña puede leerlo)
 cat > .env << 'EOF'
 db_engine=postgresql
 db_user=app_mortalidad
-db_password=mortalidad123
+db_password=REEMPLAZAR_CON_LA_CONTRASEÑA_DE_LA_BD
 db_name=sivigila_maternidad
 db_host=localhost
 db_port=5432
-jwt_secret=cambia-esto-por-un-valor-seguro
+jwt_secret=REEMPLAZAR_CON_SECRETO_JWT_ALEATORIO
+ia_service_url=http://localhost:8011
 EOF
+umask 022
+ls -l .env   # debe ser -rw------- (600)
 ```
+
+- `jwt_secret`: generarlo con `openssl rand -hex 32`. Si se cambia, todas las
+  sesiones abiertas dejan de ser válidas y los usuarios deben volver a iniciar
+  sesión.
+- `ia_service_url`: URL del ia-service en este servidor (puerto 8011, ver
+  sección 6). Sin esta línea el backend usa `http://localhost:8001`, que aquí
+  es otro proceso.
+- Si el `.env` ya existía, hacer antes una copia:
+  `cp -pn .env .env.bak-$(date +%Y%m%d)`.
 
 ### 3.2 Entorno virtual e instalación
 
@@ -139,6 +164,12 @@ sudo systemctl enable --now mortalidad-backend
 sudo systemctl status mortalidad-backend
 curl http://localhost:8010/health   # {"status":"ok"}
 ```
+
+Nota: con `--host 0.0.0.0` el backend también acepta conexiones directas por
+la red, sin pasar por Apache. Apache llega por `127.0.0.1:8010` (sección 5),
+así que se puede usar `--host 127.0.0.1` para limitarlo al propio servidor.
+Pendiente de decidir; si se cambia: `sudo systemctl daemon-reload` y
+`sudo systemctl restart mortalidad-backend`.
 
 Logs: `journalctl -u mortalidad-backend -f`.
 
@@ -229,7 +260,11 @@ sudo sed -i '/ProxyPassReverse \/blogs http:\/\/localhost:8000\/blogs/a\
 
 sudo apache2ctl configtest      # debe decir "Syntax OK"
 sudo systemctl reload apache2
-curl -sk https://ingenieria.unac.edu.co/~andrea.lopez/maternalytics/api/health
+
+# /health no está bajo /api, así que .../api/health da 404 aunque el proxy
+# funcione. Comprobar el proxy con una ruta real de la API:
+curl -sk -o /dev/null -w "%{http_code}\n" -X POST https://ingenieria.unac.edu.co/~andrea.lopez/maternalytics/api/auth/login/   # 422 (falta el cuerpo) = proxy OK
+curl -sk -o /dev/null -w "%{http_code}\n" https://ingenieria.unac.edu.co/~andrea.lopez/maternalytics/api/analisis/            # 401 (sin token) = proxy OK
 ```
 
 Nota: el backend ya trae `/api` como prefijo fijo en sus routers
@@ -244,37 +279,107 @@ Microservicio FastAPI (`ia-service/`) que el backend llama vía
 resto de la app funciona y las narrativas/chat se ocultan (el backend
 responde 503).
 
-**Ollama no se pudo usar en este servidor**: la CPU no tiene `avx`
-(`grep -c avx /proc/cpuinfo` → 0), tiene 4 núcleos y ~6 GB de RAM libres en
-un servidor compartido, y Ollama no está instalado. En su lugar `ia-service`
-llama a la API gratuita de NVIDIA (compatible con OpenAI,
-`https://integrate.api.nvidia.com/v1`). Se activa solo si `LLM_BASE_URL`
-está definido; sin esa variable sigue usando Ollama (desarrollo local).
+### Proveedor LLM actual: Groq (desde 2026-11-04)
 
-- Límites del plan gratuito: ~40 peticiones/min y créditos limitados; pensado
-  para prototipos, no producción. Los indicadores agregados salen a un tercero.
-- Modelo: `meta/llama-3.2-11b-vision-instruct` (responde 200 y en español).
-  Los catálogos cambian: `meta/llama-3.3-70b-instruct` y
-  `meta/llama-3.1-8b-instruct` ya devolvían `410` (retirados) al desplegar.
-  Si el chat empieza a dar 503, probar la clave/modelo con:
-  `curl -s https://integrate.api.nvidia.com/v1/chat/completions -H "Authorization: Bearer $KEY" -H "Content-Type: application/json" -d '{"model":"<id>","messages":[{"role":"user","content":"OK"}],"max_tokens":8}'`
-  y listar ids vivos con `GET https://integrate.api.nvidia.com/v1/models`.
+`ia-service` tiene dos modos (`ia-service/core/config.py`,
+`ia-service/ollama_client.py`):
+
+- **`LLM_BASE_URL` definido** → llama a `{LLM_BASE_URL}/chat/completions`
+  (API compatible con OpenAI) con `Authorization: Bearer {LLM_API_KEY}` y
+  `model={OLLAMA_MODEL}`. Lo usan tanto `/chat` como `/generar-narrativa`.
+- **`LLM_BASE_URL` vacío** → Ollama local (`OLLAMA_HOST`), pensado para
+  desarrollo.
+
+En producción se usa **Groq** (plan gratuito) con el modelo
+**`openai/gpt-oss-20b`** (DEC-005). La variable del modelo se llama
+`OLLAMA_MODEL` por razones históricas, pero también es el id del modelo para
+el proveedor externo.
+
+**Por qué no Ollama local en este servidor** (medido el 2026-11-04): la VM
+expone una CPU genérica (`Common KVM processor`) **sin** `sse4_2`, `avx`,
+`avx2` ni `fma`, así que llama.cpp usa su ruta sin vectorizar. Con Ollama
+instalado, `qwen2.5:1.5b` generó a **0,6 tokens/s** (126 s para 50 tokens),
+por encima del timeout de 120 s del chat; `minicpm-v` (8B) no terminó en
+300 s. Volver a evaluarlo solo si el hipervisor expone AVX2 (tipo de CPU
+`host`).
+
+**Por qué no NVIDIA** (proveedor anterior): desde el 2026-11-04 la clave
+devuelve `404 "Function ... not found for account"` en todos los modelos
+probados, y varios (`meta/llama-3.1-8b-instruct`, `meta/llama-3.3-70b-instruct`)
+devuelven `410` por fin de vida.
+
+Límites de Groq **observados el 2026-11-04** en las cabeceras
+`x-ratelimit-*` (no son garantías; Groq puede cambiarlos y los vigentes están
+en <https://console.groq.com/settings/limits>):
+
+| Límite | Valor observado |
+|---|---|
+| Peticiones por día (`x-ratelimit-limit-requests`) | 1.000 |
+| Tokens por minuto (`x-ratelimit-limit-tokens`) | 8.000 |
+
+Si se superan, Groq responde `429` y el chat muestra error (el backend devuelve
+503). Cada pregunta envía el contexto de indicadores agregados, así que en
+análisis grandes el límite de tokens por minuto es el que se alcanza primero.
+Ese mismo día, `llama-3.3-70b-versatile` y `llama-3.1-8b-instant` no estaban
+disponibles para la cuenta (`model_not_found`); los modelos accesibles se
+listan con `GET https://api.groq.com/openai/v1/models`.
+
+Datos enviados: solo los indicadores agregados que arma el backend
+(`backend/api/routers/analisis.py`, claves de `claves_contexto`) y las
+preguntas del usuario; nunca filas de pacientes. Según la política de Groq
+(<https://console.groq.com/docs/your-data>), por defecto no retiene los datos
+de inferencia, salvo registros temporales (hasta 30 días) para fiabilidad o
+abuso, que se desactivan con *Zero Data Retention* en *Settings → Data
+Controls*. Comprobar en la consola si ZDR está activo; este documento no lo
+asume.
+
+Configuración (la clave se escribe solo en el servidor, sin eco, y nunca se
+versiona; `ia-service/.env` está en `.gitignore`, plantilla en
+`ia-service/.env.example`):
 
 ```bash
 cd ~/Software-de-mortalidad-materna/ia-service
 python3.11 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 
+# Copia de seguridad del .env anterior (no sobrescribir una existente)
+[ -f .env ] && cp -pn .env .env.bak-$(date +%Y%m%d)
+
 # La clave se pide sin eco y no queda en el historial ni en el repo
-read -rsp "NVIDIA API key: " K; echo
+read -rsp "Groq API key: " K; echo
 umask 177
 cat > .env << EOF
+LLM_BASE_URL=https://api.groq.com/openai/v1
 LLM_API_KEY=$K
-LLM_BASE_URL=https://integrate.api.nvidia.com/v1
-OLLAMA_MODEL=meta/llama-3.2-11b-vision-instruct
+OLLAMA_MODEL=openai/gpt-oss-20b
 EOF
 unset K; umask 022
+ls -l .env   # debe ser -rw------- (600)
 ```
+
+Al cambiar el `.env` basta con reiniciar **solo** el ia-service; el backend no
+necesita reinicio porque llama por URL:
+
+```bash
+sudo systemctl restart mortalidad-ia.service
+systemctl is-active mortalidad-ia.service
+```
+
+Probar la clave y el modelo directamente (sin pasar por el servicio):
+
+```bash
+read -rsp "Groq API key: " K; echo
+curl -s https://api.groq.com/openai/v1/chat/completions \
+  -H @<(printf 'Authorization: Bearer %s\n' "$K") -H "Content-Type: application/json" \
+  -d '{"model":"openai/gpt-oss-20b","max_tokens":50,"messages":[{"role":"user","content":"OK"}]}'
+unset K
+```
+
+Volver a la configuración anterior: restaurar la copia
+(`cp -p .env.bak-<fecha> .env`) y reiniciar `mortalidad-ia.service`. En el
+cambio a Groq del 2026-11-04 la copia del `.env` de NVIDIA quedó como
+`ia-service/.env.bak-nvidia-20261104` (NVIDIA ya no responde, así que solo
+sirve como referencia).
 
 Servicio systemd, puerto **8011** (solo `127.0.0.1`; el 8001 por defecto está
 ocupado por otro proceso):
@@ -298,15 +403,26 @@ EOF
 sudo systemctl daemon-reload
 sudo systemctl enable --now mortalidad-ia
 
-# Conectar el backend y reiniciarlo
-echo "ia_service_url=http://localhost:8011" >> ~/Software-de-mortalidad-materna/backend/.env
+# Conectar el backend y reiniciarlo (si ia_service_url ya está en backend/.env
+# desde la sección 3.1, no repetir el echo)
+grep -q '^ia_service_url=' ~/Software-de-mortalidad-materna/backend/.env || \
+  echo "ia_service_url=http://localhost:8011" >> ~/Software-de-mortalidad-materna/backend/.env
 sudo systemctl restart mortalidad-backend
 ```
 
-Verificación: `POST http://localhost:8011/chat` con
-`{"pregunta":"hola","historial":[],"tipo_analisis":"mortalidad","contexto":{}}`
-responde texto y `"modelo":"meta/llama-3.2-11b-vision-instruct"`.
-Logs: `journalctl -u mortalidad-ia -f`.
+Verificación (con datos ficticios):
+
+```bash
+curl -s http://127.0.0.1:8011/health          # {"status":"ok"}
+curl -s http://127.0.0.1:8011/chat -H 'Content-Type: application/json' \
+  -d '{"pregunta":"Cual es la principal causa?","historial":[],"tipo_analisis":"mortalidad","contexto":{"causas_cie10":[{"codigo":"O72.1","nombre":"Hemorragia postparto","casos":12}]}}'
+```
+
+Debe responder 200 con texto y `"modelo":"openai/gpt-oss-20b"`. El 2026-11-04
+respondió en 0,86 s. Logs: `journalctl -u mortalidad-ia -f` (un `503` en
+`POST /chat` indica que falló el proveedor; el `detail` de la respuesta trae el
+error de Groq). Timeouts: `/chat` tiene 120 s fijos en el código;
+`/generar-narrativa` usa `OLLAMA_TIMEOUT_S` (por defecto 120 s).
 
 ## 7. Carga de Excel: errores encontrados al desplegar y cómo se resolvieron
 
@@ -380,6 +496,52 @@ de tu PC.
   con `base_datos_sivigila_mortalidad.xlsx` (50 filas, el que falló) → 50 casos.
   Falta confirmarlo contra PostgreSQL en el servidor.
 
+## Credenciales del despliegue
+
+Ningún valor real de estas credenciales se escribe en el repositorio, en chats
+ni en issues. Se comparten por un gestor de contraseñas o un canal privado, y en
+el servidor viven solo en los `.env` (permisos 600, fuera de git). En este
+documento aparecen como `REEMPLAZAR_...`.
+
+| Credencial | Qué es | Dónde se obtiene | Quién la proporciona | Dónde se configura |
+|---|---|---|---|---|
+| `REEMPLAZAR_CON_LA_CONTRASEÑA_DE_LA_BD` | Contraseña del rol `app_mortalidad` de PostgreSQL, con el que se conecta el backend | Se genera: `openssl rand -hex 24` (solo hexadecimal) | Quien administra el despliegue de Maternalytics | En PostgreSQL (`CREATE USER` / `ALTER ROLE`, sección 2) **y** en `backend/.env` (`db_password`); deben coincidir |
+| `REEMPLAZAR_CON_SECRETO_JWT_ALEATORIO` | Clave con la que el backend firma y verifica los tokens de sesión | Se genera: `openssl rand -hex 32` | Se genera en el servidor; nadie más necesita conocerla | `backend/.env` (`jwt_secret`) |
+| API key de Groq (`LLM_API_KEY`) | Acceso del ia-service a Groq | <https://console.groq.com> → API Keys | Quien tiene la cuenta de Groq del equipo | `ia-service/.env` (sección 6) |
+| Cuenta SSH/sudo del servidor | Acceso a `ubuntusrv` para desplegar | La asigna la UNAC | El administrador del servidor | Personal; no se configura en el proyecto |
+| Superusuario `postgres` | Administración de PostgreSQL (compartido con otros proyectos) | Servidor | El administrador del servidor | Se usa con `sudo -u postgres`; no va en ningún `.env` |
+
+**Rotar la contraseña de `app_mortalidad` y el `jwt_secret`** (un solo reinicio
+del backend, unos segundos sin servicio; todas las sesiones se cierran y los
+usuarios deben volver a iniciar sesión):
+
+```bash
+cd ~/Software-de-mortalidad-materna/backend
+cp -pn .env .env.bak-$(date +%Y%m%d) && chmod 600 .env.bak-*   # copia para volver atrás
+
+# 1. Editar .env con los valores nuevos (db_password y jwt_secret), p. ej. con nano.
+#    El backend sigue funcionando con los anteriores hasta que se reinicie.
+#    Generarlos con: openssl rand -hex 24  /  openssl rand -hex 32
+
+# 2. Cambiar la contraseña en PostgreSQL enviando solo su hash md5
+#    (el texto en claro no queda en logs ni en el historial):
+read -rsp "Nueva contraseña de app_mortalidad (la misma del .env): " P; echo
+H="md5$(printf '%s' "${P}app_mortalidad" | md5sum | cut -c1-32)"
+printf "ALTER ROLE app_mortalidad PASSWORD '%s';\n" "$H" | sudo -u postgres psql -X -q
+unset P H
+
+# 3. Reiniciar el backend enseguida (las conexiones nuevas fallan hasta reiniciar)
+sudo systemctl restart mortalidad-backend
+systemctl is-active mortalidad-backend
+```
+
+Verificación: `curl http://localhost:8010/health` → 200; login desde el
+navegador → 200; un token anterior debe dar 401. Logs:
+`journalctl -u mortalidad-backend -f`.
+
+Volver atrás: `cp -p .env.bak-<fecha> .env`, restaurar la contraseña anterior
+con `ALTER ROLE` y reiniciar `mortalidad-backend`.
+
 ## Puertos en uso en el servidor (referencia, `sudo ss -tlnp`)
 
 Antes de asignar un puerto nuevo a cualquier servicio en este servidor
@@ -405,9 +567,20 @@ no en `ss` al momento de revisar). Nuestros: 8010 (backend), 8011 (ia-service).
       sección 6). `POST :8011/chat` responde.
 - [ ] Probar narrativa y chat desde el navegador (que `.../api/analisis/{id}/narrativa/...`
       y `.../chat/` respondan 200 y no 503).
-- [ ] Rotar la API key de NVIDIA: se pegó en un chat durante el despliegue.
+- [x] Cambiar el proveedor LLM de NVIDIA a Groq (`openai/gpt-oss-20b`) y
+      verificar `POST :8011/chat` → 200 (2026-11-04, sección 6).
+- [ ] Revocar en la consola de NVIDIA la API key anterior (se pegó en un chat
+      durante el despliegue y ya no se usa).
+- [ ] Revocar la primera API key de Groq que se pegó en un chat el 2026-11-04
+      (producción usa otra clave nueva).
+- [ ] Comprobar en <https://console.groq.com/settings/data-controls> si Zero
+      Data Retention está activo y activarlo si el equipo lo aprueba.
 - [ ] Hacer `git pull` + reinicio del backend en el servidor (sección 7) y subir
       `sivigila_mortalidad_10_casos.xlsx` desde el navegador; confirmar que carga
       con PostgreSQL y que el dashboard muestra los 10 casos.
-- [ ] Antes de versionar este archivo: cambiar `mortalidad123` y `jwt_secret` por
-      placeholders (el repo es público).
+- [x] Sustituir en este archivo las credenciales reales por placeholders
+      `REEMPLAZAR_...` (el repo es público).
+- [ ] Rotar la contraseña de `app_mortalidad` y el `jwt_secret` de producción:
+      los valores anteriores estuvieron publicados en el historial de este
+      archivo y deben darse por comprometidos. Procedimiento en
+      "Credenciales del despliegue".

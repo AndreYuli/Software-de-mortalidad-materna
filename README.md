@@ -1,22 +1,23 @@
 # Software de Mortalidad Materna (MaternAnalytics)
 
-Sistema de análisis, visualización e interpretación con IA de datos de mortalidad y morbilidad materna extrema (fichas SIVIGILA 549 y 550). Una persona de la Secretaría de Salud carga los archivos Excel, y el sistema los valida, los procesa y los muestra en un dashboard con indicadores, filtros, historial de cargas y narrativas generadas por IA local.
+Sistema de análisis, visualización e interpretación con IA de datos de mortalidad y morbilidad materna extrema (fichas SIVIGILA 549 y 550). Una persona de la Secretaría de Salud carga los archivos Excel, y el sistema los valida, los procesa y los muestra en un dashboard con indicadores, filtros, historial de cargas, narrativas y un chatbot generados por IA a partir de indicadores agregados.
 
 ## Arquitectura
 
-Tres servicios más PostgreSQL y Ollama:
+Tres servicios más PostgreSQL y un proveedor LLM (Ollama local en desarrollo; Groq en producción, ver `DEC-005`):
 
 | Servicio | Carpeta | Tecnología | Puerto |
 |---|---|---|---:|
 | Frontend | `frontend/maternanalytics/` | React 18, TypeScript, Vite | 5173 |
-| Backend | `backend/` | FastAPI, SQLAlchemy, pandas, scikit-learn, JWT | 8000 |
-| IA-SERVICE | `ia-service/` | FastAPI, httpx, Ollama (`qwen2.5`) | 8001 |
+| Backend | `backend/` | FastAPI, SQLAlchemy, pandas, scikit-learn, JWT | 8000 (8010 en el servidor) |
+| IA-SERVICE | `ia-service/` | FastAPI, httpx; Ollama (`qwen2.5`) o API compatible con OpenAI | 8001 (8011 en el servidor) |
 | PostgreSQL | externo o Docker | PostgreSQL 16 | 5432 |
-| Ollama | externo o Docker | LLM local | 11434 |
+| Ollama | externo o Docker (solo desarrollo) | LLM local | 11434 |
+| Groq | externo (producción) | `openai/gpt-oss-20b` vía `https://api.groq.com/openai/v1` | — |
 
 - Todos los endpoints de datos (`/api/analisis/*`, `/api/sivigila/*`) exigen un JWT válido. Solo son públicos el login, el registro y `/health`. Los archivos cargados (`backend/media/`) no se sirven públicamente.
 - El backend nunca envía datos crudos de pacientes al servicio de IA: solo indicadores ya agregados. Ver `backend/services/narrativa_service.py`.
-- Si Ollama o `ia-service` no están disponibles, el resto de la aplicación sigue funcionando y las narrativas se ocultan.
+- Si el proveedor LLM o `ia-service` no están disponibles, el resto de la aplicación sigue funcionando y las narrativas y el chat se ocultan o muestran error.
 
 Documentación detallada en [`docs/`](docs/): [arquitectura](docs/ARCHITECTURE.md), [producto](docs/PRODUCT.md), [diseño](docs/DESIGN.md), [reglas](docs/RULES.md), [decisiones](docs/DECISIONS.md), [tareas](docs/TASKS.md) y [changelog](docs/CHANGELOG.md).
 
@@ -38,7 +39,7 @@ Software-de-mortalidad-materna/
 │   └── local/          # No se versiona
 ├── scripts/            # iniciar_servicios.bat, ejecutar_pruebas_e2e.bat
 ├── docker-compose.yml
-├── .env.example        # Variables para docker compose
+├── .env.example        # Variables para docker compose (ia-service/.env.example para el proveedor LLM)
 └── ruff.toml           # Estilo Python (comillas simples)
 ```
 
@@ -47,12 +48,12 @@ Software-de-mortalidad-materna/
 - **Python 3.11+**
 - **Node.js 18+** y **pnpm**
 - **PostgreSQL 14+** (o Docker)
-- **[Ollama](https://ollama.com)** con el modelo `qwen2.5`: `ollama pull qwen2.5`
+- Un proveedor LLM: **[Ollama](https://ollama.com)** local con `qwen2.5` (`ollama pull qwen2.5`) **o** una API compatible con OpenAI, como Groq (producción)
 - Opcional: **Docker Desktop** para levantar todo con `docker compose`
 
 ## Variables de entorno
 
-**Backend** (`backend/.env`, copiar desde `backend/.env.example`):
+**Backend** (`backend/.env`, copiar desde `backend/.env.example`; esa plantilla solo trae las variables `DB_*`, así que hay que añadir a mano `JWT_SECRET` y, si el ia-service no está en el puerto 8001, `IA_SERVICE_URL`. Valores y origen de cada credencial en `DEPLOY.md`, sección "Credenciales del despliegue"):
 
 | Variable | Descripción | Por defecto |
 |---|---|---|
@@ -62,7 +63,17 @@ Software-de-mortalidad-materna/
 | `IA_SERVICE_URL` | URL de `ia-service` | `http://localhost:8001` |
 | `CORS_ORIGINS` | Orígenes permitidos, separados por comas | `localhost:5173/5174` |
 
-**ia-service** (opcionales): `OLLAMA_HOST` (`http://localhost:11434`), `OLLAMA_MODEL` (`qwen2.5`), `OLLAMA_TIMEOUT_S` (`30`).
+**ia-service** (`ia-service/.env`, copiar desde `ia-service/.env.example`):
+
+| Variable | Descripción | Por defecto |
+|---|---|---|
+| `LLM_BASE_URL` | Si tiene valor, `/chat` y `/generar-narrativa` usan `{LLM_BASE_URL}/chat/completions` (API compatible con OpenAI). Vacío = Ollama. Producción: `https://api.groq.com/openai/v1` | vacío |
+| `LLM_API_KEY` | API key del proveedor externo. Solo en el `.env` real, nunca en el repo | vacío |
+| `OLLAMA_MODEL` | Id del modelo, **también para el proveedor externo**. Producción: `openai/gpt-oss-20b` | `qwen2.5` |
+| `OLLAMA_HOST` | URL de Ollama (solo si `LLM_BASE_URL` está vacío) | `http://localhost:11434` |
+| `OLLAMA_TIMEOUT_S` | Timeout de `/generar-narrativa`, en segundos. `/chat` usa 120 s fijos en el código | `120` |
+
+Despliegue y límites del proveedor en `DEPLOY.md`, sección 6.
 
 **Frontend** (`frontend/maternanalytics/.env.local`, opcional): `VITE_API_URL` (por defecto `http://localhost:8000/api`).
 

@@ -90,3 +90,28 @@ Pasar a `app/` obliga a reescribir unos 110 imports de primer nivel, `Path('medi
 ### Estado
 
 APROBADA
+
+---
+
+## DEC-005
+
+### Fecha
+
+2026-11-04
+
+### Decisión
+
+En producción, `ia-service` usa **Groq** (plan gratuito) como proveedor LLM, con el modelo `openai/gpt-oss-20b` y la API compatible con OpenAI (`LLM_BASE_URL=https://api.groq.com/openai/v1`). La API key vive solo en `ia-service/.env` del servidor, que no se versiona. El código no cambia: ya usaba `LLM_BASE_URL`, `LLM_API_KEY` y `OLLAMA_MODEL` para `/chat` y `/generar-narrativa`. En desarrollo se puede seguir usando Ollama dejando `LLM_BASE_URL` vacío.
+
+### Motivo
+
+- **Ollama local en el servidor:** descartado. La VM no expone `avx`, `avx2` ni `sse4_2`; `qwen2.5:1.5b` generó a 0,6 tokens/s (126 s para 50 tokens, más que el timeout de 120 s del chat) y `minicpm-v` no terminó en 300 s.
+- **NVIDIA (proveedor anterior):** dejó de responder; desde el 2026-11-04 da `404 not found for account` en todos los modelos probados.
+- **OpenRouter:** descartado por el equipo.
+- **Groq con `openai/gpt-oss-20b`:** modelo de producción disponible en el plan gratuito de la cuenta; respondió en menos de 1 s desde el servidor. `llama-3.3-70b-versatile` no estaba disponible para la cuenta.
+
+Límites observados el 2026-11-04: 1.000 peticiones/día y 8.000 tokens/min. No son garantías. Los indicadores agregados y las preguntas salen a un tercero (EE. UU.); nunca filas de pacientes.
+
+### Estado
+
+APROBADA. Reemplaza el uso de NVIDIA descrito antes en `DEPLOY.md`, sección 6.

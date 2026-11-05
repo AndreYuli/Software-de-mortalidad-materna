@@ -101,12 +101,13 @@ Nota: las carpetas se llaman `backend`, `ia-service` y `frontend` (en minúscula
 | Servicio | Carpeta | Tecnología | Puerto | Responsabilidad |
 |---|---|---:|---:|---|
 | Frontend | `frontend/maternanalytics/` | React 18, TypeScript, Vite | 5173 | Interfaz, dashboard, carga, historial, filtros y visualizaciones |
-| Backend | `backend/` | FastAPI, SQLAlchemy, pandas | 8000 | API, autenticación, carga de Excel, procesamiento, indicadores y persistencia |
-| IA-SERVICE | `ia-service/` | FastAPI, httpx, Ollama | 8001 | Generación de narrativas con IA local a partir de indicadores agregados |
+| Backend | `backend/` | FastAPI, SQLAlchemy, pandas | 8000 (8010 en el servidor) | API, autenticación, carga de Excel, procesamiento, indicadores y persistencia |
+| IA-SERVICE | `ia-service/` | FastAPI, httpx | 8001 (8011 en el servidor) | Narrativas y chat a partir de indicadores agregados, usando Ollama o una API compatible con OpenAI |
 | PostgreSQL | externo / Docker | PostgreSQL 16 | 5432 | Base de datos relacional |
-| Ollama | externo / Docker | Ollama con modelo local | 11434 | Motor LLM local para IA-SERVICE |
+| Ollama | externo / Docker | Ollama con modelo local | 11434 | Motor LLM local para IA-SERVICE en desarrollo |
+| Groq | externo | `openai/gpt-oss-20b` (API compatible con OpenAI) | — | Motor LLM de IA-SERVICE en producción (`DEC-005`) |
 
-`docker-compose.yml` levanta PostgreSQL, Ollama, IA-SERVICE y Backend. El frontend se ejecuta aparte con Vite.
+`docker-compose.yml` levanta PostgreSQL, Ollama, IA-SERVICE y Backend (modo Ollama, para desarrollo). El frontend se ejecuta aparte con Vite. En el servidor de producción los servicios corren con systemd y IA-SERVICE usa Groq (ver `DEPLOY.md`, sección 6).
 
 ## Frontend
 
@@ -165,7 +166,7 @@ El flujo general de datos es:
 9. El frontend transforma esos datos en KPIs, gráficas, cruces, tablas y reportes.
 10. El usuario interactúa con el Chatbot (mediante el componente `ChatWidget`), que envía la pregunta y el historial de conversación a `POST /api/analisis/{pk}/chat/`.
 11. El backend agrega el contexto de indicadores al prompt y reenvía la solicitud a `POST /chat` en `ia-service`.
-12. El `ia-service` genera la respuesta usando Ollama y la devuelve, fluyendo de regreso hasta el usuario.
+12. El `ia-service` genera la respuesta con el proveedor LLM configurado (Groq en producción, Ollama en desarrollo) y la devuelve, fluyendo de regreso hasta el usuario.
 
 El cliente HTTP central está en `frontend/maternanalytics/src/api.ts`. Allí se define `API_URL`, timeout de peticiones, manejo básico de errores, historial, cruces, narrativa IA y el endpoint del chat.
 
@@ -237,16 +238,23 @@ backend/
 
 ## IA-SERVICE
 
-`IA-SERVICE` es un microservicio FastAPI separado. Su función es generar narrativas usando Ollama y un modelo local.
+`IA-SERVICE` es un microservicio FastAPI separado. Su función es generar narrativas y respuestas del chat a partir de indicadores agregados.
+
+Proveedor LLM (`ia-service/core/config.py`, `ia-service/ollama_client.py`):
+
+- si `LLM_BASE_URL` tiene valor, llama a `{LLM_BASE_URL}/chat/completions` (API compatible con OpenAI) con `LLM_API_KEY` y el modelo `OLLAMA_MODEL`. Producción usa Groq (`https://api.groq.com/openai/v1`, `openai/gpt-oss-20b`), ver `DEC-005`;
+- si `LLM_BASE_URL` está vacío, usa Ollama (`OLLAMA_HOST`, `/api/generate` y `/api/chat`), pensado para desarrollo local;
+- timeouts: `/chat` 120 s fijos en el código; `/generar-narrativa` usa `OLLAMA_TIMEOUT_S` (120 s por defecto);
+- la configuración se lee del `.env` del directorio de arranque al iniciar; tras cambiarla hay que reiniciar el servicio.
 
 Reglas:
 
 - recibe indicadores agregados, no registros crudos de pacientes;
 - expone `GET /health`, `POST /generar-narrativa` y `POST /chat`;
-- si Ollama falla, responde error controlado;
+- si el proveedor LLM falla, responde error controlado (503);
 - el backend cachea narrativas en la tabla `narrativa_ia`.
 
-No enviar datos sensibles o filas individuales de pacientes a servicios externos.
+No enviar datos sensibles o filas individuales de pacientes a servicios externos. Con Groq, los indicadores agregados y las preguntas del usuario sí salen a un tercero (EE. UU.); cualquier cambio en el contexto que arma el backend (`claves_contexto` en `backend/api/routers/analisis.py`) debe mantener esa regla.
 
 ## Base de datos
 
