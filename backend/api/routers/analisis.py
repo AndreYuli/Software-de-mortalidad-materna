@@ -229,9 +229,9 @@ def detalle_analisis(
 def analisis_completo(
     pk: int,
     year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
-    month: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
-    week: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
-    day: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
+    month: str | None = Query(default=None, pattern=r'^(|0?[1-9]|1[0-2])$'),
+    week: str | None = Query(default=None, pattern=r'^(|0?[1-9]|[1-4]\d|5[0-3])$'),
+    day: str | None = Query(default=None, pattern=r'^(|0?[1-9]|[12]\d|3[01])$'),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
@@ -402,7 +402,7 @@ def obtener_narrativa_ia(
     pk: int,
     tipo_narrativa: str,
     year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
-    month: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
+    month: str | None = Query(default=None, pattern=r'^(|0?[1-9]|1[0-2])$'),
     tipo_clustering: str = Query(default='kmeans'),
     n_clusters: int = Query(default=3, ge=2, le=20),
     regenerar: bool = Query(default=False),
@@ -475,7 +475,7 @@ def chat_analisis(
     pk: int,
     req: ChatRequest,
     year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
-    month: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
+    month: str | None = Query(default=None, pattern=r'^(|0?[1-9]|1[0-2])$'),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:

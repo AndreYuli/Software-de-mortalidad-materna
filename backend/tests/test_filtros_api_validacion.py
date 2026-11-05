@@ -89,6 +89,28 @@ def test_completo_rechaza_formato_invalido(client, analisis_id, espia, campo, va
 @pytest.mark.parametrize(
     'campo,valor',
     [
+        ('month', '0'),
+        ('month', '00'),
+        ('month', '13'),
+        ('month', '99'),
+        ('week', '0'),
+        ('week', '54'),
+        ('week', '99'),
+        ('day', '0'),
+        ('day', '32'),
+        ('day', '99'),
+    ],
+)
+def test_completo_rechaza_rango_invalido(client, analisis_id, espia, campo, valor):
+    """Completo rechaza month week day fuera de rango."""
+    r = client.get(f'/api/analisis/{analisis_id}/completo/', params={campo: valor})
+    assert r.status_code == 422, (campo, valor, r.status_code, r.text[:120])
+    assert espia == []
+
+
+@pytest.mark.parametrize(
+    'campo,valor',
+    [
         ('year', '2026'),
         ('month', '4'),
         ('week', '12'),
@@ -99,6 +121,13 @@ def test_completo_rechaza_formato_invalido(client, analisis_id, espia, campo, va
         ('day', ''),
         ('year', '0'),
         ('month', '07'),
+        ('month', '1'),
+        ('month', '12'),
+        ('month', '01'),
+        ('week', '1'),
+        ('week', '53'),
+        ('day', '1'),
+        ('day', '31'),
     ],
 )
 def test_completo_acepta_formato_valido(client, analisis_id, espia, campo, valor):
@@ -153,6 +182,25 @@ def test_chat_rechaza_formato_invalido(client, analisis_id, espia, campo, valor)
     )
     assert r.status_code == 422, (campo, valor, r.status_code)
     assert 'invalid literal' not in r.text
+
+
+def test_narrativa_rechaza_month_fuera_de_rango(client, analisis_id, espia):
+    """Narrativa rechaza month fuera de rango."""
+    r = client.get(
+        f'/api/analisis/{analisis_id}/narrativa/resumen_ejecutivo/',
+        params={'month': '13'},
+    )
+    assert r.status_code == 422
+
+
+def test_chat_rechaza_month_fuera_de_rango(client, analisis_id, espia):
+    """Chat rechaza month fuera de rango."""
+    r = client.post(
+        f'/api/analisis/{analisis_id}/chat/',
+        params={'month': '13'},
+        json={'pregunta': 'hola', 'historial': []},
+    )
+    assert r.status_code == 422
 
 
 @pytest.mark.parametrize(
