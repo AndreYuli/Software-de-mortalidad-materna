@@ -7,7 +7,7 @@ class UsuarioRegister(BaseModel):
     """Datos requeridos para registrar un usuario nuevo.
 
     Attributes:
-        nombre: Nombre completo del usuario.
+        nombre: Nombre completo del usuario (máximo 150 caracteres).
         email: Correo electrónico único, normalizado a minúsculas.
         password: Contraseña en texto plano (mínimo 8 caracteres).
         departamento_codigo: Código del departamento (ej. 'antioquia').
@@ -15,7 +15,7 @@ class UsuarioRegister(BaseModel):
             tenant con el que se aíslan los datos del usuario.
     """
 
-    nombre: str = Field(..., min_length=1)
+    nombre: str = Field(..., min_length=1, max_length=150)
     email: EmailStr
     password: str = Field(..., min_length=8)
     departamento_codigo: str = Field(..., min_length=1)
