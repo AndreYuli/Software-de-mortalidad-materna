@@ -10,6 +10,7 @@ import {
   fetchWithTimeout,
 } from "../../api";
 import { loginSchema } from "../../validation/loginSchema";
+import { useDocumentTitle } from "../../hooks/navigation/useDocumentTitle";
 import AuthCard from "./AuthCard";
 import AuthField from "./AuthField";
 import AuthNotice from "./AuthNotice";
@@ -31,6 +32,7 @@ interface LoginResponse {
 }
 
 export default function Login({ onLogin, onRegister }: LoginProps = {}) {
+  useDocumentTitle('Iniciar sesión')
   const navigate = useNavigate();
   const location = useLocation();
   const arrival = (location.state as { registeredEmail?: string; justRegistered?: boolean } | null) ?? {};

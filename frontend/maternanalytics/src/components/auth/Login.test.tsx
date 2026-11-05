@@ -82,4 +82,9 @@ describe('Login', () => {
     expect(screen.getByLabelText('Correo electrónico')).toHaveAttribute('autocomplete', 'username')
     expect(screen.getByLabelText('Contraseña')).toHaveAttribute('autocomplete', 'current-password')
   })
+
+  it('pone el título de la pestaña', () => {
+    renderLogin()
+    expect(document.title).toBe('Iniciar sesión · VidaMaterna')
+  })
 })

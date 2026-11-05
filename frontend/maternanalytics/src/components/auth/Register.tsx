@@ -14,6 +14,7 @@ import {
   registerSchema,
   type RegisterFormValues,
 } from "../../validation/registerSchema";
+import { useDocumentTitle } from "../../hooks/navigation/useDocumentTitle";
 import AuthCard from "./AuthCard";
 import AuthField from "./AuthField";
 import AuthNotice from "./AuthNotice";
@@ -31,6 +32,7 @@ interface RegisterResponse {
 }
 
 export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
+  useDocumentTitle('Crear cuenta')
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
