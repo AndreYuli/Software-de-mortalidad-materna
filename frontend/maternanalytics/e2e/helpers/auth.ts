@@ -8,6 +8,9 @@ const E2E_USER = {
   nombre: 'Usuario E2E',
   email: process.env.E2E_EMAIL ?? 'e2e@vidamaterna.co',
   password: process.env.E2E_PASSWORD ?? 'e2e-clave-segura',
+  // El registro exige la afiliación del usuario (aislamiento por secretaría).
+  departamento_codigo: process.env.E2E_DEPARTAMENTO ?? 'antioquia',
+  secretaria_codigo: process.env.E2E_SECRETARIA ?? 'bello',
 };
 
 export async function loginByApi(page: Page): Promise<void> {

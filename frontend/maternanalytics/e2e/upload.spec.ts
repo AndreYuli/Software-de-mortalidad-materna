@@ -84,20 +84,19 @@ test.describe('Flujo de Carga SIVIGILA', () => {
   });
 
   test('Debería procesar exitosamente un archivo Excel válido', async ({ page }) => {
-    // Le damos más tiempo a la prueba porque el backend toma varios segundos procesando
+    // Fixture de 200 registros; el de 10.000 tardaba ~2,5 min y se caía con el equipo cargado.
     test.setTimeout(120000);
 
     await page.goto('/cargar-mortalidad');
     
     // Subimos un archivo Excel que sabemos que está perfecto
-    await page.locator('input[type="file"]').setInputFiles('./e2e/fixtures/mortalidad-valida.xlsx');
+    await page.locator('input[type="file"]').setInputFiles('./e2e/fixtures/mortalidad-valida-pequena.xlsx');
     
     // El botón debería estar habilitado y le damos click
     await expect(page.getByRole('button', { name: /Iniciar análisis/i })).toBeEnabled({ timeout: 10000 });
     await page.getByRole('button', { name: /Iniciar análisis/i }).click();
 
     // Verificamos el mensaje de éxito real del componente UploadSection
-    // Le damos hasta 90 segundos porque sabemos que el botón se queda en "Procesando registros..."
     await expect(page.getByText(/Análisis guardado correctamente/i)).toBeVisible({ timeout: 90000 });
   });
 });

@@ -67,6 +67,7 @@ export function useUploadHistory(perPage = 20): UseUploadHistoryReturn {
   useEffect(() => {
     const controller = new AbortController()
     let cancelled = false
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- inicio de petición: marca "cargando" antes del fetch
     setLoading(true)
     setError(null)
     fetchHistorial(page, perPage, { q: busqueda, tipo, year, month, week }, controller.signal)

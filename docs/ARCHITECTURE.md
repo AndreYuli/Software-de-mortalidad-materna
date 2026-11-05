@@ -88,8 +88,6 @@ Software-de-mortalidad-materna/
 │   ├── pruebas/             # Excel sintéticos
 │   └── local/               # No versionado: archivos de procedencia sin confirmar
 ├── scripts/                 # iniciar_servicios.bat, ejecutar_pruebas_e2e.bat
-├── docker-compose.yml
-├── .env.example
 ├── ruff.toml
 └── README.md
 ```
@@ -103,11 +101,11 @@ Nota: las carpetas se llaman `backend`, `ia-service` y `frontend` (en minúscula
 | Frontend | `frontend/maternanalytics/` | React 18, TypeScript, Vite | 5173 | Interfaz, dashboard, carga, historial, filtros y visualizaciones |
 | Backend | `backend/` | FastAPI, SQLAlchemy, pandas | 8000 (8010 en el servidor) | API, autenticación, carga de Excel, procesamiento, indicadores y persistencia |
 | IA-SERVICE | `ia-service/` | FastAPI, httpx | 8001 (8011 en el servidor) | Narrativas y chat a partir de indicadores agregados, usando Ollama o una API compatible con OpenAI |
-| PostgreSQL | externo / Docker | PostgreSQL 16 | 5432 | Base de datos relacional |
-| Ollama | externo / Docker | Ollama con modelo local | 11434 | Motor LLM local para IA-SERVICE en desarrollo |
+| PostgreSQL | externo | PostgreSQL 16 | 5432 | Base de datos relacional |
+| Ollama | externo | Ollama con modelo local | 11434 | Motor LLM local para IA-SERVICE en desarrollo |
 | Groq | externo | `openai/gpt-oss-20b` (API compatible con OpenAI) | — | Motor LLM de IA-SERVICE en producción (`DEC-005`) |
 
-`docker-compose.yml` levanta PostgreSQL, Ollama, IA-SERVICE y Backend (modo Ollama, para desarrollo). El frontend se ejecuta aparte con Vite. En el servidor de producción los servicios corren con systemd y IA-SERVICE usa Groq (ver `DEPLOY.md`, sección 6).
+En desarrollo, PostgreSQL, Ollama, IA-SERVICE y Backend se levantan por separado (ver `scripts/iniciar_servicios.bat`) y el frontend se ejecuta aparte con Vite. En el servidor de producción los servicios corren con systemd y IA-SERVICE usa Groq (ver `DEPLOY.md`, sección 6).
 
 ## Frontend
 
@@ -280,7 +278,7 @@ El backend también crea tablas propias mediante SQLAlchemy al iniciar, como an�
 - Mantener las responsabilidades de cada componente.
 - No mezclar lógica de negocio dentro de componentes visuales si puede vivir en hooks, servicios o utilidades.
 - No cambiar rutas, estructura de carpetas o contratos de API sin revisar el impacto completo.
-- No renombrar `backend`, `ia-service` ni `frontend` sin actualizar `docker-compose.yml`, `scripts/` y `.gitignore`.
+- No renombrar `backend`, `ia-service` ni `frontend` sin actualizar `scripts/` y `.gitignore`.
 - No introducir otra librería de gráficas si ECharts o Chart.js son suficientes.
 - No enviar datos crudos de pacientes a IA.
 - Si cambia una decisión arquitectónica, actualizar este documento y `docs/CHANGELOG.md`.
@@ -291,4 +289,3 @@ Estos puntos fueron identificados en el código y deben tenerse presentes antes 
 
 - La definición de tasa de letalidad debe confirmarse con el equipo antes de ajustar cálculos.
 - `NarrativaIA.tsx` existe, pero su integración visible en el dashboard debe verificarse antes de asumir que el usuario puede usarla.
-- El frontend no está incluido en `docker-compose.yml`; si se define despliegue con Docker completo, debe agregarse explícitamente.

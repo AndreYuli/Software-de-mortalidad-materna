@@ -13,12 +13,20 @@ export interface AnalisisMeta {
   demoras?: Record<string, DemoraDetalle>
   distribucion_edad_gestacional?: { labels: string[]; valores: number[]; total: number }
   distribucion_edad_riesgo?: { labels: string[]; valores: number[]; total: number }
+  severidad_fallas?: { fallas?: { nombre: string; casos: number }[] }
+  distribucion_sociodemografica?: Record<
+    string,
+    { labels: string[]; valores: number[]; total: number; evento?: string }
+  >
 }
 
 export interface EstadisticasBasicas {
   total_casos?: number
   controles_prenatales_promedio?: number
   estancia_hospitalaria_promedio?: number
+  edad_promedio?: number
+  estancia_uci_promedio?: number
+  criterios_promedio?: number
 }
 
 export interface CausaCie10 {

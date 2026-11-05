@@ -9,7 +9,7 @@ class UsuarioRegister(BaseModel):
     Attributes:
         nombre: Nombre completo del usuario.
         email: Correo electrónico único, normalizado a minúsculas.
-        password: Contraseña en texto plano (mínimo 6 caracteres).
+        password: Contraseña en texto plano (mínimo 8 caracteres).
         departamento_codigo: Código del departamento (ej. 'antioquia').
         secretaria_codigo: Código de la secretaría de salud (ej. 'bello'); define el
             tenant con el que se aíslan los datos del usuario.
@@ -17,7 +17,7 @@ class UsuarioRegister(BaseModel):
 
     nombre: str = Field(..., min_length=1)
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8)
     departamento_codigo: str = Field(..., min_length=1)
     secretaria_codigo: str = Field(..., min_length=1)
 
