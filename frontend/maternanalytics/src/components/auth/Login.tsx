@@ -127,6 +127,7 @@ export default function Login({ onLogin, onRegister }: LoginProps = {}) {
           icon={Mail}
           type="email"
           placeholder="tu.correo@institucion.gov.co"
+          autoComplete="username"
           error={errors.email?.message}
           registration={register("email")}
         />
@@ -136,6 +137,7 @@ export default function Login({ onLogin, onRegister }: LoginProps = {}) {
           icon={Lock}
           type="password"
           placeholder="••••••••"
+          autoComplete="current-password"
           error={errors.password?.message}
           registration={register("password")}
         />

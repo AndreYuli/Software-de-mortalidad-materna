@@ -69,4 +69,10 @@ describe('Login', () => {
     await userEvent.click(screen.getByRole('button', { name: /crear cuenta/i }))
     expect(screen.getByText('pantalla registro')).toBeInTheDocument()
   })
+
+  it('expone autocomplete para que el navegador rellene las credenciales', () => {
+    renderLogin()
+    expect(screen.getByLabelText('Correo electrónico')).toHaveAttribute('autocomplete', 'username')
+    expect(screen.getByLabelText('Contraseña')).toHaveAttribute('autocomplete', 'current-password')
+  })
 })

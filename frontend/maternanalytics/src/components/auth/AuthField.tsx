@@ -8,6 +8,7 @@ interface AuthFieldProps {
   icon: LucideIcon
   type?: 'text' | 'email' | 'password'
   placeholder?: string
+  autoComplete?: string
   error?: string
   registration: UseFormRegisterReturn
 }
@@ -18,6 +19,7 @@ export default function AuthField({
   icon: Icon,
   type = 'text',
   placeholder,
+  autoComplete,
   error,
   registration,
 }: AuthFieldProps) {
@@ -40,6 +42,7 @@ export default function AuthField({
           id={id}
           type={inputType}
           placeholder={placeholder}
+          autoComplete={autoComplete}
           required
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : undefined}
