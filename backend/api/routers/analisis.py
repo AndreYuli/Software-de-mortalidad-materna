@@ -13,8 +13,7 @@ from schemas.analisis_schema import AnalisisResponse, CargaUpdate, ChatRequest, 
 from services import analisis_service, narrativa_service
 from services.ia_client import IAServiceUnavailableError, chatear_ia
 
-router = APIRouter(
-    prefix='/api', tags=['analisis'], dependencies=[Depends(get_current_user)])
+router = APIRouter(prefix='/api', tags=['analisis'], dependencies=[Depends(get_current_user)])
 
 
 @contextmanager
@@ -23,14 +22,11 @@ def _errores_servicio() -> Generator[None, None, None]:
     try:
         yield
     except FileNotFoundError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
     except RuntimeError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(exc))
 
 
 def _get_analisis_or_404(pk: int, db: Session, usuario: Usuario) -> Analisis:
@@ -69,6 +65,7 @@ def subir_archivo(
         tipo: Tipo de análisis ('mortalidad' o 'morbilidad').
         archivo: Archivo Excel cargado por el usuario.
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Datos del análisis creado o actualizado, incluyendo resumen SIVIGILA.
@@ -93,12 +90,14 @@ def listar_analisis(
 
     Args:
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Lista de análisis únicos ordenados por fecha de carga descendente.
     """
     lista_analisis = analisis_service.listar_unicos(
-        db=db, secretaria_codigo=usuario.secretaria_codigo)
+        db=db, secretaria_codigo=usuario.secretaria_codigo
+    )
     return lista_analisis
 
 
@@ -125,13 +124,21 @@ def historial_analisis(
         month: Filtra por mes de la carga (1-12).
         week: Filtra por semana ISO de la carga.
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Dict con 'items' (cada uno con anio, mes y semana de la carga), 'total' (que cumple
         los filtros), 'page', 'per_page', 'total_pages' y 'anios_disponibles'.
     """
     items, total = analisis_service.listar_historial(
-        db=db, page=page, per_page=per_page, q=q, tipo=tipo, year=year, month=month, week=week,
+        db=db,
+        page=page,
+        per_page=per_page,
+        q=q,
+        tipo=tipo,
+        year=year,
+        month=month,
+        week=week,
         secretaria_codigo=usuario.secretaria_codigo,
     )
     total_pages = (total + per_page - 1) // per_page if total > 0 else 0
@@ -164,7 +171,9 @@ def historial_analisis(
 
 @router.patch('/analisis/{pk}/', response_model=AnalisisResponse)
 def actualizar_analisis(
-    pk: int, datos: CargaUpdate, db: Session = Depends(get_db),
+    pk: int,
+    datos: CargaUpdate,
+    db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> AnalisisResponse:
     """Corrige el nombre de archivo y/o la fecha de una carga del historial.
@@ -173,6 +182,7 @@ def actualizar_analisis(
         pk: ID de la carga.
         datos: Campos a modificar.
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         La carga actualizada.
@@ -203,6 +213,7 @@ def detalle_analisis(
     Args:
         pk: ID del análisis.
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Datos del análisis.
@@ -217,10 +228,10 @@ def detalle_analisis(
 @router.get('/analisis/{pk}/completo/')
 def analisis_completo(
     pk: int,
-    year: str | None = Query(default=None),
-    month: str | None = Query(default=None),
-    week: str | None = Query(default=None),
-    day: str | None = Query(default=None),
+    year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
+    month: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
+    week: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
+    day: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
@@ -233,6 +244,7 @@ def analisis_completo(
         week: Semana ISO del año para filtrar los datos (opcional).
         day: Día del mes para filtrar los datos (opcional).
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Diccionario con estadísticas, distribuciones, clustering y metadatos.
@@ -268,6 +280,7 @@ def clustering(
         pk: ID del análisis.
         req: Parámetros del clustering (tipo y número de clusters).
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Resultado del clustering con etiquetas y métricas.
@@ -293,6 +306,7 @@ def heatmap(
     Args:
         pk: ID del análisis.
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Datos del heatmap para renderizar en el frontend.
@@ -322,6 +336,7 @@ def extra_columna(
     Args:
         pk: ID del análisis.
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Datos de la gráfica de distribución extra.
@@ -338,8 +353,7 @@ def extra_columna(
             detail='Extra columna solo está disponible para análisis de mortalidad.',
         )
     with _errores_servicio():
-        resultado = analisis_service.calcular_extra_columna(
-            analisis=analisis, columna_idx=0, db=db)
+        resultado = analisis_service.calcular_extra_columna(analisis=analisis, columna_idx=0, db=db)
     return resultado
 
 
@@ -351,8 +365,7 @@ def cruce_variables(
         description='Variable sociodemográfica: zona_residencia, poblacion_vulnerable, etnia, '
         'tipo_afiliacion',
     ),
-    var_clinica: str = Query(...,
-                             description='Variable clínica (depende del tipo de análisis)'),
+    var_clinica: str = Query(..., description='Variable clínica (depende del tipo de análisis)'),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
@@ -363,6 +376,7 @@ def cruce_variables(
         var_socio: Clave de la variable sociodemográfica.
         var_clinica: Clave de la variable clínica.
         db: Sesión de base de datos inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Dict con categorias_socio, categorias_clinica, matriz de conteos, total.
@@ -387,8 +401,8 @@ def cruce_variables(
 def obtener_narrativa_ia(
     pk: int,
     tipo_narrativa: str,
-    year: str | None = Query(default=None),
-    month: str | None = Query(default=None),
+    year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
+    month: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
     tipo_clustering: str = Query(default='kmeans'),
     n_clusters: int = Query(default=3, ge=2, le=20),
     regenerar: bool = Query(default=False),
@@ -406,6 +420,7 @@ def obtener_narrativa_ia(
         n_clusters: Número de clusters, solo relevante si tipo_narrativa='clustering'.
         regenerar: Si es True, fuerza una nueva llamada a IA-SERVICE ignorando cache.
         db: Sesión de base de datos.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Dict con narrativa, modelo, generado_en y desde_cache.
@@ -418,8 +433,7 @@ def obtener_narrativa_ia(
 
     with _errores_servicio():
         if tipo_narrativa == 'clustering':
-            filtros.update({'tipo_clustering': tipo_clustering,
-                           'n_clusters': n_clusters})
+            filtros.update({'tipo_clustering': tipo_clustering, 'n_clusters': n_clusters})
             clustering_resultado = analisis_service.ejecutar_clustering(
                 analisis,
                 tipo_clustering,
@@ -431,8 +445,7 @@ def obtener_narrativa_ia(
                 clustering_resultado,
             )
         else:
-            analisis_completo = analisis_service.calcular_completo(
-                analisis, year, month, db)
+            analisis_completo = analisis_service.calcular_completo(analisis, year, month, db)
             indicadores = narrativa_service.extraer_indicadores_para_narrativa(
                 tipo_narrativa,
                 analisis_completo,
@@ -461,8 +474,8 @@ def obtener_narrativa_ia(
 def chat_analisis(
     pk: int,
     req: ChatRequest,
-    year: str | None = Query(default=None),
-    month: str | None = Query(default=None),
+    year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
+    month: str | None = Query(default=None, pattern=r'^\d{0,2}$'),
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
@@ -474,6 +487,7 @@ def chat_analisis(
         year: Año para filtrar los datos (opcional).
         month: Mes para filtrar los datos (opcional).
         db: Sesión de BD inyectada.
+        usuario: Usuario autenticado (inyectado por la dependencia).
 
     Returns:
         Diccionario con la respuesta y el modelo utilizado.
@@ -483,8 +497,7 @@ def chat_analisis(
     """
     analisis = _get_analisis_or_404(pk, db, usuario)
     with _errores_servicio():
-        analisis_completo = analisis_service.calcular_completo(
-            analisis, year, month, db)
+        analisis_completo = analisis_service.calcular_completo(analisis, year, month, db)
 
         # Subconjunto de datos agregados para el contexto del chatbot
         claves_contexto = [
@@ -503,11 +516,9 @@ def chat_analisis(
             'distribucion_edad_riesgo',
             'distribucion_edad_gestacional',
         ]
-        contexto = {k: analisis_completo[k]
-                    for k in claves_contexto if k in analisis_completo}
+        contexto = {k: analisis_completo[k] for k in claves_contexto if k in analisis_completo}
 
-        historial_dicts = [{'rol': h.rol, 'contenido': h.contenido}
-                           for h in req.historial]
+        historial_dicts = [{'rol': h.rol, 'contenido': h.contenido} for h in req.historial]
 
         try:
             return chatear_ia(req.pregunta, historial_dicts, analisis.tipo, contexto)
