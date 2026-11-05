@@ -123,6 +123,15 @@ describe('UploadHistorySection', () => {
     expect(screen.queryByText('Limpiar filtros')).toBeNull()
   })
 
+  it('conjuga en singular con una sola carga', async () => {
+    render(<UploadHistorySection />)
+    expect(await screen.findByText('1 carga registrada')).toBeTruthy()
+
+    fetchHistorial.mockResolvedValue(respuesta([item(1)]))
+    fireEvent.change(screen.getByLabelText('Evento'), { target: { value: 'morbilidad' } })
+    expect(await screen.findByText('1 carga que coincide con los filtros')).toBeTruthy()
+  })
+
   it('sin cargas y sin filtros invita a subir un archivo', async () => {
     fetchHistorial.mockResolvedValue(respuesta([]))
     render(<UploadHistorySection />)

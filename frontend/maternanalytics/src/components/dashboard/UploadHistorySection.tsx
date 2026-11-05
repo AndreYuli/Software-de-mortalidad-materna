@@ -76,7 +76,9 @@ export function UploadHistorySection() {
   // sección por el indicador de carga, el campo de búsqueda perdería el foco en cada tecla.
   const resumen = loading
     ? 'Consultando…'
-    : `${total} ${total === 1 ? 'carga' : 'cargas'}${hasFilters ? ' que coinciden con los filtros' : ' registradas'}`
+    : total === 1
+      ? `1 carga ${hasFilters ? 'que coincide con los filtros' : 'registrada'}`
+      : `${total} cargas ${hasFilters ? 'que coinciden con los filtros' : 'registradas'}`
 
   return (
     <div className="flex flex-col gap-4">
