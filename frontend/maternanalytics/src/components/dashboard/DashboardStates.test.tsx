@@ -5,9 +5,12 @@ import { DashboardLoadingState } from './DashboardLoadingState'
 import { DashboardErrorState } from './DashboardErrorState'
 
 describe('DashboardLoadingState', () => {
-  it('anuncia la carga con role="status"', () => {
+  it('anuncia la carga con role="status" y muestra el esqueleto (sin rueda)', () => {
     render(<DashboardLoadingState />)
-    expect(screen.getByRole('status')).toHaveTextContent('Generando panel estratégico...')
+    const estado = screen.getByRole('status')
+    expect(estado).toHaveTextContent('Cargando…')
+    expect(estado).toHaveAttribute('aria-busy', 'true')
+    expect(screen.queryByText('Generando panel estratégico...')).toBeNull()
   })
 })
 
