@@ -16,8 +16,7 @@ from main import app
 def client(db_session):
     """Cliente HTTP con la dependencia de BD sobreescrita por la sesión de prueba."""
     app.dependency_overrides[get_db] = lambda: db_session
-    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
-        secretaria_codigo=None)
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(secretaria_codigo=None)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -49,20 +48,23 @@ def test_narrativa_devuelve_503_si_ia_service_no_disponible(client, db_session, 
     analisis = _crear_analisis(db_session)
     mocker.patch(
         'api.routers.analisis.analisis_service.calcular_completo',
-        return_value={'estadisticas_basicas': {
-            'total_casos': 5}, 'tipo': 'mortalidad'},
+        return_value={'estadisticas_basicas': {'total_casos': 5}, 'tipo': 'mortalidad'},
     )
     from services.ia_client import IAServiceUnavailableError
 
     mocker.patch(
         'api.routers.analisis.narrativa_service.obtener_narrativa',
-        side_effect=IAServiceUnavailableError('no disponible'),
+        side_effect=IAServiceUnavailableError(
+            "IA-SERVICE devolvió status 503: Function id 'x' in account 'cuenta-secreta' no existe"
+        ),
     )
 
-    response = client.get(
-        f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
+    response = client.get(f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
 
     assert response.status_code == 503
+    # El detalle del proveedor (ids de función y de cuenta) no debe llegar al usuario.
+    assert response.json()['detail'] == 'El servicio de IA no está disponible en este momento.'
+    assert 'cuenta-secreta' not in response.text
 
 
 def test_narrativa_devuelve_200_con_narrativa_generada(client, db_session, mocker):
@@ -70,8 +72,7 @@ def test_narrativa_devuelve_200_con_narrativa_generada(client, db_session, mocke
     analisis = _crear_analisis(db_session)
     mocker.patch(
         'api.routers.analisis.analisis_service.calcular_completo',
-        return_value={'estadisticas_basicas': {
-            'total_casos': 5}, 'tipo': 'mortalidad'},
+        return_value={'estadisticas_basicas': {'total_casos': 5}, 'tipo': 'mortalidad'},
     )
     mocker.patch(
         'api.routers.analisis.narrativa_service.obtener_narrativa',
@@ -83,8 +84,7 @@ def test_narrativa_devuelve_200_con_narrativa_generada(client, db_session, mocke
         },
     )
 
-    response = client.get(
-        f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
+    response = client.get(f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
 
     assert response.status_code == 200
     body = response.json()
@@ -116,8 +116,7 @@ def test_narrativa_no_envia_columnas_identificables_a_ia_client(client, db_sessi
     client.get(f'/api/analisis/{analisis.id}/narrativa/resumen_ejecutivo/')
 
     indicadores_enviados = (
-        mock_obtener.call_args.kwargs.get(
-            'indicadores') or mock_obtener.call_args[0][3]
+        mock_obtener.call_args.kwargs.get('indicadores') or mock_obtener.call_args[0][3]
     )
     campos_prohibidos = {
         'nombres_apellidos',
@@ -126,3 +125,30 @@ def test_narrativa_no_envia_columnas_identificables_a_ia_client(client, db_sessi
         'A. Nombres y Apellidos',
     }
     assert not (campos_prohibidos & set(indicadores_enviados.keys()))
+
+
+def test_narrativa_de_clustering_pasa_la_sesion_de_bd_al_servicio(client, db_session, mocker):
+    """La narrativa de agrupamiento llamaba a ejecutar_clustering sin la sesión de BD.
+
+    Hallado el 3-nov-2026 al generar narrativas contra un servidor real: la ruta respondía 500
+    ("ejecutar_clustering() missing 1 required positional argument: 'db'") en todas las llamadas.
+    """
+    analisis = _crear_analisis(db_session)
+    mock_cluster = mocker.patch(
+        'api.routers.analisis.analisis_service.ejecutar_clustering',
+        return_value={'n_clusters': 2, 'perfiles': []},
+    )
+    mocker.patch(
+        'api.routers.analisis.narrativa_service.obtener_narrativa',
+        return_value={
+            'narrativa': 'ok',
+            'modelo': 'qwen2.5',
+            'generado_en': datetime.now(timezone.utc),
+            'desde_cache': False,
+        },
+    )
+
+    response = client.get(f'/api/analisis/{analisis.id}/narrativa/clustering/')
+
+    assert response.status_code == 200
+    assert mock_cluster.call_args.kwargs['db'] is db_session

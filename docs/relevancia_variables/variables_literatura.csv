@@ -1,0 +1,21 @@
+factor,variable,n_articulos,articulos,disponible_549,disponible_550,campo_ficha
+Sociodemográficos,Edad de la mujer/participante,21,"Abdissa Aga & Taye Goshu, 2025; Chapman et al., 2026; El Iskandarani et al., 2025; Fenta et al., 2025; Hameed et al., 2025; Hu et al., 2025; J. Huang et al., 2025; R. S. Huang et al., 2025; Khalid et al., 2025; Kuhrt et al., 2025; Lee et al., 2025; Meena et al., 2025; Post et al., 2025; Reitsma et al., 2025; Sango et al., 2025; Serván-Mori et al., 2025; Su et al., 2025; Thomas et al., 2026; Walle et al., 2025; Williamson et al., 2024; Zambrano Santos et al., 2025",1,1,Fecha de nacimiento / edad (ambos eventos)
+Sociodemográficos,Nivel educativo de la mujer,7,"Fenta et al., 2025; Geddes-Barton et al., 2024; Khalid et al., 2025; Post et al., 2025; Serván-Mori et al., 2025; Sheikh et al., 2026; Walle et al., 2025",0,1,6.3 Escolaridad (solo 550)
+Sociodemográficos,Educación de la pareja,1,"Walle et al., 2025",0,0,No existe en las fichas
+Sociodemográficos,Raza/etnia de la mujer,6,"Brown et al., 2025; Hameed et al., 2025; R. S. Huang et al., 2025; Post et al., 2025; Thomas et al., 2026; Williamson et al., 2024",1,1,Etnia (datos sociodemográficos)
+Sociodemográficos,Ingresos del hogar,3,"Geddes-Barton et al., 2024; Post et al., 2025; Williamson et al., 2024",0,0,No existe en las fichas
+Sociodemográficos,Tipo de seguro de salud,5,"Hameed et al., 2025; Post et al., 2025; Serván-Mori et al., 2025; Thomas et al., 2026; Williamson et al., 2024",1,1,Tipo de afiliación (datos sociodemográficos)
+Sociodemográficos,Índice de riqueza del hogar,3,"Fenta et al., 2025; Sheikh et al., 2026; Walle et al., 2025",0,0,No existe en las fichas
+Sociodemográficos,Área de residencia (rural/urbana),3,"Fenta et al., 2025; Serván-Mori et al., 2025; Walle et al., 2025",1,1,Zona de residencia (datos sociodemográficos)
+Clínicos,Paridad,7,"Duzguner et al., 2026; El Iskandarani et al., 2025; Hameed et al., 2025; Meena et al., 2025; Sango et al., 2025; Su et al., 2025; Thomas et al., 2026",1,1,Partos vaginales y cesáreas
+Clínicos,Gravidez/número de embarazos,6,"Abdissa Aga & Taye Goshu, 2025; El Iskandarani et al., 2025; Meena et al., 2025; Sango et al., 2025; Su et al., 2025; Zambrano Santos et al., 2025",1,1,N° gestaciones / 6.5 Gestaciones
+Clínicos,Edad gestacional,5,"Abdissa Aga & Taye Goshu, 2025; Duzguner et al., 2026; Kuhrt et al., 2025; Reitsma et al., 2025; Su et al., 2025",1,1,Edad gestacional ocurrencia / 9.2 Semana gestación
+Clínicos,Atención prenatal,7,"Abdissa Aga & Taye Goshu, 2025; Duzguner et al., 2026; El Iskandarani et al., 2025; Kachimanga et al., 2025; Sahin, 2025; Sheikh et al., 2026; Walle et al., 2025",1,1,N° controles prenatales / 8.1 No. CPN
+Clínicos,Cesárea previa,1,"Duzguner et al., 2026",1,1,Cesáreas / 6.7 Cesáreas
+Clínicos,Abortos previos,1,"Abdissa Aga & Taye Goshu, 2025",1,1,Abortos / 6.10 Abortos
+Clínicos,Presión arterial elevada,2,"Kuhrt et al., 2025; Zambrano Santos et al., 2025",0,0,No se registra la medición en las fichas
+Clínicos,Preeclampsia,2,"Abdissa Aga & Taye Goshu, 2025; Sango et al., 2025",1,1,Preeclampsia (criterio 549; complicación 550)
+Clínicos,Índice de masa corporal — IMC,2,"Sango et al., 2025; Zambrano Santos et al., 2025",0,0,No existe en las fichas
+Clínicos,Comorbilidades,2,"Sango et al., 2025; Williamson et al., 2024",1,1,Antecedentes de riesgo / enfermedad específica (parcial)
+Clínicos,Enfermedad cardiovascular,2,"Hameed et al., 2025; Williamson et al., 2024",1,1,Falla cardíaca (549) / antecedentes de riesgo (550) (parcial)
+Clínicos,"Mortalidad materna, varias mediciones específicas",11,"Abdissa Aga & Taye Goshu, 2025; Hu et al., 2025; J. Huang et al., 2025; R. S. Huang et al., 2025; Kuhrt et al., 2025; Lee et al., 2025; Meena et al., 2025; Sahin, 2025; Serván-Mori et al., 2025; Sheikh et al., 2026; Williamson et al., 2024",1,1,El evento 550 mismo (variable de resultado)

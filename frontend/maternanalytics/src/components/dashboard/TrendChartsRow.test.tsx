@@ -32,4 +32,26 @@ describe('TrendChartsRow', () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Top 10 Causas de Morbilidad. Eclampsia: 3' })).toBeInTheDocument()
   })
+
+  it('muestra las causas asociadas de morbilidad cuando se reciben', () => {
+    render(
+      <TrendChartsRow
+        {...sampleProps}
+        topCausasAsociadasMorbilidad={{ labels: ['Hemorragia postparto'], values: [4], colors: ['#2ca02c'] }}
+      />,
+    )
+    expect(
+      screen.getByRole('img', { name: 'Top 10 Causas asociadas de Morbilidad. Hemorragia postparto: 4' }),
+    ).toBeInTheDocument()
+  })
+
+  it('sin causas asociadas registradas muestra su estado vacío, y sin la prop no aparece', () => {
+    const { unmount } = render(
+      <TrendChartsRow {...sampleProps} topCausasAsociadasMorbilidad={{ labels: [], values: [], colors: [] }} />,
+    )
+    expect(screen.getByText('Sin causas asociadas registradas')).toBeInTheDocument()
+    unmount()
+    render(<TrendChartsRow {...sampleProps} topCausasAsociadasMorbilidad={null} />)
+    expect(screen.queryByText('Top 10 Causas asociadas de Morbilidad')).not.toBeInTheDocument()
+  })
 })

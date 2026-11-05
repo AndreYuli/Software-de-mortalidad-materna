@@ -61,6 +61,12 @@ export interface IndicadoresMorbilidad extends AnalisisMeta {
   momento_ocurrencia: Record<string, unknown>
   institucion_referencia: Record<string, unknown>
   tiempo_remision: Record<string, unknown>
+  /** Causas asociadas (tabla causa_asociada_morbilidad); el porcentaje es sobre el total de casos. */
+  causas_asociadas?: {
+    top_causas: CausaCie10[]
+    total_causas_unicas: number
+    casos_con_causa_asociada?: number
+  }
   obstetrico_edad: Record<string, unknown>
 }
 
@@ -88,4 +94,13 @@ export interface NarrativaResponse {
   modelo: string
   generado_en: string
   desde_cache: boolean
+  verificacion?: VerificacionNarrativa
+}
+
+/** Verificación automática de la narrativa (cifras vs. indicadores y coherencia textual). */
+export interface VerificacionNarrativa {
+  cifras_total: number
+  cifras_respaldadas: number
+  cifras_sin_respaldo: string[]
+  alertas_coherencia: string[]
 }

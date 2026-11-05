@@ -21,6 +21,9 @@ from db.models_sqlalchemy import (
 from services._sivigila_catalog import _resolve_catalog
 from services._sivigila_escritura import (
     _MORBILIDAD_FECHA_EGRESO_COLS,
+    _MORBILIDAD_INSTITUCION_REF_1_COLS,
+    _MORBILIDAD_INSTITUCION_REF_2_COLS,
+    _MORTALIDAD_COMPLICACIONES_FETO_COLS,
     _MORTALIDAD_FECHA_DEFUNCION_COLS,
     _MORTALIDAD_MOMENTO_MUERTE_COLS,
     _actualizar_caso_mortalidad,
@@ -39,23 +42,31 @@ from services._sivigila_helpers import (
 )
 from services._sivigila_morbilidad import _escribir_relacionados_morbilidad
 from services._sivigila_mortalidad import _escribir_relacionados_mortalidad
+from utils.cie10 import es_codigo_cie10_valido, limpiar_causa_asociada, normalizar_cie10
 from utils.column_validators import _require_text
 from utils.date_parsers import _parse_date
 from utils.text_utils import clean_text
-from utils.type_parsers import _parse_int
+from utils.type_parsers import _parse_bool, _parse_int
 
 logger = logging.getLogger(__name__)
 
 
 _MAX_FILAS_EN_MENSAJE = 20
 
-# Columnas NOT NULL de antecedente_materno y del momento de la muerte: se validan en la
+# Columnas de morbilidad con códigos CIE-10 (la principal y las tres asociadas).
+_COLUMNAS_CIE10_MORBILIDAD = (
+    'Causa principal CIE-10',
+    'Causa asociada CIE-10',
+    'Causa asociada CIE-10.1',
+    'Causa asociada CIE-10.2',
+)
+
+# Columnas NOT NULL de antecedente_materno_mortalidad y del momento de la muerte: se validan en la
 # pasada 1 para dar el número de fila en vez de fallar al insertar con un error de la BD.
 _CATALOGOS_OBLIGATORIOS_MORTALIDAD = (
     (CatConvivencia, ['6.1 Convivencia']),
     (CatEscolaridad, ['6.3 Escolaridad']),
-    (CatRegulacionFecundidad, [
-     '6.4 Regulación Fecundidad', '6.4 Regulacion Fecundidad']),
+    (CatRegulacionFecundidad, ['6.4 Regulación Fecundidad', '6.4 Regulacion Fecundidad']),
     (CatMomentoMuerte, _MORTALIDAD_MOMENTO_MUERTE_COLS),
 )
 
@@ -83,8 +94,7 @@ def _verificar_causa_completa(
     columna = '10.1 Causa básica CIE-10' if tipo == 'mortalidad' else 'Causa principal CIE-10'
     if columna not in registros:
         return
-    vacias = registros[columna].map(
-        clean_text).isna() & ~df_hashes.isin(existing_hashes)
+    vacias = registros[columna].map(clean_text).isna() & ~df_hashes.isin(existing_hashes)
     filas = (registros.index[vacias] + 2).tolist()
     if not filas:
         return
@@ -96,6 +106,138 @@ def _verificar_causa_completa(
         'Es obligatoria: complete el código CIE-10 o elimine esas filas y vuelva a cargar '
         'el archivo.'
     )
+
+
+def _problemas_causas_asociadas_repetidas(row, fila: int) -> list[str]:
+    """Causas asociadas que repiten la principal u otra asociada de la misma fila.
+
+    La base impide repetir una asociada en el mismo caso (UNIQUE(id_caso, cie10)); que una
+    asociada repita la causa principal lo impide esta validación (están en tablas distintas).
+    Los códigos se comparan normalizados: 'O14.1' y 'o141' son el mismo.
+    """
+    problemas: list[str] = []
+    principal = clean_text(_get_value(row, ['Causa principal CIE-10']))
+    principal = normalizar_cie10(principal) if principal else None
+    vistas: dict[str, str] = {}
+    for columna in _COLUMNAS_CIE10_MORBILIDAD[1:]:
+        valor = limpiar_causa_asociada(_get_value(row, [columna]))
+        if not valor:
+            continue
+        codigo = normalizar_cie10(valor)
+        if principal and codigo == principal:
+            problemas.append(
+                f"Fila {fila}: la columna '{columna}' repite la causa principal ('{valor}'); "
+                'una causa asociada debe ser distinta de la principal.'
+            )
+        elif codigo in vistas:
+            problemas.append(
+                f"Fila {fila}: la columna '{columna}' repite la causa asociada '{valor}' de la "
+                f"columna '{vistas[codigo]}'."
+            )
+        else:
+            vistas[codigo] = columna
+    return problemas
+
+
+def _problemas_instituciones_repetidas(row, fila: int) -> list[str]:
+    """La institución de referencia 2 no puede ser la misma que la 1 (cadena de remisión)."""
+    nombres = [
+        clean_text(_get_value(row, cols))
+        for cols in (_MORBILIDAD_INSTITUCION_REF_1_COLS, _MORBILIDAD_INSTITUCION_REF_2_COLS)
+    ]
+    if nombres[0] and nombres[1] and nombres[0].strip().lower() == nombres[1].strip().lower():
+        return [
+            f"Fila {fila}: la columna '{_MORBILIDAD_INSTITUCION_REF_2_COLS[0]}' repite la "
+            f"institución de referencia 1 ('{nombres[1]}'); según la ficha 549, la 2 es la que "
+            'remitió a la paciente hacia la 1, así que deben ser distintas.'
+        ]
+    return []
+
+
+def _problemas_complicacion_feto(row, fila: int) -> list[str]:
+    """El CIE-10 de complicaciones del feto o del recién nacido (8.6), si se llena, existe."""
+    columna = _MORTALIDAD_COMPLICACIONES_FETO_COLS[0]
+    valor = limpiar_causa_asociada(_get_value(row, _MORTALIDAD_COMPLICACIONES_FETO_COLS))
+    if valor and not es_codigo_cie10_valido(valor):
+        return [
+            f"Fila {fila}: el código CIE-10 '{valor}' de la columna '{columna}' no existe en la "
+            'tabla de referencia CIE-10 (formato válido: P00.0 o P000; déjela vacía si no aplica).'
+        ]
+    return []
+
+
+def _verificar_reglas_de_valor(
+    tipo: str,
+    registros: pd.DataFrame,
+    df_hashes: pd.Series,
+    existing_hashes: set[str],
+) -> None:
+    """Valida valores que la BD rechazaría, y los reporta todos juntos con su fila de Excel.
+
+    Antes la base de datos era la única que frenaba un CIE-10 perinatal o unas gestaciones fuera
+    de rango, y el usuario veía el INSERT crudo (revisión de uso, parte 3, problemas 1, 2 y 4).
+
+    Args:
+        tipo: 'mortalidad' o 'morbilidad'.
+        registros: DataFrame limpio sin filas completamente vacías.
+        df_hashes: Serie con el hash de cada fila, indexada igual que registros.
+        existing_hashes: Hashes ya presentes en la BD (esas filas se omiten).
+
+    Raises:
+        ValueError: Con la lista de problemas (máximo _MAX_FILAS_EN_MENSAJE) si hay alguno.
+    """
+    problemas: list[str] = []
+    for index, row in registros.iterrows():
+        if df_hashes.loc[index] in existing_hashes:
+            continue
+        fila = index + 2
+        if tipo == 'mortalidad':
+            causa = (clean_text(_get_value(row, ['10.1 Causa básica CIE-10'])) or '').upper()
+            if causa.startswith('P') or causa in ('8888', '9999'):
+                problemas.append(
+                    f"Fila {fila}: el código CIE-10 '{causa}' no es una causa de muerte materna "
+                    "(los que empiezan por 'P' son perinatales; 8888 y 9999 no son válidos)."
+                )
+            elif causa and not es_codigo_cie10_valido(causa):
+                problemas.append(
+                    f"Fila {fila}: el código CIE-10 '{causa}' de la columna '10.1 Causa básica "
+                    "CIE-10' no existe en la tabla de referencia CIE-10 (formato válido: O14.1 u "
+                    'O141).'
+                )
+            problemas.extend(_problemas_complicacion_feto(row, fila))
+            gest = _parse_int(_get_value(row, ['6.5 Gestaciones']))
+            if gest is not None and not 1 <= gest <= 20:
+                problemas.append(f'Fila {fila}: las gestaciones ({gest}) deben estar entre 1 y 20.')
+        else:
+            gest = _parse_int(_get_value(row, ['N° gestaciones']))
+            if gest is not None and not 0 <= gest <= 19:
+                problemas.append(f'Fila {fila}: las gestaciones ({gest}) deben estar entre 0 y 19.')
+            for columna in _COLUMNAS_CIE10_MORBILIDAD:
+                es_asociada = columna != 'Causa principal CIE-10'
+                valor = _get_value(row, [columna])
+                codigo = limpiar_causa_asociada(valor) if es_asociada else clean_text(valor)
+                if codigo and not es_codigo_cie10_valido(codigo):
+                    problemas.append(
+                        f"Fila {fila}: el código CIE-10 '{codigo}' de la columna '{columna}' no "
+                        'existe en la tabla de referencia CIE-10 (formato válido: O14.1 u O141).'
+                    )
+            problemas.extend(_problemas_causas_asociadas_repetidas(row, fila))
+            problemas.extend(_problemas_instituciones_repetidas(row, fila))
+            if (
+                _parse_bool(_get_value(row, ['Ingreso UCI']))
+                and _parse_int(_get_value(row, ['Días estancia UCI'])) is None
+            ):
+                problemas.append(
+                    f"Fila {fila}: 'Ingreso UCI' es Sí pero falta 'Días estancia UCI' "
+                    '(obligatorio según la plantilla).'
+                )
+    if not problemas:
+        return
+    resto = len(problemas) - _MAX_FILAS_EN_MENSAJE
+    detalle = ' '.join(problemas[:_MAX_FILAS_EN_MENSAJE])
+    if resto > 0:
+        detalle += f' … y {resto} problema(s) más.'
+    raise ValueError(f'El archivo tiene valores que corregir antes de guardarlo. {detalle}')
 
 
 def _fase1_validar_filas(
@@ -127,6 +269,7 @@ def _fase1_validar_filas(
     event_hashes: list[str] = []
 
     _verificar_causa_completa(tipo, registros, df_hashes, existing_hashes)
+    _verificar_reglas_de_valor(tipo, registros, df_hashes, existing_hashes)
 
     for index, row in registros.iterrows():
         numero_fila = index + 2
@@ -163,17 +306,16 @@ def _fase1_validar_filas(
                 numero_fila=numero_fila,
                 catalog_cache=catalog_cache,
             )
-            fecha_egreso = _parse_date(_get_value(
-                row, _MORBILIDAD_FECHA_EGRESO_COLS))
-            causa = _require_text(
-                _get_value(row, ['Causa principal CIE-10']),
-                'Causa principal CIE-10',
-                numero_fila,
-            ).upper()
-            momento = _resolve_momento_ocurrencia(
-                _get_value(row, ['Momento ocurrencia']))
-            edad_gestacional = _parse_int(_get_value(
-                row, ['Edad gestacional ocurrencia (sem)']))
+            fecha_egreso = _parse_date(_get_value(row, _MORBILIDAD_FECHA_EGRESO_COLS))
+            causa = normalizar_cie10(
+                _require_text(
+                    _get_value(row, ['Causa principal CIE-10']),
+                    'Causa principal CIE-10',
+                    numero_fila,
+                )
+            )
+            momento = _resolve_momento_ocurrencia(_get_value(row, ['Momento ocurrencia']))
+            edad_gestacional = _parse_int(_get_value(row, ['Edad gestacional ocurrencia (sem)']))
             event_hash = _hash_payload(
                 {
                     'tipo': 'morbilidad',
@@ -200,10 +342,8 @@ def _fase1_validar_filas(
                     'A. Nombres y apellidos del paciente',
                     'Nombres y apellidos',
                 ],
-                tipo_id_cols=['B. Tipo ID', 'Tipo de ID',
-                              'Tipo de identificación'],
-                numero_id_cols=['C. Número ID',
-                                'N° identificación', 'Número de identificación'],
+                tipo_id_cols=['B. Tipo ID', 'Tipo de ID', 'Tipo de identificación'],
+                numero_id_cols=['C. Número ID', 'N° identificación', 'Número de identificación'],
                 row=row,
                 numero_fila=numero_fila,
                 catalog_cache=catalog_cache,
@@ -225,13 +365,14 @@ def _fase1_validar_filas(
                     numero_fila=numero_fila,
                     nombre_campo=columnas[0],
                 )
-            fecha_def = _parse_date(_get_value(
-                row, _MORTALIDAD_FECHA_DEFUNCION_COLS))
-            causa = _require_text(
-                _get_value(row, ['10.1 Causa básica CIE-10']),
-                '10.1 Causa básica CIE-10',
-                numero_fila,
-            ).upper()
+            fecha_def = _parse_date(_get_value(row, _MORTALIDAD_FECHA_DEFUNCION_COLS))
+            causa = normalizar_cie10(
+                _require_text(
+                    _get_value(row, ['10.1 Causa básica CIE-10']),
+                    '10.1 Causa básica CIE-10',
+                    numero_fila,
+                )
+            )
             event_hash = _hash_payload(
                 {
                     'tipo': 'mortalidad',
@@ -332,17 +473,14 @@ def _fase3_upsert_casos(
         ident = pdata.ident
         paciente = caches.paciente_cache[ident['numero_id']]
         importacion = caches.import_cache.get(pdata.event_hash)
-        caso = caches.caso_by_id.get(
-            importacion.caso_id) if importacion else None
+        caso = caches.caso_by_id.get(importacion.caso_id) if importacion else None
 
         if tipo == 'morbilidad':
             if caso is None:
                 clave_busqueda = (paciente.id_paciente, pdata.fecha_egreso)
-                caso_potencial = caches.caso_by_paciente_fecha.get(
-                    clave_busqueda)
+                caso_potencial = caches.caso_by_paciente_fecha.get(clave_busqueda)
                 if caso_potencial:
-                    causa_existente = caches.causa_cache.get(
-                        caso_potencial.id_caso)
+                    causa_existente = caches.causa_cache.get(caso_potencial.id_caso)
                     if causa_existente and causa_existente.causa_principal_cie10 == pdata.causa:
                         caso = caso_potencial
             caso_creado = caso is None
@@ -363,11 +501,9 @@ def _fase3_upsert_casos(
         else:
             if caso is None:
                 clave_busqueda = (paciente.id_paciente, pdata.fecha_def)
-                caso_potencial = caches.caso_by_paciente_fecha.get(
-                    clave_busqueda)
+                caso_potencial = caches.caso_by_paciente_fecha.get(clave_busqueda)
                 if caso_potencial:
-                    causa_existente = caches.causa_cache.get(
-                        caso_potencial.id_caso)
+                    causa_existente = caches.causa_cache.get(caso_potencial.id_caso)
                     if causa_existente and causa_existente.causa_basica_cie10 == pdata.causa:
                         caso = caso_potencial
             caso_creado = caso is None
@@ -380,12 +516,10 @@ def _fase3_upsert_casos(
                     secretaria_codigo=secretaria_codigo,
                 )
                 db.add(caso)
-                caches.caso_by_paciente_fecha[(
-                    paciente.id_paciente, pdata.fecha_def)] = caso
+                caches.caso_by_paciente_fecha[(paciente.id_paciente, pdata.fecha_def)] = caso
                 resumen['casos_creados'] += 1
             else:
-                _actualizar_caso_mortalidad(
-                    db, caso, pdata.sitio, pdata.fecha_def)
+                _actualizar_caso_mortalidad(db, caso, pdata.sitio, pdata.fecha_def)
                 resumen['casos_actualizados'] += 1
 
         row_cases[index] = (caso, caso_creado)
@@ -428,8 +562,7 @@ def persistir_dataframe(
         query = db.query(SivigilaImportacion.row_hash).filter(
             SivigilaImportacion.secretaria_codigo == secretaria_codigo
         )
-        hashes_bd = query.filter(
-            SivigilaImportacion.row_hash.in_(df_hashes.tolist())).all()
+        hashes_bd = query.filter(SivigilaImportacion.row_hash.in_(df_hashes.tolist())).all()
         existing_hashes = set(row[0] for row in hashes_bd)
     except Exception:
         logger.warning(
@@ -455,8 +588,7 @@ def persistir_dataframe(
     if not non_dup_indices:
         return resumen
 
-    caches = _precargar_caches_sivigila(
-        db, tipo, numeros_id, event_hashes, secretaria_codigo)
+    caches = _precargar_caches_sivigila(db, tipo, numeros_id, event_hashes, secretaria_codigo)
 
     _fase2_upsert_pacientes(non_dup_indices, pass1_data, caches, db, resumen)
     db.flush()

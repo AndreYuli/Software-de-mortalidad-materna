@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { getCie10Description } from "../../constants/dashboardConstants";
 import {
   exportReportToExcel,
   exportToCsv,
@@ -43,11 +44,26 @@ export const ExportReportModal: React.FC<ExportReportModalProps> = ({
       } else if (selectedFormat === "pdf") {
         printExecutiveMedicalReport(reportData);
       } else if (selectedFormat === "csv") {
-        const headers = ["Diagnóstico CIE-10", "Casos"];
-        const rows = reportData.causasPrincipales.causas.map((c, i) => [
+        const { causas, valores, eventos, porcentajes } = reportData.causasPrincipales;
+        const headers = ["Evento", "Código CIE-10", "Diagnóstico", "Casos", "Porcentaje (%)"];
+        const rows = causas.map((c, i) => [
+          eventos?.[i] ?? "",
           c,
-          reportData.causasPrincipales.valores[i] || 0,
+          getCie10Description(c),
+          valores[i] || 0,
+          porcentajes?.[i] !== undefined ? porcentajes[i]!.toFixed(1) : "",
         ]);
+        // Causas asociadas de morbilidad, identificadas en la columna Evento.
+        const asociadas = reportData.causasAsociadas;
+        asociadas?.causas.forEach((c, i) => {
+          rows.push([
+            "Morbilidad (causa asociada)",
+            c,
+            getCie10Description(c),
+            asociadas.valores[i] || 0,
+            asociadas.porcentajes?.[i] !== undefined ? asociadas.porcentajes[i]!.toFixed(1) : "",
+          ]);
+        });
         exportToCsv(
           `Causas_CIE10_${reportData.periodo.anio || "Consolidado"}`,
           headers,

@@ -21,6 +21,8 @@ export interface TopCausasChartData {
 export interface TrendChartsRowProps {
   topCausasMortalidad: TopCausasChartData
   topCausasMorbilidad: TopCausasChartData
+  /** Causas asociadas de morbilidad; null u omitido si el segmento no incluye morbilidad. */
+  topCausasAsociadasMorbilidad?: TopCausasChartData | null
 }
 
 // Empíricamente, el ancho automático que Chart.js calcula para el eje Y
@@ -106,7 +108,11 @@ function CausasBarChart({ title, eyebrow, data, emptyMessage, insight }: CausasB
   )
 }
 
-export function TrendChartsRow({ topCausasMortalidad, topCausasMorbilidad }: TrendChartsRowProps) {
+export function TrendChartsRow({
+  topCausasMortalidad,
+  topCausasMorbilidad,
+  topCausasAsociadasMorbilidad,
+}: TrendChartsRowProps) {
   const topCausasMortalidadInsight = useMemo(
     () => getTopCausasAiInsight(topCausasMortalidad.labels, topCausasMortalidad.values, false, topCausasMortalidad.total),
     [topCausasMortalidad],
@@ -142,6 +148,15 @@ export function TrendChartsRow({ topCausasMortalidad, topCausasMorbilidad }: Tre
           insight={topCausasMorbilidadInsight}
         />
       </div>
+      {topCausasAsociadasMorbilidad && (
+        <CausasBarChart
+          eyebrow="Evento 549 · causas asociadas"
+          title="Top 10 Causas asociadas de Morbilidad"
+          data={topCausasAsociadasMorbilidad}
+          emptyMessage="Sin causas asociadas registradas"
+          insight="Un caso puede tener hasta tres causas asociadas: el porcentaje de cada una es sobre el total de casos de morbilidad y las barras no suman 100 %."
+        />
+      )}
     </section>
   )
 }

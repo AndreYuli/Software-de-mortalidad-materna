@@ -154,3 +154,26 @@ def test_extraer_indicadores_tipo_invalido_lanza_valueerror():
         assert False, 'Debió lanzar ValueError'
     except ValueError:
         pass
+
+
+def test_narrativa_incluye_verificacion_automatica(db_session, mocker):
+    """Cada narrativa devuelve cuántas cifras están respaldadas y las alertas de coherencia."""
+    analisis = _crear_analisis(db_session)
+    mocker.patch(
+        'services.narrativa_service.ia_client.generar_narrativa',
+        return_value={
+            'narrativa': 'Se registraron 10 casos en el periodo analizado, y 77 fallecieron.',
+            'modelo': 'qwen2.5',
+        },
+    )
+    resultado = obtener_narrativa(
+        db_session,
+        analisis,
+        'resumen_ejecutivo',
+        indicadores={'total_casos': 10},
+        filtros={'year': None, 'month': None},
+        regenerar=False,
+    )
+    v = resultado['verificacion']
+    assert v['cifras_total'] == 2 and v['cifras_respaldadas'] == 1
+    assert v['cifras_sin_respaldo'] == ['77']

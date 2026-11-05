@@ -137,7 +137,7 @@ export default function Register({ onRegistered, onBack }: RegisterProps = {}) {
             icon={Mail}
             type="email"
             placeholder="tu.correo@institucion.gov.co"
-            autoComplete="email"
+            autoComplete="username"
             error={errors.email?.message}
             registration={register("email")}
           />

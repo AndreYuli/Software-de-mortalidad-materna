@@ -161,6 +161,13 @@ __pycache__/
 # Archivos subidos
 backend/media/
 
+# Migración de la base (scripts/migrar_estructura_anterior.py): respaldos con datos de
+# pacientes, informes y correcciones CIE-10. Nunca se versionan.
+backend/backups/
+backend/migracion_reportes/
+*.dump
+correcciones_cie10.csv
+
 # Entornos virtuales
 backend/venv/
 venv/

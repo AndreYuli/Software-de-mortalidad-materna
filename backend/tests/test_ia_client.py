@@ -47,3 +47,21 @@ def test_generar_narrativa_lanza_error_en_503_de_ia_service(mocker):
 
     with pytest.raises(IAServiceUnavailableError):
         generar_narrativa('resumen_ejecutivo', 'mortalidad', {'total_casos': 5})
+
+
+def test_generar_narrativa_espera_lo_que_tarda_el_proveedor(mocker):
+    """El tiempo de espera es el configurado (120 s), no 35 s.
+
+    El 3-nov-2026 el proveedor gratuito tardó 34 a 63 s en una narrativa de 150 palabras; con
+    35 s fijos el backend cortaba antes de que respondiera y el usuario veía "IA no disponible".
+    """
+    from core.config import Config
+
+    cliente = mocker.patch('services.ia_client.httpx.Client')
+    cliente.return_value.__enter__.return_value.post.side_effect = httpx.TimeoutException('t')
+
+    with pytest.raises(IAServiceUnavailableError):
+        generar_narrativa('resumen_ejecutivo', 'mortalidad', {'total_casos': 5})
+
+    assert Config.ia_timeout_s == 120.0
+    assert cliente.call_args.kwargs['timeout'] == Config.ia_timeout_s

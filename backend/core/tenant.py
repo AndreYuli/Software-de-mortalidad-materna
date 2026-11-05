@@ -14,12 +14,16 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Secretaria:
+    """Secretaría de salud habilitada (código estable y nombre visible)."""
+
     codigo: str
     nombre: str
 
 
 @dataclass(frozen=True)
 class Departamento:
+    """Departamento habilitado con sus secretarías."""
+
     codigo: str
     nombre: str
     secretarias: tuple[Secretaria, ...]
@@ -31,19 +35,15 @@ DEPARTAMENTOS: tuple[Departamento, ...] = (
         nombre='Antioquia',
         secretarias=(
             Secretaria(codigo='bello', nombre='Secretaría de Salud de Bello'),
-            Secretaria(codigo='envigado',
-                       nombre='Secretaría de Salud de Envigado'),
-            Secretaria(codigo='itagui',
-                       nombre='Secretaría de Salud de Itagüí'),
+            Secretaria(codigo='envigado', nombre='Secretaría de Salud de Envigado'),
+            Secretaria(codigo='itagui', nombre='Secretaría de Salud de Itagüí'),
         ),
     ),
 )
 
 # Índice global código de secretaría -> (departamento, secretaría) para validación O(1).
 _POR_CODIGO_SECRETARIA: dict[str, tuple[Departamento, Secretaria]] = {
-    sec.codigo: (dep, sec)
-    for dep in DEPARTAMENTOS
-    for sec in dep.secretarias
+    sec.codigo: (dep, sec) for dep in DEPARTAMENTOS for sec in dep.secretarias
 }
 
 
@@ -65,6 +65,13 @@ def resolver_secretaria(departamento_codigo: str, secretaria_codigo: str) -> tup
         raise ValueError('La secretaría de salud seleccionada no es válida.')
     departamento, secretaria = entrada
     if departamento.codigo != departamento_codigo:
-        raise ValueError(
-            'La secretaría seleccionada no pertenece al departamento indicado.')
+        raise ValueError('La secretaría seleccionada no pertenece al departamento indicado.')
     return departamento.nombre, secretaria.nombre, secretaria.codigo
+
+
+def nombres_de_secretaria(secretaria_codigo: str | None) -> tuple[str | None, str | None]:
+    """Devuelve (nombre del departamento, nombre de la secretaría) de un código, o (None, None)."""
+    entrada = _POR_CODIGO_SECRETARIA.get(secretaria_codigo or '')
+    if entrada is None:
+        return None, None
+    return entrada[0].nombre, entrada[1].nombre

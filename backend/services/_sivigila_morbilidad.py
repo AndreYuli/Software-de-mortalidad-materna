@@ -3,7 +3,8 @@
 from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import (
-    AntecedentesObstetricos,
+    AntecedenteObstetrico,
+    AntecedenteObstetricoMorbilidad,
     CatEtnia,
     CatGrupoCausa,
     CatPoblacionVulnerable,
@@ -11,13 +12,16 @@ from db.models_sqlalchemy import (
     CatTerminacionGestacion,
     CatTipoAfiliacion,
     CatZonaResidencia,
+    CausaAsociadaMorbilidad,
     CausasMorbilidad,
+    CirugiaAdicionalMorbilidad,
     CriteriosEnfermedad,
     CriteriosFallaOrganica,
     CriteriosManejo,
     DatosSociodemograficos,
     ManejoHospitalario,
     Referencia,
+    ReferenciaInstitucion,
 )
 from services._sivigila_catalog import _resolve_catalog_optional
 from services._sivigila_escritura import (
@@ -36,6 +40,7 @@ from services._sivigila_escritura import (
     _upsert_single_related,
 )
 from services._sivigila_helpers import _DatosPasada1
+from utils.cie10 import limpiar_causa_asociada, normalizar_cie10
 from utils.date_parsers import _parse_date
 from utils.text_utils import clean_text, is_empty, slugify
 from utils.type_parsers import _parse_bool, _parse_decimal, _parse_int
@@ -95,6 +100,21 @@ def _parse_multiplicidad(value) -> int | None:
     return None
 
 
+def _reemplazar_hijas(db: Session, modelo, filtro: dict, filas: list[dict], reemplazar: bool):
+    """Deja en la tabla hija exactamente `filas` para el padre `filtro` (1FN).
+
+    Args:
+        db: Sesión de base de datos.
+        modelo: Modelo de la tabla hija (una fila por posición `orden`).
+        filtro: Clave foránea del padre, p. ej. {'id_caso': 7}.
+        filas: Valores de cada hija (sin la clave foránea), ya en orden 1..n.
+        reemplazar: True si el padre ya existía y puede tener hijas previas que borrar.
+    """
+    if reemplazar:
+        db.query(modelo).filter_by(**filtro).delete(synchronize_session=False)
+    db.add_all(modelo(**filtro, **f) for f in filas)
+
+
 def _escribir_relacionados_morbilidad(
     db: Session,
     row,
@@ -129,19 +149,31 @@ def _escribir_relacionados_morbilidad(
         _get_value(row, _MORBILIDAD_TERMINACION_COLS),
         catalog_cache=catalog_cache,
     )
+    # Campos obstétricos comunes a los dos eventos: tabla única `antecedente_obstetrico`.
     _upsert_single_related(
         db,
-        AntecedentesObstetricos,
-        {'id_caso': caso.id_caso},
+        AntecedenteObstetrico,
+        {'caso_morbilidad_id': caso.id_caso},
         {
-            'num_gestaciones': _parse_int(_get_value(row, ['N° gestaciones'])),
+            'gestaciones': _parse_int(_get_value(row, ['N° gestaciones'])),
             'partos_vaginales': _parse_int(_get_value(row, ['Partos vaginales'])),
             'cesareas': _parse_int(_get_value(row, ['Cesáreas'])),
             'abortos': _parse_int(_get_value(row, ['Abortos'])),
+            'nacidos_muertos': _parse_int(_get_value(row, ['Muertos'])),
+            'hijos_vivos': _parse_int(_get_value(row, ['Vivos'])),
+            'id_regulacion_fecundidad': regulacion.id if regulacion else None,
+            'num_controles_prenatales': _parse_int(_get_value(row, ['N° controles prenatales'])),
+            'semana_inicio_cpn': _parse_int(_get_value(row, ['Semanas inicio CPN'])),
+        },
+        **kw,
+    )
+    _upsert_single_related(
+        db,
+        AntecedenteObstetricoMorbilidad,
+        {'id_caso': caso.id_caso},
+        {
             'molas': _parse_int(_get_value(row, ['Molas'])),
             'ectopicos': _parse_int(_get_value(row, ['Ectópicos'])),
-            'muertos': _parse_int(_get_value(row, ['Muertos'])),
-            'vivos': _parse_int(_get_value(row, ['Vivos'])),
             'fecha_ultima_gestacion': _parse_date(
                 _get_value(
                     row,
@@ -152,9 +184,6 @@ def _escribir_relacionados_morbilidad(
                     ],
                 )
             ),
-            'id_regulacion_fecundidad': regulacion.id if regulacion else None,
-            'num_controles_prenatales': _parse_int(_get_value(row, ['N° controles prenatales'])),
-            'semanas_inicio_cpn': _parse_int(_get_value(row, ['Semanas inicio CPN'])),
             'id_terminacion_gestacion': terminacion.id if terminacion else None,
             'edad_gestacional_sem': _parse_int(
                 _get_value(row, ['Edad gestacional ocurrencia (sem)'])
@@ -264,7 +293,7 @@ def _escribir_relacionados_morbilidad(
     if cir2 is not None and not (1 <= cir2 <= 4):
         cir2 = None
 
-    _upsert_single_related(
+    manejo = _upsert_single_related(
         db,
         ManejoHospitalario,
         {'id_caso': caso.id_caso},
@@ -272,12 +301,20 @@ def _escribir_relacionados_morbilidad(
             'dias_estancia_hosp': dias_hosp,
             'dias_estancia_uci': dias_uci,
             'unidades_transfundidas': unidades_trans,
-            'cirugia_1': cir1,
-            'cirugia_1_cual': clean_text(_get_value(row, ['¿Cuál otra cirugía 1?'])),
-            'cirugia_2': cir2,
-            'cirugia_2_cual': clean_text(_get_value(row, ['¿Cuál otra cirugía 2?'])),
         },
         **kw,
+    )
+    db.flush()  # obtiene id_manejo para las cirugías hijas
+    cirugias = [
+        {'orden': orden, 'id_tipo_cirugia': codigo, 'cual': clean_text(_get_value(row, [cual_col]))}
+        for orden, codigo, cual_col in (
+            (1, cir1, '¿Cuál otra cirugía 1?'),
+            (2, cir2, '¿Cuál otra cirugía 2?'),
+        )
+        if codigo is not None
+    ]
+    _reemplazar_hijas(
+        db, CirugiaAdicionalMorbilidad, {'id_manejo': manejo.id_manejo}, cirugias, not caso_creado
     )
 
     grupo_causa = _resolve_catalog_optional(
@@ -293,26 +330,44 @@ def _escribir_relacionados_morbilidad(
         {
             'causa_principal_cie10': pdata.causa,
             'id_grupo_causa': grupo_causa.id if grupo_causa else None,
-            'causa_asociada_2': clean_text(_get_value(row, ['Causa asociada CIE-10'])),
-            'causa_asociada_3': clean_text(_get_value(row, ['Causa asociada CIE-10.1'])),
-            'causa_asociada_4': clean_text(_get_value(row, ['Causa asociada CIE-10.2'])),
         },
         **kw,
+    )
+    asociadas = [
+        limpiar_causa_asociada(_get_value(row, [col]))
+        for col in ('Causa asociada CIE-10', 'Causa asociada CIE-10.1', 'Causa asociada CIE-10.2')
+    ]
+    _reemplazar_hijas(
+        db,
+        CausaAsociadaMorbilidad,
+        {'id_caso': caso.id_caso},
+        [{'orden': i, 'cie10': normalizar_cie10(c)} for i, c in enumerate(asociadas, start=1) if c],
+        not caso_creado,
     )
 
     tiene_remitida = _has_any_value(row, ['Remitida'])
     remitida = _parse_bool(_get_value(row, ['Remitida'])) if tiene_remitida else 0
-    _upsert_single_related(
+    referencia = _upsert_single_related(
         db,
         Referencia,
         {'id_caso': caso.id_caso},
         {
             'remitida': remitida,
-            'institucion_ref_1': clean_text(_get_value(row, _MORBILIDAD_INSTITUCION_REF_1_COLS)),
-            'institucion_ref_2': clean_text(_get_value(row, _MORBILIDAD_INSTITUCION_REF_2_COLS)),
             'tiempo_remision_h': _parse_decimal(_get_value(row, _MORBILIDAD_TIEMPO_REMISION_COLS)),
         },
         **kw,
+    )
+    db.flush()  # obtiene id_referencia para las instituciones hijas
+    instituciones = [
+        clean_text(_get_value(row, cols))
+        for cols in (_MORBILIDAD_INSTITUCION_REF_1_COLS, _MORBILIDAD_INSTITUCION_REF_2_COLS)
+    ]
+    _reemplazar_hijas(
+        db,
+        ReferenciaInstitucion,
+        {'id_referencia': referencia.id_referencia},
+        [{'orden': i, 'institucion': n} for i, n in enumerate(instituciones, start=1) if n],
+        not caso_creado,
     )
 
     zona = _resolve_catalog_optional(

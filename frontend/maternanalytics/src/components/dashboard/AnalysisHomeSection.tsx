@@ -95,7 +95,7 @@ export function AnalysisHomeSection({
     )
   }, [mortalidadData, morbilidadData])
 
-  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, demorasChartData, edadChartData, severidadFallasData, morbKpis, edadGestacionalMortalidad, edadGestacionalMorbilidad, edadRiesgoMortalidad, edadRiesgoMorbilidad, sociodemograficaMortalidad, sociodemograficaMorbilidad } = useDashboardCharts({
+  const { lineChartData, topCausasMortalidad, topCausasMorbilidad, topCausasAsociadasMorbilidad, demorasChartData, edadChartData, severidadFallasData, morbKpis, edadGestacionalMortalidad, edadGestacionalMorbilidad, edadRiesgoMortalidad, edadRiesgoMorbilidad, sociodemograficaMortalidad, sociodemograficaMorbilidad } = useDashboardCharts({
     segmento,
     mortalidadData,
     morbilidadData,
@@ -129,9 +129,21 @@ export function AnalysisHomeSection({
         morbilidad: lineChartData.series.find((s) => s.name.toLowerCase().includes('morbilidad'))?.data || [],
       },
       causasPrincipales: {
-        causas: [...topCausasMortalidad.labels, ...topCausasMorbilidad.labels],
+        causas: [...topCausasMortalidad.codigos, ...topCausasMorbilidad.codigos],
         valores: [...topCausasMortalidad.values, ...topCausasMorbilidad.values],
+        eventos: [
+          ...topCausasMortalidad.codigos.map(() => 'Mortalidad'),
+          ...topCausasMorbilidad.codigos.map(() => 'Morbilidad'),
+        ],
+        porcentajes: [...topCausasMortalidad.porcentajes, ...topCausasMorbilidad.porcentajes],
       },
+      causasAsociadas: topCausasAsociadasMorbilidad
+        ? {
+            causas: topCausasAsociadasMorbilidad.codigos,
+            valores: topCausasAsociadasMorbilidad.values,
+            porcentajes: topCausasAsociadasMorbilidad.porcentajes,
+          }
+        : undefined,
       demoras: {
         nombres: demorasChartData.labels,
         valores: demorasChartData.values,
@@ -152,6 +164,7 @@ export function AnalysisHomeSection({
     lineChartData,
     topCausasMortalidad,
     topCausasMorbilidad,
+    topCausasAsociadasMorbilidad,
     demorasChartData,
     edadChartData,
     severidadFallasData,
@@ -187,7 +200,7 @@ export function AnalysisHomeSection({
         {ultimaSemanaReportada && (
           <p className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
             <CalendarClock className="size-4" aria-hidden="true" />
-            Última semana reportada: {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
+            Última semana reportada: semana {ultimaSemanaReportada.semana} de {ultimaSemanaReportada.anio}
           </p>
         )}
       </div>
@@ -222,7 +235,11 @@ export function AnalysisHomeSection({
       />
 
       {activeTab === 'generalidades' && (
-        <TrendChartsRow topCausasMortalidad={topCausasMortalidad} topCausasMorbilidad={topCausasMorbilidad} />
+        <TrendChartsRow
+          topCausasMortalidad={topCausasMortalidad}
+          topCausasMorbilidad={topCausasMorbilidad}
+          topCausasAsociadasMorbilidad={topCausasAsociadasMorbilidad}
+        />
       )}
 
       {activeTab === 'morbilidad' && (

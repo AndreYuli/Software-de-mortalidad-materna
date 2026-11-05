@@ -8,8 +8,19 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy.orm import Session
 
-from db.models_sqlalchemy import VMorbilidadCompleta, VMortalidadCompleta
+from db.models_sqlalchemy import (
+    VCausaAsociadaMorbilidad,
+    VMorbilidadCompleta,
+    VMortalidadCompleta,
+)
 from services._analisis_excel import preparar_dataframe_analisis
+
+# Columnas de la plantilla 549 para las causas asociadas (orden 1, 2 y 3).
+COLUMNAS_CAUSA_ASOCIADA: tuple[str, ...] = (
+    'Causa asociada CIE-10',
+    'Causa asociada CIE-10.1',
+    'Causa asociada CIE-10.2',
+)
 
 _MORBILIDAD_DB_MAPPING = {
     'nombres_apellidos': 'Nombres y apellidos',
@@ -126,8 +137,36 @@ def _construir_df_desde_bd(
             records.append(d)
         df_raw = pd.DataFrame.from_records(records)
         dataframe_resultado = df_raw.rename(columns=mapping)
+        if tipo == 'morbilidad':
+            dataframe_resultado = _agregar_causas_asociadas(
+                db, dataframe_resultado, [r.id_caso for r in registros], secretaria_codigo
+            )
 
     return dataframe_resultado
+
+
+def _agregar_causas_asociadas(
+    db: Session, df: pd.DataFrame, ids_caso: list[int], secretaria_codigo: str | None
+) -> pd.DataFrame:
+    """Añade al DataFrame de análisis las causas asociadas de cada caso.
+
+    En la base son filas de `causa_asociada_morbilidad` (1FN). Para el análisis se proyectan,
+    solo en memoria, a las mismas columnas de la plantilla 549 (`Causa asociada CIE-10`, `.1`,
+    `.2`), así el procesador trata igual un Excel cargado y los datos de la base.
+    """
+    columnas = list(COLUMNAS_CAUSA_ASOCIADA)
+    por_caso: dict[int, list[str | None]] = {i: [None] * len(columnas) for i in ids_caso}
+    filas = (
+        db.query(VCausaAsociadaMorbilidad)
+        .filter(VCausaAsociadaMorbilidad.secretaria_codigo == secretaria_codigo)
+        .all()
+    )
+    for fila in filas:
+        if fila.id_caso in por_caso and 1 <= fila.orden <= len(columnas):
+            por_caso[fila.id_caso][fila.orden - 1] = fila.cie10
+    valores = [por_caso[i] for i in ids_caso]
+    asociadas = pd.DataFrame(valores, columns=columnas, index=df.index)
+    return pd.concat([df, asociadas], axis=1)
 
 
 def _guardar_df_como_excel(

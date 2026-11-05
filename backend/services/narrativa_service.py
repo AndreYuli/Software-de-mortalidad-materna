@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import Analisis, NarrativaIA
 from services import ia_client
+from services.narrativa_verificacion import verificar_narrativa
 
 
 def calcular_filtros_hash(filtros: dict[str, Any]) -> str:
@@ -44,7 +45,9 @@ def obtener_narrativa(
         regenerar: Si es True, ignora la cache y fuerza una nueva llamada a IA-SERVICE.
 
     Returns:
-        Dict con `narrativa`, `modelo`, `generado_en` y `desde_cache`.
+        Dict con `narrativa`, `modelo`, `generado_en`, `desde_cache` y `verificacion`
+        (cifras respaldadas por los indicadores y alertas de coherencia textual; ver
+        services.narrativa_verificacion). No equivale a validación clínica.
 
     Raises:
         services.ia_client.IAServiceUnavailableError: Si IA-SERVICE no está disponible.
@@ -67,6 +70,7 @@ def obtener_narrativa(
                 'modelo': existente.modelo,
                 'generado_en': existente.generado_en,
                 'desde_cache': True,
+                'verificacion': verificar_narrativa(existente.contenido, indicadores),
             }
 
     resultado_ia = ia_client.generar_narrativa(tipo_narrativa, analisis.tipo, indicadores)
@@ -99,7 +103,13 @@ def obtener_narrativa(
         db.add(registro)
     db.commit()
 
-    return {'narrativa': texto, 'modelo': modelo, 'generado_en': ahora, 'desde_cache': False}
+    return {
+        'narrativa': texto,
+        'modelo': modelo,
+        'generado_en': ahora,
+        'desde_cache': False,
+        'verificacion': verificar_narrativa(texto, indicadores),
+    }
 
 
 def extraer_indicadores_para_narrativa(
