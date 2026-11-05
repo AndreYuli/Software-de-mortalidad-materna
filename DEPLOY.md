@@ -292,14 +292,12 @@ responde 503).
 
 ### Proveedor LLM actual: Groq (desde 2026-11-04)
 
-`ia-service` tiene dos modos (`ia-service/core/config.py`,
-`ia-service/ollama_client.py`):
-
-- **`LLM_BASE_URL` definido** → llama a `{LLM_BASE_URL}/chat/completions`
-  (API compatible con OpenAI) con `Authorization: Bearer {LLM_API_KEY}` y
-  `model={OLLAMA_MODEL}`. Lo usan tanto `/chat` como `/generar-narrativa`.
-- **`LLM_BASE_URL` vacío** → Ollama local (`OLLAMA_HOST`), pensado para
-  desarrollo.
+`ia-service` llama siempre a un proveedor con API compatible con OpenAI
+(`ia-service/core/config.py`, `ia-service/llm_client.py`): hace POST a
+`{LLM_BASE_URL}/chat/completions` con `Authorization: Bearer {LLM_API_KEY}` y
+`model={OLLAMA_MODEL}`. Lo usan tanto `/chat` como `/generar-narrativa`. Si
+`LLM_BASE_URL` está vacía, ambos responden 503 (desde 2026-11-05 el servicio
+ya no incluye soporte para Ollama).
 
 En producción se usa **Groq** (plan gratuito) con el modelo
 **`openai/gpt-oss-20b`** (DEC-005). La variable del modelo se llama

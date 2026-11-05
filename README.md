@@ -4,16 +4,15 @@ Sistema de análisis, visualización e interpretación con IA de datos de mortal
 
 ## Arquitectura
 
-Tres servicios más PostgreSQL y un proveedor LLM (Ollama local en desarrollo; Groq en producción, ver `DEC-005`):
+Tres servicios más PostgreSQL y un proveedor LLM externo (Groq, ver `DEC-005`):
 
 | Servicio | Carpeta | Tecnología | Puerto |
 |---|---|---|---:|
 | Frontend | `frontend/maternanalytics/` | React 18, TypeScript, Vite | 5173 |
 | Backend | `backend/` | FastAPI, SQLAlchemy, pandas, scikit-learn, JWT | 8000 (8010 en el servidor) |
-| IA-SERVICE | `ia-service/` | FastAPI, httpx; Ollama (`qwen2.5`) o API compatible con OpenAI | 8001 (8011 en el servidor) |
+| IA-SERVICE | `ia-service/` | FastAPI, httpx; API compatible con OpenAI | 8001 (8011 en el servidor) |
 | PostgreSQL | externo | PostgreSQL 16 | 5432 |
-| Ollama | externo | LLM local | 11434 |
-| Groq | externo (producción) | `openai/gpt-oss-20b` vía `https://api.groq.com/openai/v1` | — |
+| Groq | externo | `openai/gpt-oss-20b` vía `https://api.groq.com/openai/v1` | — |
 
 - Todos los endpoints de datos (`/api/analisis/*`, `/api/sivigila/*`) exigen un JWT válido. Solo son públicos el login, el registro y `/health`. Los archivos cargados (`backend/media/`) no se sirven públicamente.
 - El backend nunca envía datos crudos de pacientes al servicio de IA: solo indicadores ya agregados. Ver `backend/services/narrativa_service.py`.
@@ -46,7 +45,7 @@ Software-de-mortalidad-materna/
 - **Python 3.11+**
 - **Node.js 18+** y **pnpm**
 - **PostgreSQL 14+**
-- Un proveedor LLM: **[Ollama](https://ollama.com)** local con `qwen2.5` (`ollama pull qwen2.5`) **o** una API compatible con OpenAI, como Groq (producción)
+- Una API compatible con OpenAI para el LLM, como Groq (necesita una API key; ver `ia-service/.env.example`)
 
 ## Variables de entorno
 
@@ -64,10 +63,9 @@ Software-de-mortalidad-materna/
 
 | Variable | Descripción | Por defecto |
 |---|---|---|
-| `LLM_BASE_URL` | Si tiene valor, `/chat` y `/generar-narrativa` usan `{LLM_BASE_URL}/chat/completions` (API compatible con OpenAI). Vacío = Ollama. Producción: `https://api.groq.com/openai/v1` | vacío |
+| `LLM_BASE_URL` | **Obligatoria.** `/chat` y `/generar-narrativa` usan `{LLM_BASE_URL}/chat/completions` (API compatible con OpenAI). Producción: `https://api.groq.com/openai/v1`. Si está vacía, responden 503 | vacío |
 | `LLM_API_KEY` | API key del proveedor externo. Solo en el `.env` real, nunca en el repo | vacío |
-| `OLLAMA_MODEL` | Id del modelo, **también para el proveedor externo**. Producción: `openai/gpt-oss-20b` | `qwen2.5` |
-| `OLLAMA_HOST` | URL de Ollama (solo si `LLM_BASE_URL` está vacío) | `http://localhost:11434` |
+| `OLLAMA_MODEL` | Id del modelo del proveedor (el nombre de la variable es histórico). Producción: `openai/gpt-oss-20b` | `openai/gpt-oss-20b` |
 | `OLLAMA_TIMEOUT_S` | Timeout de `/generar-narrativa`, en segundos. `/chat` usa 120 s fijos en el código | `120` |
 
 Despliegue y límites del proveedor en `DEPLOY.md`, sección 6.
@@ -116,7 +114,7 @@ pnpm dev
 
 Abre **http://localhost:5173**. Vite hace de proxy de `/api` hacia `localhost:8000`.
 
-En Windows, `scripts\iniciar_servicios.bat` abre las terminales de Ollama, ia-service, backend, frontend y ngrok (necesita los `venv` ya creados).
+En Windows, `scripts\iniciar_servicios.bat` abre las terminales de ia-service, backend, frontend y ngrok (necesita los `venv` ya creados).
 
 ### Primer usuario
 
@@ -139,7 +137,7 @@ set DB_NAME=vm_prueba_base
 set VM_PG_PRUEBAS=host=127.0.0.1 port=5432 user=postgres password=...
 pytest tests/ -v
 
-# ia-service (18 tests)
+# ia-service (24 tests)
 cd ia-service && venv\Scripts\activate && pytest tests/ -v
 
 # Frontend: tipos, lint, tests unitarios y build

@@ -1,0 +1,64 @@
+================================================================================
+VALIDACIÓN 3 - CIFRAS DE LAS NARRATIVAS DE IA
+Modelo: openai/gpt-oss-20b (devuelto por la API: openai/gpt-oss-20b) | 3 repeticiones por tipo | datos E2E (mortalidad 400, morbilidad 200 casos)
+Coincide = la cifra del texto es igual a un indicador de origen (redondeada como aparece)
+================================================================================
+Evento     Narrativa           Rep.  Cifras  Coinciden       %
+--------------------------------------------------------------------------------
+mortalidad resumen_ejecutivo      1      16         13     81%
+mortalidad resumen_ejecutivo      2      20         18     90%
+mortalidad resumen_ejecutivo      3      13         12     92%
+mortalidad demoras                1       6          5     83%
+mortalidad demoras                2       5          5    100%
+mortalidad demoras                3       4          4    100%
+mortalidad tendencias             1      24         21     88%
+mortalidad tendencias             2      16         16    100%
+mortalidad tendencias             3      22         22    100%
+morbilidad resumen_ejecutivo      1      18         17     94%
+morbilidad resumen_ejecutivo      2      16         16    100%
+morbilidad resumen_ejecutivo      3      15         14     93%
+morbilidad demoras                1      15         14     93%
+morbilidad demoras                2      12         10     83%
+morbilidad demoras                3      12         12    100%
+morbilidad tendencias             1      26         23     88%
+morbilidad tendencias             2      19         17     89%
+morbilidad tendencias             3      14         14    100%
+--------------------------------------------------------------------------------
+mortalidad resumen_ejecutivo  total      49         43   87.8%
+mortalidad demoras            total      15         14   93.3%
+mortalidad tendencias         total      62         59   95.2%
+morbilidad resumen_ejecutivo  total      49         47   95.9%
+morbilidad demoras            total      39         36   92.3%
+morbilidad tendencias         total      59         54   91.5%
+================================================================================
+TOTAL: 253/273 cifras coinciden (92.7%) | narrativas sin ninguna cifra fuera de los datos: 7/18
+================================================================================
+
+CIFRAS QUE NO COINCIDEN DIRECTAMENTE (revisar una a una):
+  mortalidad/resumen_ejecutivo #1: «10»
+  mortalidad/resumen_ejecutivo #1: «10»
+  mortalidad/resumen_ejecutivo #1: «78,5»
+  mortalidad/resumen_ejecutivo #2: «10»
+  mortalidad/resumen_ejecutivo #2: «10»
+  mortalidad/resumen_ejecutivo #3: «10»
+  mortalidad/demoras #1: «400»
+  mortalidad/tendencias #1: «50»
+  mortalidad/tendencias #1: «50»
+  mortalidad/tendencias #1: «25»
+  morbilidad/resumen_ejecutivo #1: «71»
+  morbilidad/resumen_ejecutivo #3: «55»
+  morbilidad/demoras #1: «75»
+  morbilidad/demoras #2: «75»
+  morbilidad/demoras #2: «90»
+  morbilidad/tendencias #1: «100»
+  morbilidad/tendencias #1: «110»
+  morbilidad/tendencias #1: «122»
+  morbilidad/tendencias #2: «9,75»
+  morbilidad/tendencias #2: «10,17»
+
+ALERTAS DE COHERENCIA DEL VERIFICADOR (tal como en el lote 2):
+  mortalidad/resumen_ejecutivo #3: Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos.
+  mortalidad/tendencias #1: Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos.
+  mortalidad/tendencias #3: Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos.
+  morbilidad/demoras #2: Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos.
+  morbilidad/tendencias #2: Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos.

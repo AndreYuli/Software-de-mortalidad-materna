@@ -12,7 +12,7 @@ def construir(
     contexto: dict[str, Any],
     tipo_analisis: str,
 ) -> list[dict[str, str]]:
-    """Construye la lista de mensajes para el endpoint de chat de Ollama.
+    """Construye la lista de mensajes para el endpoint de chat del proveedor LLM.
 
     Args:
         pregunta: Pregunta del usuario.

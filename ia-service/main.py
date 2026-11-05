@@ -4,7 +4,7 @@ import logging
 
 from core.config import Config
 from fastapi import FastAPI, HTTPException, status
-from ollama_client import OllamaUnavailableError, chatear, generar
+from llm_client import LLMUnavailableError, chatear, generar
 from prompts import chat_datos, construir_prompt
 from schemas import ChatRequest, ChatResponse, NarrativaRequest, NarrativaResponse
 
@@ -49,14 +49,14 @@ def generar_narrativa(payload: NarrativaRequest) -> NarrativaResponse:
         La narrativa generada y el nombre del modelo usado.
 
     Raises:
-        HTTPException: 503 si Ollama no está disponible o falla la generación.
+        HTTPException: 503 si el proveedor LLM no está disponible o falla la generación.
     """
     prompt = construir_prompt(
         payload.tipo_narrativa, payload.indicadores, payload.tipo_analisis
     )
     try:
         texto = generar(prompt)
-    except OllamaUnavailableError as exc:
+    except LLMUnavailableError as exc:
         raise _sin_proveedor(exc) from exc
 
     return NarrativaResponse(narrativa=texto, modelo=Config.ollama_model)
@@ -73,7 +73,7 @@ def chat(payload: ChatRequest) -> ChatResponse:
         La respuesta generada y el modelo usado.
 
     Raises:
-        HTTPException: 503 si Ollama no está disponible.
+        HTTPException: 503 si el proveedor LLM no está disponible.
     """
     messages = chat_datos.construir(
         pregunta=payload.pregunta,
@@ -83,7 +83,7 @@ def chat(payload: ChatRequest) -> ChatResponse:
     )
     try:
         texto = chatear(messages)
-    except OllamaUnavailableError as exc:
+    except LLMUnavailableError as exc:
         raise _sin_proveedor(exc) from exc
 
     return ChatResponse(respuesta=texto, modelo=Config.ollama_model)

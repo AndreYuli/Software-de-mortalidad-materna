@@ -1,0 +1,311 @@
+{
+ "simulado": false,
+ "modelo": "openai/gpt-oss-20b",
+ "modelo_ids": [
+  "openai/gpt-oss-20b"
+ ],
+ "total_cifras": 273,
+ "coinciden": 253,
+ "filas": [
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 1,
+   "cifras": 16,
+   "coinciden": 13
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 2,
+   "cifras": 20,
+   "coinciden": 18
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 3,
+   "cifras": 13,
+   "coinciden": 12
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "demoras",
+   "rep": 1,
+   "cifras": 6,
+   "coinciden": 5
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "demoras",
+   "rep": 2,
+   "cifras": 5,
+   "coinciden": 5
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "demoras",
+   "rep": 3,
+   "cifras": 4,
+   "coinciden": 4
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifras": 24,
+   "coinciden": 21
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 2,
+   "cifras": 16,
+   "coinciden": 16
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 3,
+   "cifras": 22,
+   "coinciden": 22
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 1,
+   "cifras": 18,
+   "coinciden": 17
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 2,
+   "cifras": 16,
+   "coinciden": 16
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 3,
+   "cifras": 15,
+   "coinciden": 14
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "demoras",
+   "rep": 1,
+   "cifras": 15,
+   "coinciden": 14
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "demoras",
+   "rep": 2,
+   "cifras": 12,
+   "coinciden": 10
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "demoras",
+   "rep": 3,
+   "cifras": 12,
+   "coinciden": 12
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifras": 26,
+   "coinciden": 23
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 2,
+   "cifras": 19,
+   "coinciden": 17
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 3,
+   "cifras": 14,
+   "coinciden": 14
+  }
+ ],
+ "no_coinciden": [
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 1,
+   "cifra": "10",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 1,
+   "cifra": "10",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 1,
+   "cifra": "78,5",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 2,
+   "cifra": "10",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 2,
+   "cifra": "10",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 3,
+   "cifra": "10",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "demoras",
+   "rep": 1,
+   "cifra": "400",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifra": "50",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifra": "50",
+   "contexto": ""
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifra": "25",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 1,
+   "cifra": "71",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 3,
+   "cifra": "55",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "demoras",
+   "rep": 1,
+   "cifra": "75",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "demoras",
+   "rep": 2,
+   "cifra": "75",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "demoras",
+   "rep": 2,
+   "cifra": "90",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifra": "100",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifra": "110",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "cifra": "122",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 2,
+   "cifra": "9,75",
+   "contexto": ""
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 2,
+   "cifra": "10,17",
+   "contexto": ""
+  }
+ ],
+ "alertas": [
+  {
+   "evento": "mortalidad",
+   "tipo": "resumen_ejecutivo",
+   "rep": 3,
+   "alerta": "Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos."
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 1,
+   "alerta": "Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos."
+  },
+  {
+   "evento": "mortalidad",
+   "tipo": "tendencias",
+   "rep": 3,
+   "alerta": "Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos."
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "demoras",
+   "rep": 2,
+   "alerta": "Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos."
+  },
+  {
+   "evento": "morbilidad",
+   "tipo": "tendencias",
+   "rep": 2,
+   "alerta": "Lenguaje prescriptivo: la narrativa es descriptiva y no debe recomendar tratamientos."
+  }
+ ]
+}

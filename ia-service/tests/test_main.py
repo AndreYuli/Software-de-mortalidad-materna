@@ -1,6 +1,7 @@
 """Tests del endpoint de health check."""
 
 from fastapi.testclient import TestClient
+from core.config import Config
 from main import app
 
 client = TestClient(app)
@@ -27,7 +28,7 @@ def test_generar_narrativa_devuelve_200_en_exito(mocker):
     assert response.status_code == 200
     body = response.json()
     assert body['narrativa'] == 'Narrativa generada de prueba.'
-    assert body['modelo'] == 'qwen2.5'
+    assert body['modelo'] == Config.ollama_model
 
 
 def test_generar_narrativa_devuelve_422_con_tipo_invalido():
@@ -42,12 +43,12 @@ def test_generar_narrativa_devuelve_422_con_tipo_invalido():
     assert response.status_code == 422
 
 
-def test_generar_narrativa_devuelve_503_si_ollama_no_disponible(mocker):
-    from ollama_client import OllamaUnavailableError
+def test_generar_narrativa_devuelve_503_si_el_proveedor_no_disponible(mocker):
+    from llm_client import LLMUnavailableError
 
     mocker.patch(
         'main.generar',
-        side_effect=OllamaUnavailableError(
+        side_effect=LLMUnavailableError(
             "Function id 'x' in account 'cuenta-secreta' is not found"
         ),
     )

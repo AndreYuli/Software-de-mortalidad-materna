@@ -140,7 +140,7 @@ Cuando trabajes con narrativa IA o chatbot:
 
 - usar información agregada;
 - no exponer registros individuales;
-- respetar la arquitectura local con `IA-SERVICE` y Ollama si se usa IA generativa;
+- respetar la arquitectura con `IA-SERVICE` y un proveedor LLM compatible con OpenAI si se usa IA generativa;
 - manejar indisponibilidad del servicio sin romper el dashboard;
 - documentar cualquier nuevo contrato o endpoint.
 
