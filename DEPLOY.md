@@ -578,13 +578,15 @@ no en `ss` al momento de revisar). Nuestros: 8010 (backend), 8011 (ia-service).
       y `.../chat/` respondan 200 y no 503).
 - [x] Cambiar el proveedor LLM de NVIDIA a Groq (`openai/gpt-oss-20b`) y
       verificar `POST :8011/chat` → 200 (2026-11-04, sección 6).
+- [ ] Actualizar el servidor con la versión nueva de `main` (incluye la BD con la estructura nueva, PR #5) siguiendo
+      [docs/ACTUALIZAR_SERVIDOR.md](docs/ACTUALIZAR_SERVIDOR.md).
 - [ ] Revocar en la consola de NVIDIA la API key anterior (se pegó en un chat
       durante el despliegue y ya no se usa).
 - [ ] Revocar la primera API key de Groq que se pegó en un chat el 2026-11-04
       (producción usa otra clave nueva).
 - [ ] Comprobar en <https://console.groq.com/settings/data-controls> si Zero
       Data Retention está activo y activarlo si el equipo lo aprueba.
-- [ ] Hacer `git pull` + reinicio del backend en el servidor (sección 7) y subir
+- [ ] Hacer `git pull` + reinicio del backend en el servidor (ver [docs/ACTUALIZAR_SERVIDOR.md](docs/ACTUALIZAR_SERVIDOR.md)) y subir
       `sivigila_mortalidad_10_casos.xlsx` desde el navegador; confirmar que carga
       con PostgreSQL y que el dashboard muestra los 10 casos.
 - [x] Sustituir en este archivo las credenciales reales por placeholders
