@@ -46,7 +46,12 @@ def test_generar_narrativa_devuelve_422_con_tipo_invalido():
 def test_generar_narrativa_devuelve_503_si_el_proveedor_no_disponible(mocker):
     from llm_client import LLMUnavailableError
 
-    mocker.patch('main.generar', side_effect=LLMUnavailableError('no disponible'))
+    mocker.patch(
+        'main.generar',
+        side_effect=LLMUnavailableError(
+            "Function id 'x' in account 'cuenta-secreta' is not found"
+        ),
+    )
 
     response = client.post(
         '/generar-narrativa',
@@ -58,3 +63,5 @@ def test_generar_narrativa_devuelve_503_si_el_proveedor_no_disponible(mocker):
     )
 
     assert response.status_code == 503
+    # El detalle del proveedor (ids de función y de cuenta) no debe salir del microservicio.
+    assert 'cuenta-secreta' not in response.text

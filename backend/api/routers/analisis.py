@@ -1,9 +1,11 @@
 """Endpoints para carga, consulta y análisis estadístico de archivos Excel."""
 
+import logging
 from contextlib import contextmanager
-from typing import Any, Generator, Literal
+from typing import Annotated, Any, Generator, Literal
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from pydantic import AfterValidator
 from sqlalchemy.orm import Session
 
 from api.dependencies import get_current_user
@@ -12,6 +14,41 @@ from db.models_sqlalchemy import Analisis, Usuario
 from schemas.analisis_schema import AnalisisResponse, CargaUpdate, ChatRequest, ClusteringRequest
 from services import analisis_service, narrativa_service
 from services.ia_client import IAServiceUnavailableError, chatear_ia
+
+
+def _entero_en_rango(minimo: int, maximo: int):
+    """Crea un validador de filtros de fecha: texto entero dentro de [minimo, maximo].
+
+    Los filtros llegan como texto (el front puede omitirlos); un valor no numérico o fuera de
+    rango debe ser 422 con mensaje claro, no un 500 con la excepción de Python (revisión de uso,
+    partes 5 y 6).
+    """
+
+    def validar(valor: str | None) -> str | None:
+        if valor is None or valor == '':
+            return None
+        if not (valor.isascii() and valor.isdigit() and minimo <= int(valor) <= maximo):
+            raise ValueError(f'Debe ser un número entero entre {minimo} y {maximo}.')
+        return valor
+
+    return validar
+
+
+FiltroAnio = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1900, 2100))]
+FiltroMes = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1, 12))]
+FiltroSemana = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1, 53))]
+FiltroDia = Annotated[str | None, Query(), AfterValidator(_entero_en_rango(1, 31))]
+
+logger = logging.getLogger(__name__)
+
+_IA_NO_DISPONIBLE = 'El servicio de IA no está disponible en este momento.'
+
+
+def _ia_no_disponible(exc: Exception) -> HTTPException:
+    """503 genérico: el detalle del proveedor (ids de función y de cuenta) sólo va al log."""
+    logger.warning('IA-SERVICE no disponible: %s', exc)
+    return HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=_IA_NO_DISPONIBLE)
+
 
 router = APIRouter(prefix='/api', tags=['analisis'], dependencies=[Depends(get_current_user)])
 
@@ -65,7 +102,7 @@ def subir_archivo(
         tipo: Tipo de análisis ('mortalidad' o 'morbilidad').
         archivo: Archivo Excel cargado por el usuario.
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Datos del análisis creado o actualizado, incluyendo resumen SIVIGILA.
@@ -90,7 +127,7 @@ def listar_analisis(
 
     Args:
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Lista de análisis únicos ordenados por fecha de carga descendente.
@@ -124,7 +161,7 @@ def historial_analisis(
         month: Filtra por mes de la carga (1-12).
         week: Filtra por semana ISO de la carga.
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Dict con 'items' (cada uno con anio, mes y semana de la carga), 'total' (que cumple
@@ -182,7 +219,7 @@ def actualizar_analisis(
         pk: ID de la carga.
         datos: Campos a modificar.
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         La carga actualizada.
@@ -213,7 +250,7 @@ def detalle_analisis(
     Args:
         pk: ID del análisis.
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Datos del análisis.
@@ -228,10 +265,10 @@ def detalle_analisis(
 @router.get('/analisis/{pk}/completo/')
 def analisis_completo(
     pk: int,
-    year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
-    month: str | None = Query(default=None, pattern=r'^(|0?[1-9]|1[0-2])$'),
-    week: str | None = Query(default=None, pattern=r'^(|0?[1-9]|[1-4]\d|5[0-3])$'),
-    day: str | None = Query(default=None, pattern=r'^(|0?[1-9]|[12]\d|3[01])$'),
+    year: FiltroAnio = None,
+    month: FiltroMes = None,
+    week: FiltroSemana = None,
+    day: FiltroDia = None,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
@@ -244,7 +281,7 @@ def analisis_completo(
         week: Semana ISO del año para filtrar los datos (opcional).
         day: Día del mes para filtrar los datos (opcional).
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Diccionario con estadísticas, distribuciones, clustering y metadatos.
@@ -280,7 +317,7 @@ def clustering(
         pk: ID del análisis.
         req: Parámetros del clustering (tipo y número de clusters).
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Resultado del clustering con etiquetas y métricas.
@@ -306,7 +343,7 @@ def heatmap(
     Args:
         pk: ID del análisis.
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Datos del heatmap para renderizar en el frontend.
@@ -336,7 +373,7 @@ def extra_columna(
     Args:
         pk: ID del análisis.
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Datos de la gráfica de distribución extra.
@@ -376,7 +413,7 @@ def cruce_variables(
         var_socio: Clave de la variable sociodemográfica.
         var_clinica: Clave de la variable clínica.
         db: Sesión de base de datos inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Dict con categorias_socio, categorias_clinica, matriz de conteos, total.
@@ -401,8 +438,8 @@ def cruce_variables(
 def obtener_narrativa_ia(
     pk: int,
     tipo_narrativa: str,
-    year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
-    month: str | None = Query(default=None, pattern=r'^(|0?[1-9]|1[0-2])$'),
+    year: FiltroAnio = None,
+    month: FiltroMes = None,
     tipo_clustering: str = Query(default='kmeans'),
     n_clusters: int = Query(default=3, ge=2, le=20),
     regenerar: bool = Query(default=False),
@@ -420,7 +457,7 @@ def obtener_narrativa_ia(
         n_clusters: Número de clusters, solo relevante si tipo_narrativa='clustering'.
         regenerar: Si es True, fuerza una nueva llamada a IA-SERVICE ignorando cache.
         db: Sesión de base de datos.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Dict con narrativa, modelo, generado_en y desde_cache.
@@ -435,9 +472,10 @@ def obtener_narrativa_ia(
         if tipo_narrativa == 'clustering':
             filtros.update({'tipo_clustering': tipo_clustering, 'n_clusters': n_clusters})
             clustering_resultado = analisis_service.ejecutar_clustering(
-                analisis,
-                tipo_clustering,
-                n_clusters,
+                analisis=analisis,
+                tipo_clustering=tipo_clustering,
+                n_clusters=n_clusters,
+                db=db,
             )
             indicadores = narrativa_service.extraer_indicadores_para_narrativa(
                 tipo_narrativa,
@@ -462,10 +500,7 @@ def obtener_narrativa_ia(
                 regenerar,
             )
         except IAServiceUnavailableError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=str(exc),
-            ) from exc
+            raise _ia_no_disponible(exc) from exc
 
     return resultado
 
@@ -474,8 +509,8 @@ def obtener_narrativa_ia(
 def chat_analisis(
     pk: int,
     req: ChatRequest,
-    year: str | None = Query(default=None, pattern=r'^\d{0,4}$'),
-    month: str | None = Query(default=None, pattern=r'^(|0?[1-9]|1[0-2])$'),
+    year: FiltroAnio = None,
+    month: FiltroMes = None,
     db: Session = Depends(get_db),
     usuario: Usuario = Depends(get_current_user),
 ) -> dict[str, Any]:
@@ -487,7 +522,7 @@ def chat_analisis(
         year: Año para filtrar los datos (opcional).
         month: Mes para filtrar los datos (opcional).
         db: Sesión de BD inyectada.
-        usuario: Usuario autenticado (inyectado por la dependencia).
+        usuario: Usuario autenticado; su secretaría acota los datos a los que accede.
 
     Returns:
         Diccionario con la respuesta y el modelo utilizado.
@@ -523,7 +558,4 @@ def chat_analisis(
         try:
             return chatear_ia(req.pregunta, historial_dicts, analisis.tipo, contexto)
         except IAServiceUnavailableError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=str(exc),
-            ) from exc
+            raise _ia_no_disponible(exc) from exc

@@ -1,10 +1,24 @@
 """Punto de entrada del microservicio de IA generativa."""
 
+import logging
+
 from core.config import Config
 from fastapi import FastAPI, HTTPException, status
 from llm_client import LLMUnavailableError, chatear, generar
 from prompts import chat_datos, construir_prompt
 from schemas import ChatRequest, ChatResponse, NarrativaRequest, NarrativaResponse
+
+logger = logging.getLogger(__name__)
+
+
+def _sin_proveedor(exc: Exception) -> HTTPException:
+    """503 con mensaje genérico; la respuesta cruda del proveedor (ids de función y cuenta) sólo se registra."""
+    logger.warning('Proveedor LLM no disponible: %s', exc)
+    return HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail='El proveedor del modelo de lenguaje no está disponible.',
+    )
+
 
 app = FastAPI(
     title='IA Generativa — Mortalidad Materna',
@@ -43,9 +57,7 @@ def generar_narrativa(payload: NarrativaRequest) -> NarrativaResponse:
     try:
         texto = generar(prompt)
     except LLMUnavailableError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
-        ) from exc
+        raise _sin_proveedor(exc) from exc
 
     return NarrativaResponse(narrativa=texto, modelo=Config.ollama_model)
 
@@ -72,8 +84,6 @@ def chat(payload: ChatRequest) -> ChatResponse:
     try:
         texto = chatear(messages)
     except LLMUnavailableError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)
-        ) from exc
+        raise _sin_proveedor(exc) from exc
 
     return ChatResponse(respuesta=texto, modelo=Config.ollama_model)

@@ -2,9 +2,17 @@ import { z } from 'zod';
 
 export const registerSchema = z
   .object({
-    nombre: z.string().trim().min(1, 'El nombre es obligatorio').max(150, 'El nombre no puede superar 150 caracteres'),
+    nombre: z
+      .string()
+      .trim()
+      .min(1, 'El nombre es obligatorio')
+      .max(120, 'El nombre no puede superar 120 caracteres')
+      .regex(/^[^<>]*$/, 'El nombre no puede contener los caracteres < o >'),
     email: z.string().email('Formato de correo inválido'),
-    password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+    password: z
+      .string()
+      .min(8, 'La contraseña debe tener al menos 8 caracteres')
+      .max(128, 'La contraseña no puede superar 128 caracteres'),
     confirmPassword: z.string().min(1, 'Confirma tu contraseña'),
     departamento: z.string().min(1, 'Selecciona tu departamento'),
     secretaria: z.string().min(1, 'Selecciona tu secretaría de salud'),

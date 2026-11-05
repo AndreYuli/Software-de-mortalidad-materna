@@ -141,15 +141,11 @@ _MORBILIDAD_TERMINACION_COLS = [
     'Terminacion de la gestacion',
 ]
 _MORBILIDAD_ESTADO_RN_COLS = ['Estado recién nacido', 'Estado recien nacido']
-_MORBILIDAD_PESO_RN_COLS = [
-    'Peso RN (g)', 'Peso RN gramos', 'Peso RN', 'Peso recién nacido']
+_MORBILIDAD_PESO_RN_COLS = ['Peso RN (g)', 'Peso RN gramos', 'Peso RN', 'Peso recién nacido']
 _MORBILIDAD_TRANSFUNDIDAS_COLS = ['Unidades transfundidas']
-_MORBILIDAD_GRUPO_CAUSA_COLS = [
-    'Causa principal agrupada', 'Grupo causa', 'Grupo de causa']
-_MORBILIDAD_INSTITUCION_REF_1_COLS = [
-    'Institución referencia 1', 'Institucion referencia 1']
-_MORBILIDAD_INSTITUCION_REF_2_COLS = [
-    'Institución referencia 2', 'Institucion referencia 2']
+_MORBILIDAD_GRUPO_CAUSA_COLS = ['Causa principal agrupada', 'Grupo causa', 'Grupo de causa']
+_MORBILIDAD_INSTITUCION_REF_1_COLS = ['Institución referencia 1', 'Institucion referencia 1']
+_MORBILIDAD_INSTITUCION_REF_2_COLS = ['Institución referencia 2', 'Institucion referencia 2']
 _MORBILIDAD_TIEMPO_REMISION_COLS = [
     'Tiempo remisión (horas)',
     'Tiempo remisión (h)',
@@ -225,11 +221,9 @@ def _resolve_momento_ocurrencia(value: Any) -> str | None:
     resultado: str | None = None
     if not is_empty(value):
         if isinstance(value, (int, float)):
-            resultado = {1: 'Antes', 2: 'Durante',
-                         3: 'Despues', 4: 'Despues'}.get(int(value))
+            resultado = {1: 'Antes', 2: 'Durante', 3: 'Despues', 4: 'Despues'}.get(int(value))
         else:
-            mapa_momento = {'antes': 'Antes',
-                            'durante': 'Durante', 'despues': 'Despues'}
+            mapa_momento = {'antes': 'Antes', 'durante': 'Durante', 'despues': 'Despues'}
             resultado = mapa_momento.get(slugify(value))
     return resultado
 
@@ -248,8 +242,7 @@ def _normalize_estado_rn(value: Any) -> str | None:
         if isinstance(value, (int, float)):
             resultado = {1: 'Vivo', 2: 'Muerto'}.get(int(value))
         else:
-            resultado = {'vivo': 'Vivo', 'muerto': 'Muerto'}.get(
-                slugify(value))
+            resultado = {'vivo': 'Vivo', 'muerto': 'Muerto'}.get(slugify(value))
     return resultado
 
 
@@ -280,13 +273,23 @@ def _upsert_single_related(
     Returns:
         Instancia creada o actualizada del modelo relacionado.
     """
-    caso_id = lookup.get('id_caso')
-    exists = caso_id in related_cache.get(model, set())
+    # Casi todas las tablas relacionadas cuelgan de `id_caso`. `antecedente_obstetrico` es
+    # compartida por los dos eventos y cuelga de `caso_morbilidad_id` o `caso_mortalidad_id`:
+    # sus ids se solapan, por eso el caché se separa por (modelo, columna).
+    columna = 'id_caso' if 'id_caso' in lookup else next(iter(lookup))
+    caso_id = lookup[columna]
+    llave = model if columna == 'id_caso' else (model, columna)
+    exists = caso_id in related_cache.get(llave, set())
+
+    if not caso_creado and not exists and db.query(model).filter_by(**lookup).first() is not None:
+        # El caché no lo conocía pero el registro existe: se actualiza en vez de duplicar
+        # (con la restricción de unicidad, duplicar sería un error de la base de datos).
+        exists = True
 
     if caso_creado or not exists:
         instancia: Any = model(**lookup, **defaults)
         db.add(instancia)
-        related_cache.setdefault(model, set()).add(caso_id)
+        related_cache.setdefault(llave, set()).add(caso_id)
     else:
         instancia = db.query(model).filter_by(**lookup).first()
         if instancia is not None:
@@ -295,7 +298,7 @@ def _upsert_single_related(
         else:
             instancia = model(**lookup, **defaults)
             db.add(instancia)
-            related_cache.setdefault(model, set()).add(caso_id)
+            related_cache.setdefault(llave, set()).add(caso_id)
     return instancia
 
 
@@ -384,10 +387,8 @@ def _resolver_identificacion(
     Returns:
         Dict con nombres, tipo_obj, tipo_codigo, numero_id y fecha_nacimiento.
     """
-    nombres = _require_text(_get_value(row, nombres_cols),
-                            nombres_cols[0], numero_fila)
-    tipo_id_valor = _normalizar_tipo_identificacion(
-        _get_value(row, tipo_id_cols))
+    nombres = _require_text(_get_value(row, nombres_cols), nombres_cols[0], numero_fila)
+    tipo_id_valor = _normalizar_tipo_identificacion(_get_value(row, tipo_id_cols))
     tipo_obj = _resolve_catalog(
         db,
         CatTipoId,

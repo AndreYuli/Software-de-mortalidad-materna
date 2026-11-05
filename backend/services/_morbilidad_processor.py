@@ -7,6 +7,7 @@ import pandas as pd
 
 from services._ml_analisis import AnalisisML
 from services.procesador_base import ProcesadorBase
+from utils.cie10 import obtener_nombre_cie10
 from utils.type_parsers import es_valor_positivo
 
 _KEYWORDS_FALLAS = (
@@ -36,6 +37,11 @@ _COLS_SEVERIDAD = [
 ]
 
 _COLUMNA_CAUSA_PRINCIPAL = 'Causa principal CIE-10'
+_COLUMNAS_CAUSA_ASOCIADA = (
+    'Causa asociada CIE-10',
+    'Causa asociada CIE-10.1',
+    'Causa asociada CIE-10.2',
+)
 
 
 def _normalizar(texto: str) -> str:
@@ -247,6 +253,49 @@ class MorbilidadProcessor(ProcesadorBase):
             Dict con top_causas y total_causas_unicas.
         """
         return self._analizar_causas_cie10(_COLUMNA_CAUSA_PRINCIPAL, top_n)
+
+    def analizar_causas_asociadas(self, top_n: int = 10) -> dict[str, Any]:
+        """Causas asociadas (CIE-10) más frecuentes, contando cada caso una vez por código.
+
+        Un caso puede tener hasta tres causas asociadas: se juntan las tres columnas, se
+        normaliza el código y el porcentaje es sobre el total de casos (no suma 100 %).
+
+        Args:
+            top_n: Número de causas más frecuentes a incluir.
+
+        Returns:
+            Dict con top_causas (código, nombre, casos, porcentaje), total_causas_unicas y
+            casos_con_causa_asociada. Dict vacío si no hay columnas de causas asociadas.
+        """
+        columnas = [c for c in _COLUMNAS_CAUSA_ASOCIADA if c in self.df.columns]
+        if not columnas:
+            return {}
+        total_casos = len(self.df)
+        largo = (
+            self.df[columnas]
+            .reset_index(drop=True)
+            .reset_index(names='caso')
+            .melt(id_vars='caso', value_name='codigo')
+            .dropna(subset=['codigo'])
+        )
+        largo['codigo'] = largo['codigo'].map(lambda v: str(v).replace('.', '').strip().upper())
+        largo = largo[(largo['codigo'] != '') & ~largo['codigo'].str.fullmatch(r'[-–—]+')]
+        # (caso, código) único: un código no cuenta dos veces para el mismo caso.
+        por_caso = largo[['caso', 'codigo']].drop_duplicates()
+        conteo = por_caso['codigo'].value_counts().head(top_n)
+        return {
+            'top_causas': [
+                {
+                    'codigo': str(k),
+                    'nombre': obtener_nombre_cie10(str(k)),
+                    'casos': int(v),
+                    'porcentaje': float(v / total_casos * 100) if total_casos > 0 else 0.0,
+                }
+                for k, v in conteo.items()
+            ],
+            'total_causas_unicas': int(por_caso['codigo'].nunique()),
+            'casos_con_causa_asociada': int(por_caso['caso'].nunique()),
+        }
 
     def analizar_obstetrico_por_edad(self) -> dict[str, Any]:
         """Cruza variables obstétricas con grupos de edad para detectar patrones.

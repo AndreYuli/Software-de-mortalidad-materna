@@ -1,0 +1,21 @@
+﻿posicion,variable,factor,n_articulos,frecuencia,ic_bajo,ic_alto,disponible_en,campo_ficha
+1,Edad de la mujer/participante,Sociodemográficos,21,0.7,0.5212,0.8334,ambos,Fecha de nacimiento / edad (ambos eventos)
+2,"Mortalidad materna, varias mediciones específicas",Clínicos,11,0.3667,0.2187,0.5449,ambos,El evento 550 mismo (variable de resultado)
+3,Atención prenatal,Clínicos,7,0.2333,0.1179,0.4093,ambos,N° controles prenatales / 8.1 No. CPN
+4,Nivel educativo de la mujer,Sociodemográficos,7,0.2333,0.1179,0.4093,550,6.3 Escolaridad (solo 550)
+5,Paridad,Clínicos,7,0.2333,0.1179,0.4093,ambos,Partos vaginales y cesáreas
+6,Gravidez/número de embarazos,Clínicos,6,0.2,0.0951,0.3731,ambos,N° gestaciones / 6.5 Gestaciones
+7,Raza/etnia de la mujer,Sociodemográficos,6,0.2,0.0951,0.3731,ambos,Etnia (datos sociodemográficos)
+8,Edad gestacional,Clínicos,5,0.1667,0.0734,0.3356,ambos,Edad gestacional ocurrencia / 9.2 Semana gestación
+9,Tipo de seguro de salud,Sociodemográficos,5,0.1667,0.0734,0.3356,ambos,Tipo de afiliación (datos sociodemográficos)
+10,Ingresos del hogar,Sociodemográficos,3,0.1,0.0346,0.2562,ninguno,No existe en las fichas
+11,Área de residencia (rural/urbana),Sociodemográficos,3,0.1,0.0346,0.2562,ambos,Zona de residencia (datos sociodemográficos)
+12,Índice de riqueza del hogar,Sociodemográficos,3,0.1,0.0346,0.2562,ninguno,No existe en las fichas
+13,Comorbilidades,Clínicos,2,0.0667,0.0185,0.2132,ambos,Antecedentes de riesgo / enfermedad específica (parcial)
+14,Enfermedad cardiovascular,Clínicos,2,0.0667,0.0185,0.2132,ambos,Falla cardíaca (549) / antecedentes de riesgo (550) (parcial)
+15,Preeclampsia,Clínicos,2,0.0667,0.0185,0.2132,ambos,Preeclampsia (criterio 549; complicación 550)
+16,Presión arterial elevada,Clínicos,2,0.0667,0.0185,0.2132,ninguno,No se registra la medición en las fichas
+17,Índice de masa corporal — IMC,Clínicos,2,0.0667,0.0185,0.2132,ninguno,No existe en las fichas
+18,Abortos previos,Clínicos,1,0.0333,0.0059,0.1667,ambos,Abortos / 6.10 Abortos
+19,Cesárea previa,Clínicos,1,0.0333,0.0059,0.1667,ambos,Cesáreas / 6.7 Cesáreas
+20,Educación de la pareja,Sociodemográficos,1,0.0333,0.0059,0.1667,ninguno,No existe en las fichas

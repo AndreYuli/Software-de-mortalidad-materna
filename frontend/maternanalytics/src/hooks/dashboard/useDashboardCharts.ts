@@ -71,12 +71,14 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
 
   const topCausasMortalidad = useMemo(() => {
     if (!(segmento === 'ambos' || segmento === 'mortalidad')) {
-      return { labels: [], values: [], colors: [], total: 0 }
+      return { labels: [], codigos: [], porcentajes: [], values: [], colors: [], total: 0 }
     }
     const causas = mortalidadData?.causas_cie10?.top_causas ?? []
     const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10)
     return {
       labels: sorted.map((c) => getCie10Description(c.codigo)),
+      codigos: sorted.map((c) => c.codigo),
+      porcentajes: sorted.map((c) => c.porcentaje),
       values: sorted.map((c) => c.casos),
       colors: sorted.map(() => CHART_COLORS.mortalidad),
       total: mortalidadData?.estadisticas_basicas?.total_casos ?? mortalidadData?.total_registros ?? 0,
@@ -85,15 +87,33 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
 
   const topCausasMorbilidad = useMemo(() => {
     if (!(segmento === 'ambos' || segmento === 'morbilidad')) {
-      return { labels: [], values: [], colors: [], total: 0 }
+      return { labels: [], codigos: [], porcentajes: [], values: [], colors: [], total: 0 }
     }
     const causas = morbilidadData?.causas_cie10?.top_causas ?? []
     const sorted = [...causas].sort((a, b) => b.casos - a.casos).slice(0, 10)
     return {
       labels: sorted.map((c) => getCie10Description(c.codigo)),
+      codigos: sorted.map((c) => c.codigo),
+      porcentajes: sorted.map((c) => c.porcentaje),
       values: sorted.map((c) => c.casos),
       colors: sorted.map(() => CHART_COLORS.morbilidad),
       total: morbilidadData?.estadisticas_basicas?.total_casos ?? morbilidadData?.total_registros ?? 0,
+    }
+  }, [segmento, morbilidadData])
+
+  // Causas asociadas de morbilidad (hasta 3 por caso): null si el segmento no incluye morbilidad.
+  const topCausasAsociadasMorbilidad = useMemo(() => {
+    if (!(segmento === 'ambos' || segmento === 'morbilidad')) return null
+    const datos = morbilidadData?.tipo === 'morbilidad' ? morbilidadData.causas_asociadas : undefined
+    const sorted = [...(datos?.top_causas ?? [])].sort((a, b) => b.casos - a.casos).slice(0, 10)
+    return {
+      labels: sorted.map((c) => getCie10Description(c.codigo)),
+      codigos: sorted.map((c) => c.codigo),
+      porcentajes: sorted.map((c) => c.porcentaje),
+      values: sorted.map((c) => c.casos),
+      colors: sorted.map(() => CHART_COLORS.morbilidad),
+      total: morbilidadData?.estadisticas_basicas?.total_casos ?? morbilidadData?.total_registros ?? 0,
+      casosConCausaAsociada: datos?.casos_con_causa_asociada ?? 0,
     }
   }, [segmento, morbilidadData])
 
@@ -194,6 +214,7 @@ export function useDashboardCharts({ segmento, mortalidadData, morbilidadData, f
     lineChartData,
     topCausasMortalidad,
     topCausasMorbilidad,
+    topCausasAsociadasMorbilidad,
     demorasChartData,
     edadChartData,
     edadGestacionalMortalidad,

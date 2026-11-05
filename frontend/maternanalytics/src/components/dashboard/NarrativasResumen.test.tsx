@@ -55,11 +55,36 @@ describe('NarrativasResumen', () => {
     )
   })
 
-  it('si el servicio de IA no está disponible (503) el bloque desaparece', async () => {
-    obtenerNarrativa.mockResolvedValue(null)
-    const { container } = render(<NarrativasResumen {...base} segmento="mortalidad" />)
+  it('si el servicio de IA no está disponible (503) avisa y permite reintentar (no desaparece)', async () => {
+    obtenerNarrativa.mockResolvedValueOnce(null)
+    render(<NarrativasResumen {...base} segmento="mortalidad" />)
     fireEvent.click(screen.getByText('Generar resumen IA'))
-    await waitFor(() => expect(container.innerHTML).toBe(''))
+    expect(await screen.findByText(/servicio de IA no está disponible/i)).toBeTruthy()
+
+    obtenerNarrativa.mockResolvedValueOnce({ narrativa: 'Ya responde', modelo: 'm', generado_en: 'x', desde_cache: false })
+    fireEvent.click(screen.getByText('Reintentar'))
+    expect(await screen.findByText('Ya responde')).toBeTruthy()
+  })
+
+  it('muestra la verificación automática: cifras respaldadas, alertas y que no es validación clínica', async () => {
+    obtenerNarrativa.mockResolvedValue({
+      narrativa: 'Texto con cifras',
+      modelo: 'm',
+      generado_en: 'x',
+      desde_cache: false,
+      verificacion: {
+        cifras_total: 4,
+        cifras_respaldadas: 3,
+        cifras_sin_respaldo: ['99'],
+        alertas_coherencia: ['Lenguaje causal: un análisis descriptivo no permite afirmar relaciones de causa.'],
+      },
+    })
+    render(<NarrativasResumen {...base} segmento="mortalidad" />)
+    fireEvent.click(screen.getByText('Generar resumen IA'))
+    expect(await screen.findByText(/3 de 4 cifras coinciden con los indicadores/)).toBeTruthy()
+    expect(screen.getByText(/No respaldadas: 99/)).toBeTruthy()
+    expect(screen.getByText(/Lenguaje causal/)).toBeTruthy()
+    expect(screen.getByText(/no es una validación clínica/i)).toBeTruthy()
   })
 
   it('ante un error de red muestra un mensaje y permite reintentar (no se queda cargando)', async () => {

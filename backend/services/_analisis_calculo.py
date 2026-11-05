@@ -103,6 +103,7 @@ def calcular_completo(
                 'tipo': 'morbilidad',
                 'estadisticas_basicas': p.calcular_estadisticas_basicas(),
                 'causas_cie10': p.analizar_causas_cie10(top_n=10),
+                'causas_asociadas': p.analizar_causas_asociadas(top_n=10),
                 'criterios_inclusion': p.analizar_criterios_inclusion(),
                 'momento_ocurrencia': p.analizar_momento_ocurrencia(),
                 'institucion_referencia': p.analizar_institucion_referencia(),

@@ -1,0 +1,69 @@
+# Cambios de la corrección al aval condicionado (3-nov-2026)
+
+Rama `correccion/aval-condicionado` (16 commits, último `a520cdbf`). Sin push ni despliegue.
+Pruebas al cierre: back 228 (+2 omitidas), IA 24, front 247, e2e Playwright 23/23.
+Fuente: `git log` de la rama. Los pendientes están en `PENDIENTES_CORRECCION_AVAL.md`.
+
+## Base de datos y carga
+| Commit | Cambio |
+|---|---|
+| `68473289` | Normalización a 1FN: tablas hijas `causa_asociada_morbilidad`, `referencia_institucion` y `cirugia_adicional_morbilidad` |
+| `86e50448` | Errores de base de datos traducidos y reglas de valor validadas con número de fila |
+| `148f7336` | Se valida formato y existencia de los códigos CIE-10 de morbilidad; «—» ya no se guarda como causa |
+
+## Seguridad
+| Commit | Cambio |
+|---|---|
+| `ae76d5d9` | Contraseñas más estrictas, nombre sin HTML, filtros de fecha validados (422, no 500) |
+| `dd6e2feb` | Límite de 10 intentos / 15 min y tiempo de espera de la IA configurable. La contraseña mínima se subió a 15 (NIST SP 800-63B-4) y el 4-nov se volvió a **8** (ver «Cambios posteriores») |
+| `8ab6a1a1` | La prueba e2e HU-01 usa una contraseña de 15+ caracteres (sigue siendo válida con mínimo 8) |
+
+## IA y narrativas
+| Commit | Cambio |
+|---|---|
+| `bed0c6c2` | Verificación automática de narrativas (cifras y coherencia) y aviso visible si la IA no responde |
+| `3b10715d` | Diagnóstico del 404 del proveedor; el detalle del proveedor ya no llega al usuario |
+| `f34827fa` | El verificador acepta cifras truncadas y los años/meses que son claves de los indicadores |
+| `a520cdbf` | El verificador lee «6.065» también como decimal |
+| `cbd0122a` | La narrativa de agrupamiento respondía 500 siempre (faltaba pasar la sesión de BD) |
+
+## Análisis, dashboard y exportes
+| Commit | Cambio |
+|---|---|
+| `ba49bad7` | Índice cuantitativo de relevancia bibliográfica de variables, con trazabilidad variable-artículo |
+| `b420feb9` | Se versionan los CSV de relevancia que faltaban y se corrige «seis» por «cinco» |
+| `c6baae6d` | Hoja y CSV de causas CIE-10 con código real, evento y porcentaje del dashboard |
+| `1e8fe321` | «Última carga» pasa a «Última semana reportada» |
+| `29e6ca08` | Autocompletado de credenciales y concordancia de número en el historial de cargas |
+
+## Cambios posteriores (4-nov-2026, sin commit)
+- Contraseña mínima de **8** caracteres (antes 15): `backend/schemas/user_schema.py`, `frontend/.../registerSchema.ts`, `Register.tsx`, `Register.test.tsx` y `backend/tests/test_revision_uso_api.py`. Back: 227 pruebas aprobadas (+2 omitidas); front, las 20 de `components/auth`.
+
+## Reconstrucción de la base de datos (4-nov-2026, rama `correccion/bd-reconstruida`)
+Detalle y decisiones en `docs/BASE_DE_DATOS.md`; diagramas por dominio en `docs/modelo_de_datos/`.
+- El script SQL ya no se escribe a mano: se **genera** desde los modelos (`scripts/generar_esquema_sql.py`) y no trae `DROP DATABASE`.
+- Tablas maestras nuevas: `cat_evento`, `departamento`, `secretaria`, `cie10` (12.900 códigos). `secretaria_codigo`, `tipo` y los CIE-10 de morbilidad pasan a llaves foráneas.
+- Una sola tabla de antecedentes obstétricos comunes (`antecedente_obstetrico`, asociación excluyente) para morbilidad y mortalidad; lo propio de cada evento queda en su tabla.
+- Triggers: `actualizado_en`, bitácora `auditoria_cambio` (solo nombres de columnas) y validación del caso de cada importación.
+- Restricciones: 1:1 explícito, caso único por (secretaría, paciente, fecha), CHECK de rangos, índices en todas las llaves foráneas.
+- CIE-10 se guarda normalizado (`O141`).
+- Nombres claros: `antecedentes_obstetricos` → `antecedente_obstetrico_morbilidad` y `antecedente_materno` → `antecedente_materno_mortalidad`. `api_usuario` ya no repite el nombre del departamento y de la secretaría.
+- Pruebas: back 236 aprobadas (+2 omitidas; incluye pruebas de PostgreSQL con esquema temporal), e2e 23/23 sobre una base reconstruida desde el script, carga real de 200 + 200 casos y reenvío sin duplicar.
+
+## Segunda fase: migración, integración de causas asociadas e integridad (4-nov-2026, sin commit)
+Detalle en `docs/BASE_DE_DATOS.md` y `docs/MIGRACION_BD.md`.
+- **Migración sin pérdida** desde la estructura de `main`: `backend/scripts/migrar_estructura_anterior.py` copia a una base nueva (origen en solo lectura), conserva los identificadores, normaliza los CIE-10, deja lo que no puede guardarse en `migracion_registro_pendiente`, se detiene ante CIE-10 obligatorios inexistentes (corregibles con `correcciones_cie10.csv`) o duplicados, simula sin persistir y exige respaldo verificado para confirmar.
+- La migración parcial que corría en cada arranque se quitó; el backend **se niega a arrancar** sobre la estructura anterior.
+- **Causas asociadas en todas las capas**: vista `v_causa_asociada_morbilidad`, relación ORM, `causas_asociadas` en `GET /api/sivigila/morbilidad/`, DataFrame de análisis, `analizar_causas_asociadas`, gráfico del dashboard y exportes Excel/PDF/CSV. `UNIQUE(id_caso, cie10)`; la carga rechaza con fila y columna la causa asociada repetida o igual a la principal.
+- **Integridad**: FK a `cie10` en `causa_muerte.causa_basica_cie10` y `control_prenatal.compl_feto_rn_cie10` (validadas en la carga); catálogo `cat_tipo_cirugia` en lugar del `CHECK 1..4`; institución de referencia 2 distinta de la 1 (cadena de remisión de la ficha 549).
+- **Bitácora** de las tablas hijas y de detalle, con `evento` e `id_caso`.
+- **Vistas** en un `MetaData` separado: `create_all` ya no las crea como tablas vacías; el arranque sobre una base vacía siembra los catálogos y deja el mismo esquema que el script.
+- El script SQL fija `SET client_encoding = 'UTF8'` (psql en Windows corrompía las tildes).
+- Las pruebas de PostgreSQL usan bases desechables (`VM_PG_PRUEBAS`), nunca la base de la aplicación.
+- `DEPLOY.md` ya no indica `DROP DATABASE`; separa instalación nueva y migración.
+- Pruebas: ver el informe de entrega de esta fase.
+
+## Fuera del repositorio (en `Proyecto de grado`)
+- `CARACT_corregido (5).docx` (copia del (4); contraseña vuelve a 8) y (4) (copia del (3)), `Carta_de_Respuesta_corregida (3).docx`
+- `respuesta_a_la_matriz_de_la_asesora_3-nov_v2.txt`
+- Figura 4 v2: `Diagramas\figuras_nuevas\fig4_v2.py`

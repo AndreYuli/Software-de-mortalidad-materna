@@ -89,6 +89,9 @@ def test_completo_rechaza_formato_invalido(client, analisis_id, espia, campo, va
 @pytest.mark.parametrize(
     'campo,valor',
     [
+        ('year', '0'),
+        ('year', '1899'),
+        ('year', '2101'),
         ('month', '0'),
         ('month', '00'),
         ('month', '13'),
@@ -119,7 +122,6 @@ def test_completo_rechaza_rango_invalido(client, analisis_id, espia, campo, valo
         ('month', ''),
         ('week', ''),
         ('day', ''),
-        ('year', '0'),
         ('month', '07'),
         ('month', '1'),
         ('month', '12'),
@@ -134,7 +136,7 @@ def test_completo_acepta_formato_valido(client, analisis_id, espia, campo, valor
     """Completo acepta formato valido."""
     r = client.get(f'/api/analisis/{analisis_id}/completo/', params={campo: valor})
     assert r.status_code == 200, (campo, valor, r.status_code, r.text[:120])
-    assert espia[0][campo] == valor
+    assert espia[0][campo] == (valor or None)  # el vacío se normaliza a None
 
 
 def test_completo_combinaciones(client, analisis_id, espia):

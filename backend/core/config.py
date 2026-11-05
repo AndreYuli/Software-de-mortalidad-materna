@@ -45,6 +45,8 @@ class _Settings(BaseSettings):
 
     # --- IA generativa ---
     ia_service_url: str = 'http://localhost:8001'
+    # Espera máxima de una narrativa; el proveedor gratuito tarda 35-60 s (medido el 3-nov-2026).
+    ia_timeout_s: float = 120.0
 
     @field_validator('cors_origins', mode='before')
     @classmethod

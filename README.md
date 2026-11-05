@@ -81,7 +81,7 @@ psql -U postgres -c "CREATE DATABASE sivigila_maternidad;"
 psql -U postgres -d sivigila_maternidad -f backend/sivigila_maternidad_postgres.sql
 ```
 
-Las tablas propias de la aplicación (`api_analisis`, `api_usuario`, `api_sivigilaimportacion`, `narrativa_ia`) se crean solas al arrancar el backend.
+El script crea todas las tablas, catálogos, triggers y vistas (ver `docs/BASE_DE_DATOS.md`). Si la base ya tiene datos con la estructura anterior, no se reconstruye: se migra a una base nueva con `backend/scripts/migrar_estructura_anterior.py` (ver `docs/MIGRACION_BD.md`); el backend no arranca sobre la estructura anterior.
 
 ### 2. Backend
 
@@ -129,8 +129,13 @@ curl -X POST http://localhost:8000/api/auth/register/ \
 ## Pruebas
 
 ```bash
-# Backend (67 tests)
-cd backend && venv\Scripts\activate && pip install pytest pytest-mock && pytest tests/ -v
+# Backend. Algunos módulos importan main.py, que crea tablas en la base de DB_*: use una base
+# desechable. Las pruebas de PostgreSQL (esquema, migración, plantillas) solo corren con
+# VM_PG_PRUEBAS y crean/borran sus propias bases vm_prueba_*.
+cd backend && venv\Scripts\activate && pip install -r requirements.txt pytest pytest-mock
+set DB_NAME=vm_prueba_base
+set VM_PG_PRUEBAS=host=127.0.0.1 port=5432 user=postgres password=...
+pytest tests/ -v
 
 # ia-service (24 tests)
 cd ia-service && venv\Scripts\activate && pytest tests/ -v
@@ -139,7 +144,7 @@ cd ia-service && venv\Scripts\activate && pytest tests/ -v
 cd frontend/maternanalytics
 npx tsc --noEmit
 pnpm lint
-pnpm test
+pnpm test        # con Node 25+: set NODE_OPTIONS=--no-experimental-webstorage
 pnpm build
 ```
 

@@ -6,10 +6,55 @@ describe('extractErrorMessage', () => {
     expect(extractErrorMessage({ detail: 'Faltan columnas' }, 'x')).toBe('Faltan columnas')
   })
 
+  it('toma el primer msg cuando detail es la lista de un 422 (mensaje ya en español)', () => {
+    expect(extractErrorMessage({ detail: [{ msg: 'Debe ser un número entre 1 y 12.' }] }, 'x')).toBe(
+      'Debe ser un número entre 1 y 12.',
+    )
+  })
+
   it('toma el primer msg cuando detail es la lista de un 422', () => {
     expect(extractErrorMessage({ detail: [{ msg: 'value is not a valid email' }] }, 'x')).toBe(
       'El correo electrónico no es válido. Usa un correo institucional válido, por ejemplo tu.correo@institucion.gov.co.',
     )
+  })
+
+  it('traduce el error de correo de Pydantic (revisión de uso, parte 1, problema 1)', () => {
+    const body = {
+      detail: [
+        {
+          type: 'value_error',
+          loc: ['body', 'email'],
+          msg: 'value is not a valid email address: The part after the @-sign is a special-use or reserved name that cannot be used with email.',
+        },
+      ],
+    }
+    expect(extractErrorMessage(body, 'x')).toBe(
+      'Ingresa un correo electrónico válido, con un dominio real (por ejemplo, nombre@institucion.gov.co).',
+    )
+  })
+
+  it('quita el prefijo "Value error," de los validadores propios', () => {
+    const body = { detail: [{ type: 'value_error', loc: ['body', 'password'], msg: 'Value error, La contraseña es demasiado común; elige otra.' }] }
+    expect(extractErrorMessage(body, 'x')).toBe('La contraseña es demasiado común; elige otra.')
+  })
+
+  it('traduce longitudes mínima y máxima indicando el campo', () => {
+    expect(
+      extractErrorMessage(
+        { detail: [{ type: 'string_too_short', loc: ['body', 'password'], msg: 'String should have at least 8 characters', ctx: { min_length: 8 } }] },
+        'x',
+      ),
+    ).toBe('La contraseña debe tener al menos 8 caracteres.')
+    expect(
+      extractErrorMessage(
+        { detail: [{ type: 'string_too_long', loc: ['body', 'nombre'], msg: 'String should have at most 120 characters', ctx: { max_length: 120 } }] },
+        'x',
+      ),
+    ).toBe('El nombre no puede superar 120 caracteres.')
+  })
+
+  it('un mensaje en inglés sin traducción conocida cae al fallback, no se muestra crudo', () => {
+    expect(extractErrorMessage({ detail: [{ type: 'weird', loc: ['query', 'x'], msg: 'Some english text' }] }, 'fallback')).toBe('fallback')
   })
 
   it('usa el fallback con cuerpos vacíos o inesperados', () => {

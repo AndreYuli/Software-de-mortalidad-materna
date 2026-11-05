@@ -42,8 +42,8 @@ describe('KpiRow', () => {
 
   it('muestra las tendencias de mortalidad y morbilidad con la base de comparación', () => {
     render(<KpiRow {...base} periodo="mes" />)
-    expect(screen.getByText('+50% vs mes anterior')).toBeInTheDocument()
-    expect(screen.getByText('-10% vs mes anterior')).toBeInTheDocument()
+    expect(screen.getByText('+50% vs mes anterior (15 vs 10)')).toBeInTheDocument()
+    expect(screen.getByText('-10% vs mes anterior (105 vs 117)')).toBeInTheDocument()
   })
 
   it('usa "año anterior" cuando el periodo es el año', () => {

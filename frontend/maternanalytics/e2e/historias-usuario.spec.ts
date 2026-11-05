@@ -51,14 +51,14 @@ test('HU-01 Registro e inicio de sesión', async ({ page }) => {
   await page.getByLabel('Correo electrónico').fill(email);
   await page.getByLabel('Departamento').selectOption('antioquia');
   await page.getByLabel('Secretaría de salud').selectOption({ index: 1 });
-  await page.getByLabel('Contraseña', { exact: true }).fill('clave-segura-1');
-  await page.getByLabel('Confirmar contraseña').fill('clave-segura-1');
+  await page.getByLabel('Contraseña', { exact: true }).fill('clave-segura-123456');
+  await page.getByLabel('Confirmar contraseña').fill('clave-segura-123456');
   await page.getByRole('button', { name: 'Crear cuenta' }).click();
   await expect(page.getByText(/Cuenta creada exitosamente/i)).toBeVisible({ timeout: 15000 });
   // Dado que tengo cuenta, cuando ingreso mis credenciales correctas, entonces accedo al dashboard.
   await page.goto('/login');
   await page.getByLabel('Correo electrónico').fill(email);
-  await page.getByLabel('Contraseña').fill('clave-segura-1');
+  await page.getByLabel('Contraseña').fill('clave-segura-123456');
   await page.getByRole('button', { name: 'Iniciar sesión' }).click();
   await expect(page).toHaveURL(/dashboard/, { timeout: 30000 });
 });

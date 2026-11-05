@@ -18,6 +18,11 @@ describe('AuthField', () => {
     expect(screen.getByLabelText('Correo electrónico')).toHaveAttribute('type', 'email')
   })
 
+  it('pasa autoComplete al input para los gestores de contraseñas', () => {
+    render(<AuthField id="e" label="Correo" icon={Mail} type="email" autoComplete="username" registration={registration} />)
+    expect(screen.getByLabelText('Correo')).toHaveAttribute('autocomplete', 'username')
+  })
+
   it('muestra el error y marca el input como inválido', () => {
     render(<AuthField id="email" label="Correo" icon={Mail} error="Formato inválido" registration={registration} />)
     expect(screen.getByText('Formato inválido')).toBeInTheDocument()

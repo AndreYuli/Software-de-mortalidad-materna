@@ -14,10 +14,16 @@ from db.models_sqlalchemy import (
     CatTipoId,
     Paciente,
     Usuario,
+    VCausaAsociadaMorbilidad,
     VMorbilidadCompleta,
     VMortalidadCompleta,
 )
-from schemas.sivigila_schema import PacienteResponse, VMorbilidadResponse, VMortalidadResponse
+from schemas.sivigila_schema import (
+    CausaAsociadaResponse,
+    PacienteResponse,
+    VMorbilidadResponse,
+    VMortalidadResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +33,27 @@ router = APIRouter(
 
 _LIMITE_DEFAULT = 100
 _LIMITE_MAXIMO = 500
+
+
+def _causas_asociadas_por_caso(
+    db: Session, ids_caso: list[int], secretaria_codigo: str | None
+) -> dict[int, list[CausaAsociadaResponse]]:
+    """Causas asociadas de una página de casos, en UNA consulta (sin N+1), por orden."""
+    if not ids_caso:
+        return {}
+    filas = (
+        db.query(VCausaAsociadaMorbilidad)
+        .filter(
+            VCausaAsociadaMorbilidad.id_caso.in_(ids_caso),
+            VCausaAsociadaMorbilidad.secretaria_codigo == secretaria_codigo,
+        )
+        .order_by(VCausaAsociadaMorbilidad.id_caso, VCausaAsociadaMorbilidad.orden)
+        .all()
+    )
+    por_caso: dict[int, list[CausaAsociadaResponse]] = {}
+    for fila in filas:
+        por_caso.setdefault(fila.id_caso, []).append(CausaAsociadaResponse.model_validate(fila))
+    return por_caso
 
 
 def _obtener_limite(limit: int | None) -> int:
@@ -163,9 +190,14 @@ def listar_morbilidad(
             .limit(limite)
             .all()
         )
-        lista_morbilidad: list[VMorbilidadResponse] = [
-            VMorbilidadResponse.model_validate(caso) for caso in casos
-        ]
+        asociadas = _causas_asociadas_por_caso(
+            db, [caso.id_caso for caso in casos], usuario.secretaria_codigo
+        )
+        lista_morbilidad: list[VMorbilidadResponse] = []
+        for caso in casos:
+            fila = VMorbilidadResponse.model_validate(caso)
+            fila.causas_asociadas = asociadas.get(caso.id_caso, [])
+            lista_morbilidad.append(fila)
     except Exception as exc:
         logger.exception('Error al consultar la vista de morbilidad completa.')
         raise HTTPException(

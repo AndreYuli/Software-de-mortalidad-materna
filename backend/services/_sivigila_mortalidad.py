@@ -3,7 +3,8 @@
 from sqlalchemy.orm import Session
 
 from db.models_sqlalchemy import (
-    AntecedenteMaterno,
+    AntecedenteMaternoMortalidad,
+    AntecedenteObstetrico,
     AntecedentePartoPuerperio,
     AntecedenteRiesgo,
     CatConvivencia,
@@ -40,9 +41,16 @@ from services._sivigila_escritura import (
     _upsert_single_related,
 )
 from services._sivigila_helpers import _DatosPasada1
+from utils.cie10 import limpiar_causa_asociada, normalizar_cie10
 from utils.date_parsers import _parse_date, _parse_time
 from utils.text_utils import clean_text
 from utils.type_parsers import _parse_bool, _parse_int
+
+
+def _cie10_opcional(valor) -> str | None:
+    """Código CIE-10 opcional normalizado, o None si está vacío o es solo un guion."""
+    texto = limpiar_causa_asociada(valor)
+    return normalizar_cie10(texto) if texto else None
 
 
 def _escribir_relacionados_mortalidad(
@@ -87,7 +95,7 @@ def _escribir_relacionados_mortalidad(
     )
     _upsert_single_related(
         db,
-        AntecedenteMaterno,
+        AntecedenteMaternoMortalidad,
         {'id_caso': caso.id_caso},
         {
             'id_convivencia': convivencia.id if convivencia else None,
@@ -98,13 +106,24 @@ def _escribir_relacionados_mortalidad(
                 )
             ),
             'id_escolaridad': escolaridad.id if escolaridad else None,
-            'id_regulacion_fec': regulacion.id if regulacion else None,
+        },
+        **kw,
+    )
+    # Campos obstétricos comunes a los dos eventos (incluye el control prenatal contado).
+    _upsert_single_related(
+        db,
+        AntecedenteObstetrico,
+        {'caso_mortalidad_id': caso.id_caso},
+        {
             'gestaciones': _parse_int(_get_value(row, ['6.5 Gestaciones'])),
             'partos_vaginales': _parse_int(_get_value(row, ['6.6 Partos Vaginales'])),
             'cesareas': _parse_int(_get_value(row, ['6.7 Cesáreas'])),
             'nacidos_muertos': _parse_int(_get_value(row, ['6.8 Muertos'])),
             'hijos_vivos': _parse_int(_get_value(row, ['6.9 Vivos'])),
             'abortos': _parse_int(_get_value(row, ['6.10 Abortos'])),
+            'id_regulacion_fecundidad': regulacion.id if regulacion else None,
+            'num_controles_prenatales': _parse_int(_get_value(row, ['8.1 No. CPN'])),
+            'semana_inicio_cpn': _parse_int(_get_value(row, ['8.2 Semana inicio CPN'])),
         },
         **kw,
     )
@@ -364,12 +383,12 @@ def _escribir_relacionados_mortalidad(
         ControlPrenatal,
         {'id_caso': caso.id_caso},
         {
-            'num_cpn': _parse_int(_get_value(row, ['8.1 No. CPN'])),
-            'semana_inicio_cpn': _parse_int(_get_value(row, ['8.2 Semana inicio CPN'])),
             'id_personal_cpn': personal_cpn.id if personal_cpn else None,
             'id_nivel_atencion_cpn': nivel_cpn.id if nivel_cpn else None,
             'id_remisiones': remisiones.id if remisiones else None,
-            'compl_feto_rn_cie10': clean_text(
+            # Llave foránea a cie10: se guarda normalizado ('P00.0' -> 'P000'); vacío o '—'
+            # es NULL. Que el código exista lo valida la pasada 1 (_verificar_reglas_de_valor).
+            'compl_feto_rn_cie10': _cie10_opcional(
                 _get_value(row, _MORTALIDAD_COMPLICACIONES_FETO_COLS)
             ),
         },

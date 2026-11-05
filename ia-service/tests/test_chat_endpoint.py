@@ -51,4 +51,10 @@ def test_chat_devuelve_503_si_el_proveedor_no_disponible(mock_chatear):
     )
 
     assert response.status_code == 503
-    assert response.json()['detail'] == 'El proveedor no responde'
+    assert (
+        response.json()['detail']
+        == 'El proveedor del modelo de lenguaje no está disponible.'
+    )
+    assert (
+        'El proveedor no responde' not in response.text
+    )  # el detalle crudo sólo va al log
