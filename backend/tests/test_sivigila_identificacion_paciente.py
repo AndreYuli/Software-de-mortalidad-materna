@@ -25,9 +25,9 @@ def test_cambio_tipo_documento_no_duplica_paciente_y_asocia_el_caso(db_session):
     numero_id) debe actualizarse en lugar de duplicarse, y su nuevo
     caso debe asociarse a ella.
     """
-    tipo_ti = CatTipoId(id=5, codigo='TI', descripcion='Tarjeta de identidad')
-    tipo_cc = CatTipoId(id=1, codigo='CC', descripcion='Cédula de ciudadanía')
-    db_session.add_all([tipo_ti, tipo_cc])
+    # merge: en PostgreSQL el arranque ya siembra los catálogos (ids 1 y 5), no se duplican.
+    tipo_ti = db_session.merge(CatTipoId(id=5, codigo='TI', descripcion='Tarjeta de identidad'))
+    tipo_cc = db_session.merge(CatTipoId(id=1, codigo='CC', descripcion='Cédula de ciudadanía'))
     db_session.flush()
 
     existente = Paciente(
@@ -39,8 +39,7 @@ def test_cambio_tipo_documento_no_duplica_paciente_y_asocia_el_caso(db_session):
     db_session.add(existente)
     db_session.flush()
 
-    caches = _precargar_caches_sivigila(
-        db_session, 'morbilidad', {'102030'}, [], None)
+    caches = _precargar_caches_sivigila(db_session, 'morbilidad', {'102030'}, [], None)
 
     ident = {
         'tipo_obj': tipo_cc,
@@ -72,7 +71,8 @@ def test_cambio_tipo_documento_no_duplica_paciente_y_asocia_el_caso(db_session):
     assert paciente_bd.id_paciente == existente.id_paciente
 
     row_cases = _fase3_upsert_casos(
-        'morbilidad', [0], pass1_data, caches, db_session, resumen, 'bello')
+        'morbilidad', [0], pass1_data, caches, db_session, resumen, 'bello'
+    )
     db_session.flush()
 
     caso, caso_creado = row_cases[0]
